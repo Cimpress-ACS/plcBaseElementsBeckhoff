@@ -1,0 +1,19 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+  <DUT Name="T_Ctrl_SIf_MOD" Id="{fd9b22fb-c8ec-4c8b-b527-a07433784272}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_MOD :
+STRUCT
+	///configuration
+	Cfg: T_Ctrl_SIf_MOD_Cfg;
+	///parameter
+	Par: T_Ctrl_SIf_MOD_Par;
+	///current values
+	Cur: T_Ctrl_SIf_MOD_Cur;
+	///In: T_Ctrl_SIf_MOD_In;
+	///Out: T_Ctrl_SIf_MOD_Out;
+	Alm: ARRAY[1..6] OF T_Ctrl_Alm;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

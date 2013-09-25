@@ -1,0 +1,18 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <DUT Name="T_RFD_MDS_Diagnose" Id="{2bb3cefc-9dd9-4c16-9998-f2ff9df8215f}">
+    <Declaration><![CDATA[TYPE T_RFD_MDS_Diagnose :
+STRUCT
+	/// Power flux density: as smaller the value, as higher the field intensity
+	usiLFD: USINT;
+	/// Errorcounter inactive mode
+	usiFZP: USINT;
+	/// Errorcounter active: CRC or signature errors
+	usiFZA: USINT;
+	/// Presence time of tag, resolution in 9.7ms
+	usiANWZ: USINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

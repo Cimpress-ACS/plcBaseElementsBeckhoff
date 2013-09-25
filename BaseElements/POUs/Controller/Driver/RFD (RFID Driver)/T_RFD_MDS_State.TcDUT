@@ -1,0 +1,22 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <DUT Name="T_RFD_MDS_State" Id="{4c289891-fd14-4474-ada9-f856e721836b}">
+    <Declaration><![CDATA[TYPE T_RFD_MDS_State :
+STRUCT
+	/// MDS Type 1=no FRAM; 2=8k FRAM; 3=32k FRAM; 4=64k FRAM; 5=128k FRAM; 6=256k FRAM
+	bytMDSType: BYTE;
+	/// Lock bit registers (lock state)
+	bytLockState: BYTE;
+	/// MDS Version
+	bytVersion: BYTE;
+	/// Memory Size
+	worMemSize: WORD;
+	/// Blocksize in Byte
+	bytBlockSize: BYTE;
+	/// Value of memory Blocks
+	bytBlockNo: BYTE;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

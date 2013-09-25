@@ -1,0 +1,58 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <DUT Name="T_RFW" Id="{3e51dc33-0305-4c60-82e0-8b1f28fdb88f}">
+    <Declaration><![CDATA[TYPE T_RFW :
+STRUCT
+	///	Repeteition ID			Identifies the try number in the sequence	
+	usiRepetitionID: USINT;
+	///	Workstation		2 workstations in the cell	1 BIT	0: Workstation1, 2: Workstation2
+	bolWorkstation2: BOOL;
+	///usiProductID : USINT;				// 	The product ID bits 1 to 5 are indeed not used. Mail T.Bosgiraud 11.6.2013 Product type	Max number of product types = 32	5 bits,	product ID (bits 1 to 5), 
+	bolDeleteFileAfterPrint: BOOL;
+	/// 	1 means that the image has been printed without problem.
+	bolPrintOk: BOOL;
+	///	0: Use the bottom of the tray as basis and add Offset
+	bolHeightUseMeasure: BOOL;
+	///	Email 1.06.2013 Berk “Use measured height=1”, the actual measurement of the  laser plus any offsets programmed into the tray are used to adjust the lifting height
+	///	1: Use the printable product surface as basis and add Offset to the measured height
+	usiHeightOffset: USINT;
+	/// 	“Offset +/-” = 1 means that the printable surface OF the item will go further away FROM the print head.
+	bolHeightOffsetSignMinus: BOOL;
+	/// 	“Offset +/-” = 0 (default value) means that the printable surface of the item will come closer to the print head
+	bolIonizer: BOOL;
+	/// 	Pre-treatment	Plasma 0: Plasma off, 1: Level 1 ..3:Level3
+	usiPlasmaLevel: USINT;
+	/// 	Print numbers 1 means that the image needs to be printed twice on the products
+	bolPrintPass: BOOL;
+	/// 	1 means that the nozzle check pattern has to be printed onto the products.
+	bolNozzleCheck: BOOL;
+	///	1 means that the alignment check pattern has to be printed onto the products.
+	bolAligneCheck: BOOL;
+	///	UV-pinning intensity 0: Level1 ... 15: Level16
+	usiUVPinningLevel: USINT;
+	///	UV-lamp intensity 0: Level1 ... 15: Level16
+	usiUVLampLevel: USINT;
+	/// p.e.: 268205625-3.pdf -> The file name sent by VIPER to the printer and to the conveyor is made out of 64 bits
+	strFileName: STRING;
+	/// The RFID divides the rest of the name (268205625-3) as 8 successive bytes arranged as follows:
+	///	-	Byte 7 (RFID byte 0Dhex) to byte 1 (RFID byte 07hex) express the number before the hyphen sign (in this case 268205625)
+	///	-	Byte 0 (RFID byte 06hex) expresses the number after the hyphen sign (in this case 3).
+	bolBrush: BOOL;
+	///	1: use second brush means that the brush has TO be used FOR the considered tray
+	bolBrushClean: BOOL;
+	///	“Brush Fans”=1 means that the fans have to be used for the considered tray
+	bolBrushFans: BOOL;
+	///	“Gutter Clean”=1 means that the tray is running for gutter cleaning purposes.
+	bolGutterClean: BOOL;
+	/// 	This bit tells whether the tray is a regular production tray or a special tray (nozzle check, alignment...).
+	bolSpecialTray: BOOL;
+	/// 	Byte 0-13	->9999999999999	
+	strTrayID: STRING;
+	/// 	Byte 0-13	->9999999999999	
+	strTagID: STRING;
+	uliTagID: ULINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

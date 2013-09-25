@@ -1,0 +1,52 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <POU Name="FB_ULINT_TO_HEXSTRING" Id="{0fecdd07-4acd-4bed-838b-ede9abbf975f}">
+    <Declaration><![CDATA[FUNCTION FB_ULINT_TO_HEXSTRING : STRING(16)
+VAR_INPUT
+	in_uliValue: ULINT;
+END_VAR
+VAR
+	intI: INT;
+	uliValue: ULINT;
+	usiSign: USINT;
+	strTemp: STRING(16);
+	strSign: STRING(1);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[strTemp := '';
+
+
+	uliValue := in_uliValue;
+	
+	FOR intI := 0 TO 15 DO
+		
+		usiSign := ULINT_TO_USINT(uliValue MOD 16);
+		uliValue := uliValue/16;
+		
+		IF usiSign <= 9 THEN		
+			strSign := USINT_TO_STRING(usiSign);		// ASCII Sign for Value 16#30 ...16#39
+		ELSIF (usiSign = 10) THEN	
+			strSign := 'A';
+		ELSIF (usiSign = 11) THEN	
+			strSign := 'B';
+		ELSIF (usiSign = 12) THEN	
+			strSign := 'C';
+		ELSIF (usiSign = 13) THEN	
+			strSign := 'D';
+		ELSIF (usiSign = 14) THEN	
+			strSign := 'E';
+		ELSIF (usiSign = 15) THEN	
+			strSign := 'F';
+		ELSE
+			FB_ULINT_TO_HEXSTRING := '';
+			RETURN;
+		END_IF
+		strTemp := TC2_STANDARD.CONCAT(STR1 := strSign, STR2 := strTemp);
+	END_FOR
+
+	FB_ULINT_TO_HEXSTRING := strTemp;
+]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

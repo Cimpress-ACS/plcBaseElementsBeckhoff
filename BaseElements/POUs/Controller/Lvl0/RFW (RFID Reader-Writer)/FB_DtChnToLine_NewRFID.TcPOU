@@ -1,0 +1,195 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <POU Name="FB_DtChnToLine_NewRFID" Id="{d2424dfa-b7d9-443b-93a4-71c9c3c9f6a5}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_DtChnToLine_NewRFID
+VAR_INPUT
+	bolResetError: BOOL;
+	pSIf: POINTER TO T_Ctrl_SIf_RFW;
+END_VAR
+VAR_OUTPUT
+	///Error value
+	intError: INT;
+	/// Error Description
+	// -99 = Buffer FULL
+	//  -100 = No SIf Pointer
+	// positive Value = count of retrys
+END_VAR
+VAR
+	/// Internal Variable
+	intStatemachine: INT;
+	/// Time Variables
+	fbGetSystemTime: GETSYSTEMTIME;
+	stfileTime: T_FILETIME;
+	dtActualTime: DT;
+	/// Data not correct
+	bolDataBad: BOOL;
+	/// Retry Counts for error message
+	intCountRetry: INT;
+	/// Buffer for Senddata
+	aBuffer: ARRAY[0..cDtChnBuffer] OF T_NewRFID_DtChn;
+	/// Pointer for new Input
+	intPBufferInput: INT;
+	/// Pointer for readout
+	intPBufferOutput: INT;
+	/// Data Channel Specific Variable
+	intIndexOldest: INT;
+	/// Date and time of the oldes imput
+	dtOldestTag: DT;
+END_VAR
+VAR CONSTANT
+	cDtChnBuffer: INT := 20;
+	cSTA_SUB_Data_Init: INT := 900;
+	cSTA_SUB_Data_WaitForJob: INT := 902;
+	cSTA_SUB_Data_SendData: INT := 904;
+	cSTA_SUB_Data_Acknowledge: INT := 906;
+	cSTA_SUB_Data_Retry: INT := 908;
+	cSTA_SUB_Data_Error: INT := 910;
+	cDataState_DONE: INT := -1;
+	cDataState_Ready: INT := 1;
+	cDataState_Retry: INT := -99;
+	cDataState_Error: INT := -100;
+	
+	cMAX_RETRY: INT := 10;
+	
+	// Error Codes
+	cERR_BufferFull : INT := -99;
+	cERR_NoSIF : INT := -100;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+Datachannel to send data to Lince Controller
+Insert new Job with Method Creat in a Buffer
+Send buffer elements if Linecontroller is ready
+
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		26.08.2013		AVM/PRE		Start history
+
+
+___________________________________________________________________________________________________*)
+
+// Data Channel to Receive Data from Line Controller
+// Startup check States
+IF (pSIf <> 0) THEN
+	IF (intStatemachine < cSTA_SUB_Data_Init) THEN
+		intStatemachine := cSTA_SUB_Data_Init;
+	END_IF
+ELSE
+	intError := cERR_NoSIF;
+END_IF
+
+CASE intStatemachine OF
+	cSTA_SUB_Data_Init:
+		IF pSIf^.DtChnToLine.stNewRfid.intDataState = cDataState_DONE THEN
+			intStatemachine := cSTA_SUB_Data_WaitForJob;
+		END_IF
+		
+	cSTA_SUB_Data_WaitForJob:
+		// New data arrived
+		IF intPBufferInput <> intPBufferOutput THEN
+			IF pSIf^.DtChnToLine.stNewRfid.intDataState = cDataState_DONE THEN
+				intStatemachine := cSTA_SUB_Data_SendData;
+			END_IF
+		END_IF
+	
+	cSTA_SUB_Data_SendData:	
+		pSIf^.DtChnToLine.stNewRfid.uliTagID := aBuffer[intPBufferOutput].uliTagID;
+		pSIf^.DtChnToLine.stNewRfid.strID := aBuffer[intPBufferOutput].strID;
+		pSIf^.DtChnToLine.stNewRfid.dtTimestamp := aBuffer[intPBufferOutput].dtTimestamp;
+		pSIf^.DtChnToLine.stNewRfid.intDataState := cDataState_Ready;
+		intStatemachine := cSTA_SUB_Data_Acknowledge;	
+		
+	cSTA_SUB_Data_Acknowledge:	
+		IF pSIf^.DtChnToLine.stNewRfid.intDataState = cDataState_DONE THEN
+			// Data read from Line Controller
+			// Reset Buffer Element
+			aBuffer[intPBufferOutput].dtTimestamp := DINT_TO_DT(0);
+			aBuffer[intPBufferOutput].intDataState := 0;
+			aBuffer[intPBufferOutput].uliTagID := 0;
+			aBuffer[intPBufferOutput].strID := '';
+			// Increase Read out pointer
+			IF intPBufferOutput < cDtChnBuffer THEN
+				intPBufferOutput := intPBufferOutput + 1;
+			ELSE
+				intPBufferOutput := 0;
+			END_IF
+			intStatemachine := cSTA_SUB_Data_WaitForJob;
+			
+		ELSIF pSIf^.DtChnToLine.stNewRfid.intDataState = cDataState_Retry THEN
+			intStatemachine := cSTA_SUB_Data_Retry;
+		ELSIF pSIf^.DtChnToLine.stNewRfid.intDataState = cDataState_Error THEN
+			intStatemachine := cSTA_SUB_Data_Error;
+		END_IF
+		
+	cSTA_SUB_Data_Retry:
+			IF intCountRetry < cMAX_RETRY THEN
+				intCountRetry := intCountRetry + 1;
+				intStatemachine := cSTA_SUB_Data_SendData;
+			ELSE
+				intStatemachine := cSTA_SUB_Data_Error;
+			END_IF
+
+	cSTA_SUB_Data_Error:
+		intError := intCountRetry;
+		IF bolResetError = TRUE THEN
+			intStatemachine := cSTA_SUB_Data_WaitForJob;
+		END_IF
+			
+END_CASE]]></ST>
+    </Implementation>
+    <Method Name="Creat" Id="{a0bcf7e1-091f-4cb3-9289-35babae36823}">
+      <Declaration><![CDATA[METHOD Creat : INT
+VAR_INPUT
+	In_strID: STRING;			// configurable if Tag or Tray ID
+	In_uliTagID: ULINT;	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Insert a new Job to send at Line controller
+// Only insert the job, if the buffer is not full, next input dosn't cross input and Outputpointer
+
+// Get Systemtime
+fbGetSystemTime(timeLoDW=>stfileTime.dwLowDateTime, timeHiDW=>stfileTime.dwHighDateTime);
+dtActualTime := FILETIME_TO_DT( stfileTime );
+
+IF ((intPBufferInput + 1) = intPBufferOutput) OR ((intPBufferInput = cDtChnBuffer) AND (intPBufferOutput = 0)) THEN
+	Creat := cERR_BufferFull;
+ELSE
+	aBuffer[intPBufferInput].uliTagID := In_uliTagID;
+	aBuffer[intPBufferInput].strID := In_strID;
+	aBuffer[intPBufferInput].dtTimestamp := dtActualTime;
+	IF intPBufferInput < cDtChnBuffer THEN
+		intPBufferInput := intPBufferInput + 1;
+	ELSE
+		intPBufferInput := 0;
+	END_IF
+	Creat := intPBufferInput;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <ObjectProperties>﻿<XmlArchive>
+  <Data>
+    <o xml:space="preserve" t="POUImageProperty">
+      <n n="ImageData" />
+      <v n="TransparencyColor">"White"</v>
+      <v n="MakeTransparent">false</v>
+    </o>
+  </Data>
+  <TypeList>
+    <Type n="Boolean">System.Boolean</Type>
+    <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
+    <Type n="String">System.String</Type>
+  </TypeList>
+</XmlArchive></ObjectProperties>
+  </POU>
+</TcPlcObject>

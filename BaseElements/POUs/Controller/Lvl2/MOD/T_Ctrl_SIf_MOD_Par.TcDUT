@@ -1,0 +1,15 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.18">
+  <DUT Name="T_Ctrl_SIf_MOD_Par" Id="{5ac84c7c-9bfb-4225-93a5-a0a54cffe7db}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_MOD_Par :
+STRUCT
+	///[ms] wait time in pick position
+	udiWaitPick_ms: UDINT;
+	
+	// 0=slow, 1=middle, 2=fast
+	usi_speedLevel : USINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

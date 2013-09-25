@@ -1,0 +1,697 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <POU Name="FB_Com_3964R" Id="{d707ab29-ba77-483b-b221-0a21aec348f3}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Com_3964R
+VAR_INPUT
+	/// Pointer to Received Data Array
+	In_pRxData: POINTER TO ARRAY[0..255] OF BYTE;
+	/// Pointer to Sending Data Array
+	In_pTxData: POINTER TO ARRAY[0..255] OF BYTE;
+	/// Amounth of sending data
+	In_udiTxCount: UDINT;
+	/// Error Acknowledge 
+	In_bolErrorAck: BOOL;
+END_VAR
+VAR_IN_OUT
+	/// Command to send Data 1=command; 0=Done
+	InOut_bolSend: BOOL;
+	/// Command Data received 1=received; 0=Done=Ready for next Data
+	InOut_bolRec: BOOL;
+END_VAR
+VAR_OUTPUT
+	/// Amounth of received data
+	Out_udiRxCount: UDINT;
+	/// Serial interface communication error
+	Out_bolComError: BOOL;
+	/// Error in protocoll procedure
+	Out_bolProtocolErr: BOOL;
+	/// Error information to master
+	Out_udiErrorCode: UDINT;
+END_VAR
+VAR
+	In_stEL6inData AT %I*: TC2_SERIALCOM.EL6inData22B;
+	Out_stEL6outData AT %Q*: TC2_SERIALCOM.EL6outData22B;
+	/// Internal Variables
+	udiI: UDINT;
+	/// Local variable for loops
+	udiK: UDINT;
+	/// Internal Error Reset
+	bolIntReset: BOOL;
+	/// Count call trials
+	uinCountCall: UINT;
+	/// Count call Retrys
+	uinCountRetry: UINT;
+	/// Temporary value for cecking the sum
+	bytCheckValue: BYTE;
+	/// Antenna is initializied, until it is not initializied, it send 16#02 in all possible baudrates
+	bolSLGInitialized: BOOL := FALSE;
+	/// Check Timeout
+	bolTimeout: BOOL;
+	/// Check Timeout
+	bolWait: BOOL;
+	/// Send NAK needed
+	bolSendNAK: BOOL;
+	/// Receive Wait signs
+	timWaitReceive: TIME := TIME#5ms;
+	/// Receive Wait signs
+	timWaitAck: TIME := TIME#400ms;
+	/// Sign delay time
+	timZVZ: TIME := TIME#45ms;
+	/// Time ACK delay
+	timQVZ: TIME := TIME#145ms;
+	/// Initialisation of the HW card
+	bolInitRequest: BOOL;
+	/// Setting of the HW Card
+	bolSendContinious: BOOL;
+	/// Priority at RFID
+	bolPriority: BOOL;
+	/// Send DLE doubletimes
+	bolDLEDouble: BOOL;
+	/// New data received
+	bolComDataReceived: BOOL;
+	/// receiving busy
+	bolComRecBusy: BOOL;
+	/// Received Data
+	udiComSizeReceiveData: UDINT;
+	/// Sending busy
+	bolComSendBusy: BOOL;
+	/// Error at serial line control
+	bolErrSerialLineControl: BOOL;
+	/// Error at serial line control
+	stErrSerialLineControl: ComError_t;
+	/// Error at serial line  receiving data
+	bolErrReceive: BOOL;
+	/// Error at serial line  receiving data
+	stErrReceive: ComError_t;
+	/// Error at serial line sending data
+	bolErrSend: BOOL;
+	/// Error at serial line sending data
+	stErrSend: ComError_t;
+	/// Define Buffer for preparations
+	aRxData: ARRAY[0..255] OF BYTE;
+	aTxData: ARRAY[0..255] OF BYTE;
+	/// Define Buffer for Funciton
+	stRxBuffer: TC2_SERIALCOM.ComBuffer;
+	/// Transmit data buffer; used with all receive function blocks 
+	stTxBuffer: TC2_SERIALCOM.ComBuffer;
+	/// Sub Statemachine
+	intState: INT := 0;
+	intStateOld: INT := 0;
+	udiStateLoop: UDINT;
+	a_intStateHist: ARRAY[0..9] OF INT;
+	udiStateDebug: UDINT;
+	udiStateDebugMax: UDINT;
+	/// Function for serial communication
+	fbSerialLineControl: TC2_SERIALCOM.SerialLineControl;
+	fbSerialReceiveData: TC2_SERIALCOM.ReceiveData;
+	fbSerialSendData: TC2_SERIALCOM.SendData;
+	fbSerialClearComBuffer: TC2_SERIALCOM.ClearComBuffer;
+	fbTon: TC2_STANDARD.TON;
+	fbWait: TC2_STANDARD.TON;
+	fbZVZ: TC2_STANDARD.TON;
+	fbQVZ: TC2_STANDARD.TON;
+	fbPriority: TC2_STANDARD.TON;
+END_VAR
+VAR CONSTANT
+	cSTX: USINT := 16#2;
+	cDLE: USINT := 16#10;
+	cETX: USINT := 16#3;
+	cNAK: USINT := 16#15;
+	/// Startup
+	cRFD_3964_Start: INT := 2500;
+	/// Startup
+	cRFD_3964_Init: INT := 2501;
+	/// Wait for Job
+	cRFD_3964_Wait: INT := 2502;
+	/// Read recived sign
+	cRFD_3964_RxRead: INT := 2504;
+	/// Ackn. receiving ready
+	cRFD_3964_RxReadRdy: INT := 2506;
+	/// Recive Data
+	cRFD_3964_RxData: INT := 2508;
+	/// Achn. received Data
+	cRFD_3964_RxCheckData: INT := 2510;
+	/// Send Ack to Slave
+	cRFD_3964_RxAck: INT := 2512;
+	/// Send Ack to Slave
+	cRFD_3964_RxAck2: INT := 2514;
+	/// Send Request to Slave
+	cRFD_3964_TxRequest: INT := 2550;
+	/// Send Wait answer
+	cRFD_3964_TxWait: INT := 2552;
+	/// Send Data
+	cRFD_3964_TxSend: INT := 2554;
+	/// Send Wait for Ack
+	cRFD_3964_TxAck: INT := 2556;
+	/// Error
+	cRFD_3964_Error: INT := 2580;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+Driver for communication protocoll 3964R
+Description in Siemens manual from CP341, A5E02191070-03
+
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		23.07.2013		AVME/PRE	Start history
+___________________________________________________________________________________________________*)
+
+// Always
+fbSerialLineControl(
+	Mode:= TC2_SERIALCOM.ComSerialLineMode_t.SERIALLINEMODE_EL6_22B, 
+	pComIn:= ADR(In_stEL6inData), 
+	pComOut:= ADR(Out_stEL6outData), 
+	SizeComIn:= SIZEOF(In_stEL6inData), 
+	Error=> bolErrSerialLineControl, 
+	ErrorID=> stErrSerialLineControl, 
+	TxBuffer:= stTxBuffer, 
+	RxBuffer:= stRxBuffer);
+	
+// Check timers
+IF intState >= cRFD_3964_Wait THEN
+	fbZVZ(PT:= timZVZ);
+	fbQVZ(PT:= timQVZ);
+	fbWait(PT:= timWaitAck);
+
+	// Check priority
+	fbPriority(IN:= bolPriority, PT:=timWaitAck);
+	IF (fbPriority.Q = TRUE) THEN
+		bolPriority := FALSE;
+	END_IF
+
+END_IF
+		
+// Startup set correct Step
+IF intState < cRFD_3964_Start THEN
+	intState := cRFD_3964_Start;
+END_IF
+
+// State Machine
+CASE intState OF
+	cRFD_3964_Start:
+		// Clear Buffer
+		FOR udiI := 0 TO SIZEOF(aRxData)-1 DO
+			aRxData[udiI] := 0;
+			aTxData[udiI] := 0;
+		END_FOR
+		bolSLGInitialized := FALSE;
+		
+		// Clear counters
+		uinCountCall := 0;
+		uinCountRetry := 0;
+		
+		bolInitRequest := FALSE;
+		bolSendContinious := FALSE;
+		
+		
+		// Next State
+		IF (bolErrSerialLineControl = FALSE) AND (bolTimeout=TRUE) THEN
+			intState := cRFD_3964_Init;
+		ELSIF (bolErrSerialLineControl = TRUE) THEN
+			intState := cRFD_3964_Error;
+		END_IF
+
+	// Wait for a job or received Data //	
+	cRFD_3964_Init:	
+		bolInitRequest := TRUE;
+		
+		IF (bolErrSerialLineControl = FALSE) AND ((In_stEL6inData.Status.2 = TRUE) OR (bolTimeout=TRUE)) THEN	// Initialisation Done  OR (bolTimeout=TRUE)
+			intState := cRFD_3964_Wait;
+		ELSIF (bolErrSerialLineControl = TRUE) THEN
+			intState := cRFD_3964_Error;
+		END_IF
+	
+	// Wait for a job or received Data //	
+	cRFD_3964_Wait:	
+		bolInitRequest := FALSE;
+		bolSendNAK := FALSE;
+		fbZVZ.IN := FALSE;
+		fbQVZ.IN := FALSE;
+		fbWait.IN := FALSE;
+		
+		fbSerialReceiveData(
+		//	pPrefix:= , // Not used because no prefix in telegram
+			LenPrefix:= 0, 
+		//	pSuffix:= , // Not used because no suffix in telegram
+			LenSuffix:= 0, 
+			pReceiveData:= ADR(aRxData), 
+			SizeReceiveData:= 255, 
+			Timeout:= timWaitReceive, 
+		//	Reset:= , 
+			DataReceived=> bolComDataReceived, 
+			busy=> bolComRecBusy, 
+			Error=> stErrReceive, 
+			RxTimeout=> bolErrReceive, 
+			LenReceiveData=> udiComSizeReceiveData, 
+			RXbuffer:= stRxBuffer);
+		
+		//Check if Data is received
+		IF bolComDataReceived = TRUE THEN
+			intState := cRFD_3964_RxRead;
+		ELSIF (InOut_bolSend = TRUE) AND (bolPriority = FALSE) THEN
+			intState := cRFD_3964_TxRequest;
+		END_IF
+			
+	// Read first signs if new data sending needed //	
+	cRFD_3964_RxRead: 
+		// Check reached Sign
+		// Send ready for reach Data if STX is send and Buffer is ready to use
+		fbWait.IN := TRUE;
+		IF (((aRxData[0] = cSTX) OR (bolSLGInitialized = FALSE))  AND (InOut_bolRec = FALSE)) THEN 
+			aTxData[0] := cDLE;
+		ELSE
+			aTxData[0] := cNAK;
+		END_IF
+		
+		IF ((fbWait.Q = FALSE) OR (InOut_bolRec = TRUE)) THEN
+			intState := cRFD_3964_RxReadRdy; 
+			fbWait.IN := FALSE; 
+		END_IF
+		
+	// Send Feedback //		
+	cRFD_3964_RxReadRdy:
+		fbZVZ.IN := TRUE; 
+
+		IF fbZVZ.Q = TRUE THEN
+			fbSerialSendData(
+				pSendData:= ADR(aTxData), 
+				Length:= 1, 
+				Busy=> bolComSendBusy, 
+				Error=> stErrSend, 
+				TXbuffer:= stTxBuffer);
+				bolSendContinious := TRUE;
+		END_IF
+			
+		// Check transition
+		IF (bolComSendBusy = FALSE) AND (bolSLGInitialized = TRUE) AND (fbZVZ.Q = TRUE) THEN		// AND (stErrSend = 0)
+			IF (aTxData[0] = cDLE) THEN
+				intState := cRFD_3964_RxData;
+			ELSE
+				intState := cRFD_3964_Wait;
+			END_IF
+		ELSIF ((bolComSendBusy = TRUE) OR (bolTimeout = TRUE)) AND (uinCountCall < 10) AND (fbZVZ.Q = TRUE) THEN
+			uinCountCall := uinCountCall + 1;
+			intState := cRFD_3964_Wait;
+		ELSIF ((bolComSendBusy = TRUE) OR (bolTimeout = TRUE)) AND (fbZVZ.Q = TRUE) THEN
+			bolSendNAK := TRUE;
+			intState := cRFD_3964_Error;
+		END_IF
+		
+	// Read Data //	
+	cRFD_3964_RxData:
+		fbZVZ.IN := FALSE; 
+		fbSerialReceiveData(
+		//	pPrefix:= , // Not used because no prefix in telegram
+			LenPrefix:= 0, 
+		//	pSuffix:= , // Not used because no suffix in telegram
+			LenSuffix:= 0, 
+			pReceiveData:= ADR(aRxData), 
+			SizeReceiveData:= 255, 
+			Timeout:= timWaitReceive, 
+		//	Reset:= , 
+			DataReceived=> bolComDataReceived, 
+			busy=> bolComRecBusy, 
+			Error=> stErrReceive, 
+			RxTimeout=> bolErrReceive, 
+			LenReceiveData=> udiComSizeReceiveData, 
+			RXbuffer:= stRxBuffer);
+				
+		IF (bolComDataReceived = TRUE) AND (bolComRecBusy = FALSE) AND (udiComSizeReceiveData <= 255)  THEN
+			intState := cRFD_3964_RxCheckData;
+		ELSIF ((bolTimeout = TRUE) OR (udiComSizeReceiveData > 255)) THEN	 // OR (stErrReceive <> 0)
+			bolSendNAK := TRUE;
+			IF (uinCountCall < 10) THEN
+				uinCountCall := uinCountCall + 1;
+				intState := cRFD_3964_RxAck;
+			ELSE
+				intState := cRFD_3964_Error;
+			END_IF
+		END_IF
+	
+	// Check Received Data //	
+	cRFD_3964_RxCheckData:
+		//minimal 1 Byte, ETX and BCC   	ETX is last sign for BCC					DLE is last sign for ETX
+		IF (udiComSizeReceiveData >= 4) THEN
+			IF ((aRxData[udiComSizeReceiveData-2] = cETX) AND (aRxData[udiComSizeReceiveData-3] = cDLE)) THEN
+				// Check BCC
+				bytCheckValue := aRxData[0] XOR aRxData[1];
+				FOR udiI := 2 TO  (udiComSizeReceiveData-2) DO
+					bytCheckValue := bytCheckValue XOR aRxData[udiI];
+				END_FOR
+				
+				IF (bytCheckValue = aRxData[udiComSizeReceiveData-1]) THEN //BCC OK
+					// Copy Data
+					FOR udiI := 0 TO (SIZEOF(aRxData)-1) DO
+						In_pRxData^[udiI] := 0;
+					END_FOR
+					udiK := 0;
+					FOR udiI := 0 TO udiComSizeReceiveData-4 DO
+						In_pRxData^[udiK] := aRxData[udiI];
+						IF (aRxData[udiI] = cDLE) AND (aRxData[udiI+1] = cDLE) THEN		// DLE Doubling, only take on DLE
+							udiI := udiI+1;
+						END_IF
+						udiK := udiK + 1;
+					END_FOR
+					InOut_bolRec := TRUE;
+					intState := cRFD_3964_RxAck;
+				ELSE
+					bolSendNAK := TRUE;				
+					IF (uinCountCall < 10) THEN
+						uinCountCall := uinCountCall + 1;
+						intState := cRFD_3964_RxAck;
+					ELSE
+						intState := cRFD_3964_Error;
+					END_IF
+				END_IF
+			ELSE
+				bolSendNAK := TRUE;				
+				IF (uinCountCall < 10) THEN
+					uinCountCall := uinCountCall + 1;
+					intState := cRFD_3964_RxAck;
+				ELSE
+					intState := cRFD_3964_Error;
+				END_IF
+			END_IF
+		ELSIF aRxData[0] = cSTX THEN
+			aTxData[0] := cDLE;
+			intState := cRFD_3964_RxReadRdy;
+		ELSE
+			bolSendNAK := TRUE;				
+			IF (uinCountCall < 10) THEN
+				uinCountCall := uinCountCall + 1;
+				intState := cRFD_3964_RxAck;
+			ELSE
+				intState := cRFD_3964_Error;
+			END_IF
+		END_IF
+	// SEND Acknowledge of received Data //
+	cRFD_3964_RxAck:
+		IF bolSendNAK = TRUE THEN
+			aTxData[0] := cNAK;
+		ELSE
+			aTxData[0] := cDLE;
+		END_IF
+		
+		fbZVZ.IN := TRUE; // Prepare for send step
+		fbSerialSendData(
+			pSendData:= ADR(aTxData), 
+			Length:= 1, 
+			Busy=> bolComSendBusy, 
+			Error=> stErrSend, 
+			TXbuffer:= stTxBuffer);
+				
+					
+		// Check transition
+		IF (bolComSendBusy = FALSE) AND (stErrSend = 0) AND (bolSendNAK = FALSE) THEN	//  AND (fbZVZ.Q = TRUE)
+			uinCountCall := 0;
+			bolSLGInitialized := TRUE;
+			intState := cRFD_3964_Wait;
+		ELSIF (bolComSendBusy = FALSE) AND (stErrSend = 0) AND (bolSendNAK = TRUE) THEN	//  AND (fbZVZ.Q = TRUE)
+			intState := cRFD_3964_Wait;
+		END_IF
+
+	// SEND Acknowledge of received Data //
+	cRFD_3964_RxAck2:
+		IF bolSendNAK = TRUE THEN
+			aTxData[0] := cNAK;
+		ELSE
+			aTxData[0] := cDLE;
+		END_IF
+		
+		fbSerialSendData(
+			pSendData:= ADR(aTxData), 
+			Length:= 1, 
+			Busy=> bolComSendBusy, 
+			Error=> stErrSend, 
+			TXbuffer:= stTxBuffer);
+				
+		// Check transition
+		IF (bolComSendBusy = FALSE) AND (stErrSend = 0) AND (bolSendNAK = FALSE) AND (bolWait = TRUE) THEN
+			uinCountCall := 0;
+			bolSLGInitialized := TRUE;
+			intState := cRFD_3964_Wait;
+		ELSIF (bolComSendBusy = FALSE) AND (stErrSend = 0) AND (bolSendNAK = TRUE) AND (bolWait = TRUE) THEN
+			intState := cRFD_3964_Wait;
+		ELSIF ((bolComSendBusy = TRUE) OR (bolTimeout = TRUE)) THEN
+			intState := cRFD_3964_Error;
+		END_IF
+
+/////////////////////////////////////////////////////////////////////
+// Sending Data
+	// Request a sending job at Slave //
+	cRFD_3964_TxRequest:
+		aTxData[0] := cSTX;
+		fbSerialSendData(
+			pSendData:= ADR(aTxData), 
+			Length:= 1, 
+			Busy=> bolComSendBusy, 
+			Error=> stErrSend, 
+			TXbuffer:= stTxBuffer);
+		bolSendContinious := TRUE;
+			
+		// Check transition
+		IF (bolComSendBusy = FALSE) AND (stErrSend = 0) THEN
+			intState := cRFD_3964_TxWait;
+		ELSIF ((bolComSendBusy = TRUE) OR (bolTimeout = TRUE)) THEN
+			intState := cRFD_3964_Error;
+		END_IF
+		
+	// Wait for answer ready //	
+	cRFD_3964_TxWait:	
+		fbSerialReceiveData(
+		//	pPrefix:= , // Not used because no prefix in telegram
+			LenPrefix:= 0, 
+		//	pSuffix:= , // Not used because no suffix in telegram
+			LenSuffix:= 0, 
+			pReceiveData:= ADR(aRxData), 
+			SizeReceiveData:= 1, 
+			Timeout:= timWaitReceive, 
+		//	Reset:= , 
+			DataReceived=> bolComDataReceived, 
+			busy=> bolComRecBusy, 
+			Error=> stErrReceive, 
+			RxTimeout=> bolErrReceive, 
+			LenReceiveData=> udiComSizeReceiveData, 
+			RXbuffer:= stRxBuffer);
+				
+		IF (bolComDataReceived = TRUE) AND (bolComRecBusy = FALSE) AND (udiComSizeReceiveData <= 255)  THEN
+			IF aRxData[0] = cDLE THEN
+				intState := cRFD_3964_TxSend;
+			ELSIF aRxData[0] = cSTX THEN	// At Start of Text 
+				intState := cRFD_3964_RxRead;
+				bolPriority := TRUE;
+			ELSE
+				IF uinCountRetry > 10 THEN
+					intState := cRFD_3964_Error;
+				ELSE 
+					uinCountRetry := uinCountRetry + 1;
+					intState := cRFD_3964_Wait;
+				END_IF
+			END_IF			
+		ELSIF ((bolTimeout = TRUE) OR (udiComSizeReceiveData > 255)) THEN
+			IF uinCountCall > 10 THEN
+				intState := cRFD_3964_Error;
+			ELSE
+				IF bolSLGInitialized = TRUE THEN
+					uinCountCall := uinCountCall + 1;
+					intState := cRFD_3964_Wait;
+				END_IF
+			END_IF				
+		END_IF
+	
+	// sending data //	
+	cRFD_3964_TxSend:
+		//only prepare data if not sending //
+		IF (bolComSendBusy = FALSE) THEN
+			bolDLEDouble := FALSE;
+			udiI := 11;
+			FOR udiI := 0 TO (SIZEOF(aTxData)-1) DO
+				aTxData[udiI] := 0;
+			END_FOR
+			udiI := 0;
+			udiK := 0;
+			FOR udiK := 0 TO In_udiTxCount-1 DO
+				aTxData[udiI] := In_pTxData^[udiK];
+				IF aTxData[udiI] = cDLE THEN
+					udiI := udiI + 1;
+					aTxData[udiI] := cDLE;
+					bolDLEDouble := TRUE;
+				END_IF
+				udiI := udiI + 1;				
+			END_FOR
+			aTxData[udiI] := cDLE;
+			udiI := udiI + 1;
+			//IF bolDLEDouble = TRUE THEN		// DLE Doubling at the end of the data if once uced as data
+			//	aTxData[udiI] := cDLE;
+			//	udiI := udiI + 1;				
+			//END_IF
+			aTxData[udiI] := cETX;
+			
+			bytCheckValue := aTxData[0] XOR aTxData[1];
+			FOR udiK := 2 TO  udiI DO
+				bytCheckValue := bytCheckValue XOR aTxData[udiK];
+			END_FOR
+			udiI := udiI + 1;
+			aTxData[udiI] := bytCheckValue;
+			udiI := udiI + 1;
+		END_IF
+
+		fbSerialSendData(
+			pSendData:= ADR(aTxData), 
+			Length:= udiI, 
+			Busy=> bolComSendBusy, 
+			Error=> stErrSend, 
+			TXbuffer:= stTxBuffer);
+			
+		// Check transition
+		IF (bolComSendBusy = FALSE) AND (stErrSend = 0) THEN
+			intState := cRFD_3964_TxAck;
+		ELSIF ((bolComSendBusy = TRUE) OR (bolTimeout = TRUE)) THEN
+			IF uinCountRetry > 10 THEN
+				intState := cRFD_3964_Error;
+			ELSE 
+				uinCountRetry := uinCountRetry + 1;
+				intState := cRFD_3964_Wait;
+			END_IF
+		END_IF
+		
+	// Wait for answer ready //	
+	cRFD_3964_TxAck:
+		fbSerialReceiveData(
+		//	pPrefix:= , // Not used because no prefix in telegram
+			LenPrefix:= 0, 
+		//	pSuffix:= , // Not used because no suffix in telegram
+			LenSuffix:= 0, 
+			pReceiveData:= ADR(aRxData), 
+			SizeReceiveData:= 255, 
+			Timeout:= timWaitReceive, 
+		//	Reset:= , 
+			DataReceived=> bolComDataReceived, 
+			busy=> bolComRecBusy, 
+			Error=> stErrReceive, 
+			RxTimeout=> bolErrReceive, 
+			LenReceiveData=> udiComSizeReceiveData, 
+			RXbuffer:= stRxBuffer);
+				
+		IF (bolComDataReceived = TRUE) AND (bolComRecBusy = FALSE) AND (udiComSizeReceiveData <= 255)  THEN
+			IF aRxData[0] = cDLE THEN
+				intState := cRFD_3964_Wait;
+				InOut_bolSend := FALSE;
+				bolSLGInitialized := TRUE;
+			ELSE
+				IF uinCountRetry > 10 THEN
+					intState := cRFD_3964_Error;
+				ELSE 
+					uinCountRetry := uinCountRetry + 1;
+					intState := cRFD_3964_Wait;
+				END_IF
+			END_IF			
+		ELSIF ((bolTimeout = TRUE) OR (udiComSizeReceiveData > 255)) THEN	 // OR (stErrReceive <> 0)
+			IF uinCountRetry > 10 THEN
+				intState := cRFD_3964_Error;
+			ELSE
+				uinCountRetry := uinCountRetry + 1;
+				intState := cRFD_3964_Wait;
+			END_IF				
+		END_IF
+	
+
+////////////////////////////////////////////////////////////		
+		// Error State //
+		cRFD_3964_Error:
+			// Send correct information
+			IF bolErrSerialLineControl = TRUE THEN
+				Out_udiErrorCode := stErrSerialLineControl;
+				Out_bolComError := TRUE;
+			ELSIF bolErrSend = TRUE THEN
+				Out_udiErrorCode := stErrSend;				
+				Out_bolComError := TRUE;
+			ELSIF bolTimeout = TRUE THEN
+				Out_bolProtocolErr := TRUE;
+			ELSIF (Out_bolComError = FALSE) AND (Out_bolProtocolErr = FALSE) THEN
+				Out_bolComError := TRUE;
+			END_IF
+			
+			// Send NAK to RFID Reader
+			IF bolSendNAK = TRUE THEN
+				aTxData[0] := cNAK;
+				fbSerialSendData(
+					pSendData:= ADR(aTxData), 
+					Length:= 1, 
+					Busy=> bolComSendBusy, 
+					Error=> stErrSend, 
+					TXbuffer:= stTxBuffer);
+					
+				IF bolComSendBusy = FALSE THEN
+					bolSendNAK := FALSE;
+				END_IF
+			END_IF
+			
+			// Acknowledge reset Error bit and informations
+			IF (In_bolErrorAck = TRUE) OR (bolIntReset=TRUE) THEN
+				intState := cRFD_3964_Wait;
+				bolSendNAK := FALSE;
+				bolErrSerialLineControl := FALSE; 
+				bolErrReceive := FALSE;
+				bolErrSend := FALSE;
+				bolTimeout := FALSE;
+				Out_udiErrorCode := 0;
+				Out_bolComError := FALSE;
+				Out_bolProtocolErr := FALSE;
+				uinCountCall := 0;
+				uinCountRetry := 0;
+				bolIntReset := FALSE;
+				In_bolErrorAck := FALSE;
+				bolInitRequest := FALSE;
+			END_IF
+		
+END_CASE
+
+// Write parallel Outputs to commando word
+//Out_stEL6outData.Ctrl.2 := bolInitRequest;
+//Out_stEL6outData.Ctrl.3 := bolSendContinious;
+
+// make History of States
+IF intStateOld <> intState THEN
+	udiStateLoop := 9;
+	WHILE udiStateLoop > 0 DO
+		a_intStateHist[udiStateLoop] := a_intStateHist[udiStateLoop-1];
+		udiStateLoop := udiStateLoop-1;
+	END_WHILE
+	a_intStateHist[0] := intState;
+	intStateOld := intState;
+	// Time Out control
+	// Check timeout
+	fbTon(IN:= FALSE, PT:= timQVZ, Q=>bolTimeout );
+ELSE
+	IF intState <> cRFD_3964_Error THEN
+		fbTon(IN:= TRUE, PT:= timQVZ, Q=>bolTimeout );
+	END_IF
+END_IF]]></ST>
+    </Implementation>
+    <ObjectProperties>﻿<XmlArchive>
+  <Data>
+    <o xml:space="preserve" t="POUImageProperty">
+      <n n="ImageData" />
+      <v n="TransparencyColor">"White"</v>
+      <v n="MakeTransparent">false</v>
+    </o>
+  </Data>
+  <TypeList>
+    <Type n="Boolean">System.Boolean</Type>
+    <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
+    <Type n="String">System.String</Type>
+  </TypeList>
+</XmlArchive></ObjectProperties>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,18 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <DUT Name="T_RFD_Cur" Id="{6c168028-0cb6-43b9-8034-77f26b88aab1}">
+    <Declaration><![CDATA[TYPE T_RFD_Cur :
+STRUCT
+	/// Pointer to Received Data Array
+	pData: POINTER TO ARRAY[0..255] OF BYTE;
+	/// Startadress to Read/Write at the data Array Element
+	uinAdressData: UINT;
+	/// Startadress to Read/Write at the Tag
+	uinAdressTag: UINT;
+	/// Number of bytes to Read/Write
+	usiCount: USINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,15 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <Task Name="Task_Middle" Id="{af7b8d91-df95-43c1-8a64-ac6c8afa70de}">
+    <!--CycleTime in micro seconds.-->
+    <CycleTime>10000</CycleTime>
+    <Priority>10</Priority>
+    <PouCall>
+      <Name>MiddlePRG_1</Name>
+    </PouCall>
+    <TaskFBGuid>{999b86f9-8200-4708-a7b4-f379a1063732}</TaskFBGuid>
+    <Fb_init>{af60a0ac-b6a0-4a8b-bc69-21fe3acd8793}</Fb_init>
+    <Fb_exit>{39c45cbf-bcf6-4d7b-b23b-7f637afea16a}</Fb_exit>
+    <CycleUpdate>{d6eb082c-fafa-48f7-b2b3-a8896bb21fdc}</CycleUpdate>
+    <PostCycleUpdate>{ca67aaa5-ef6f-4ced-ad1e-f34aec5c4ccc}</PostCycleUpdate>
+  </Task>
+</TcPlcObject>

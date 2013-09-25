@@ -1,0 +1,19 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <DUT Name="E_Typ_Ftim" Id="{62f386c1-e9b6-4244-a2a1-ede63fe56419}">
+    <Declaration><![CDATA[TYPE E_Typ_Ftim :
+(
+	/// Setting for air interface
+	RF300 := 0,
+	ISO_generall := 1,
+	ISO_infineon := 3,
+	ISO_Fujitsu := 4,
+	ISO_NXP := 5,
+	ISO_TI := 6,
+	ISO_ST := 7,
+	Max_E_Typ_Ftim
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

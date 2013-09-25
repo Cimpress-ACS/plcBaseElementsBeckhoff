@@ -1,0 +1,1192 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <POU Name="FB_RFW" Id="{d13514ee-e1c4-4d04-872e-3bccbbe8ba69}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_RFW EXTENDS FB_CtrlBase
+VAR_INPUT
+	pRFD_SIf: POINTER TO T_RFD;
+END_VAR
+VAR
+	/// Specific interface struct for public access
+	SIf: T_Ctrl_SIf_RFW;
+	/// Internal Variable
+	bolNewTag: BOOL;
+	/// Rising Edge New tag at antenna
+	bolRENewTag: BOOL;
+	/// Startadress on the Tag from the needed Data
+	uinDataAdress: UINT;
+	/// Lengh of data to read or write
+	uinDataLengh: UINT;
+	/// Temporary Help Variable
+	usiTemp: USINT;
+	/// Temporary Help Variable
+	uinTemp: UINT;
+	/// Temporary Help Variable
+	intTemp: INT;
+	intValue: INT;	
+	/// Temporary Help Variable
+	udiTemp: UDINT;
+	/// Temporary Help Variable
+	uliTemp: LWORD;
+	/// Temporary Help Variable
+	strTemp: STRING;
+	/// Temporary Help Variable to save to position of the point in the string
+	intPositionPoint: INT;
+	/// Temporary Help Variable to save to position of the - in the string
+	intPositionSign: INT;
+END_VAR
+VAR CONSTANT
+	///sub States for RUN Function
+	cRFW_SUB_WaitTag: INT := 302;
+	cRFW_SUB_SendJob: INT := 304;
+	cRFW_SUB_GetData: INT := 306;
+	cRFW_SUB_CheckData: INT := 308;
+	cRFW_SUB_SendJobTrayID: INT := 310;
+	cRFW_SUB_GetDataTrayID: INT := 312;
+	cRFW_SUB_CheckDataTrayID: INT := 314;
+	cRFW_SUB_Finished: INT := 320;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+RFID Reader and Writer
+Controlls the communication to the RFID Reader and Writer
+
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		09.07.2013		AVME/PRE	Start history
+0.00.2		19.09.2013		AVME/PRE	Implement new Base Concept
+0.00.3		24.09.2013		AVME/KVO	Parameter init from element controller to driver
+___________________________________________________________________________________________________*)
+
+
+IF (me.bolActivate) AND (pRFD_SIf <>0) THEN // cyclic call enabled
+	IF (CIf.Info.bolInitDone=FALSE) THEN // first cycle -> init
+		CtrlInit();
+		CIf.Info.bolInitDone := TRUE;
+	ELSE
+		CycleStartDuty();
+	
+		Always();
+		
+		StateMachine();
+		
+		CycleEndDuty();
+	END_IF
+END_IF;
+]]></ST>
+    </Implementation>
+    <Method Name="sta_READBusy" Id="{21d89bd1-c368-470c-83cf-4f55ce659387}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_READBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		fbSimulationTimer.IN := FALSE;
+		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiReadTime_ms / 2);
+		fbSimulationTimer(); // set time/reset timer
+		fbSimulationTimer.IN := TRUE; // start timer
+		
+		IF SIf.Cur.dwoJob = 0 THEN
+			SIf.Cur.dwoJob := RFID_Data.cRFID_AllData;
+		END_IF
+
+		uinDataAdress := DWORD_TO_UINT(SIf.Cur.dwoJob);
+		uinDataAdress := uinDataAdress MOD 16#100;							// Maximum 255 data
+		
+		pRFD_SIf^.stCur.uinAdressData := uinDataAdress;
+		pRFD_SIf^.stCur.uinAdressTag := DWORD_TO_UINT(SIf.Cur.dwoJob);
+		pRFD_SIf^.stCur.usiCount := DWORD_TO_USINT(SHR(SIf.Cur.dwoJob,16));
+
+		pRFD_SIf^.intCmd := RFD_Cmd.cRFD_CMD_Read;
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			fbSimulationTimer(); // simulation time
+			IF (fbSimulationTimer.Q) THEN
+				pRFD_SIf^.intCmd := RFD_Cmd.cRFD_CMD_DONE;
+			END_IF
+		END_IF
+		
+		// Function
+
+		
+		
+		// State Change Condition
+		IF (pRFD_SIf^.stErr.bolErrorActive = TRUE) THEN  
+			me.StateMachine.intStateNext :=  cSTA_ERROR;
+		ELSIF (me.StateMachine.udiTimeInState_ms > SIf.Par.udiWriteTime_ms) THEN
+			// SIf.Alm[4].strText := 'timeout wait on Data';
+			Global.g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,4,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext :=  cSTA_ERROR;
+		ELSIF (pRFD_SIf^.intCmd = RFD_Cmd.cRFD_CMD_DONE) THEN
+			me.StateMachine.intStateNext := cSTA_READ;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		// Prepare Data from read memory
+		// Repetition ID
+		IF (SIf.Cur.dwoJob = RFID_Data.cRFID_AllData) OR (SIf.Cur.dwoJob = RFID_Data.cRFID_RepetionID) THEN
+			uinDataAdress := DWORD_TO_UINT(RFID_Data.cRFID_RepetionID);
+			uinDataAdress := uinDataAdress  MOD 16#100;							// only 0..255
+			IF ((uinDataAdress >= 0) AND (uinDataAdress <= 255)) THEN
+				SIf.Cur.stData.usiRepetitionID := SIf.Cur.abytData[uinDataAdress];
+			END_IF
+		END_IF
+		// Tray Info
+		IF (SIf.Cur.dwoJob = RFID_Data.cRFID_AllData) OR (SIf.Cur.dwoJob = RFID_Data.cRFID_TrayInfo) THEN
+			uinDataAdress := DWORD_TO_UINT(RFID_Data.cRFID_TrayInfo);
+			uinDataAdress := uinDataAdress  MOD 16#100;							// only 0..255
+			IF ((uinDataAdress >= 0) AND (uinDataAdress <= 255)) THEN
+				SIf.Cur.stData.bolWorkstation2 := SIf.Cur.abytData[uinDataAdress].0;
+				SIf.Cur.stData.bolDeleteFileAfterPrint := SIf.Cur.abytData[uinDataAdress].6;
+				SIf.Cur.stData.bolPrintOk := SIf.Cur.abytData[uinDataAdress].7;
+			END_IF
+		END_IF
+		// Height of tray
+		IF (SIf.Cur.dwoJob = RFID_Data.cRFID_AllData) OR (SIf.Cur.dwoJob = RFID_Data.cRFID_HeighOfTray) THEN
+			uinDataAdress := DWORD_TO_UINT(RFID_Data.cRFID_HeighOfTray);
+			uinDataAdress := uinDataAdress  MOD 16#100;							// only 0..255
+			IF ((uinDataAdress >= 0) AND (uinDataAdress <= 255)) THEN
+				SIf.Cur.stData.bolHeightUseMeasure := SIf.Cur.abytData[uinDataAdress].0;
+				SIf.Cur.stData.usiHeightOffset := 0;
+				SIf.Cur.stData.usiHeightOffset.0 := SIf.Cur.abytData[uinDataAdress].1;
+				SIf.Cur.stData.usiHeightOffset.1 := SIf.Cur.abytData[uinDataAdress].2;
+				SIf.Cur.stData.usiHeightOffset.2 := SIf.Cur.abytData[uinDataAdress].3;
+				SIf.Cur.stData.bolHeightOffsetSignMinus := SIf.Cur.abytData[uinDataAdress].4;
+			END_IF
+		END_IF
+		// Pretreatment
+		IF (SIf.Cur.dwoJob = RFID_Data.cRFID_AllData) OR (SIf.Cur.dwoJob = RFID_Data.cRFID_RepetionID) THEN
+			uinDataAdress := DWORD_TO_UINT(RFID_Data.cRFID_Pretreatment);
+			uinDataAdress := uinDataAdress  MOD 16#100;							// only 0..255
+			IF ((uinDataAdress >= 0) AND (uinDataAdress <= 255)) THEN
+				SIf.Cur.stData.bolIonizer := SIf.Cur.abytData[uinDataAdress].1;
+				SIf.Cur.stData.usiPlasmaLevel := 0;
+				SIf.Cur.stData.usiPlasmaLevel.0 := SIf.Cur.abytData[uinDataAdress].2;
+				SIf.Cur.stData.usiPlasmaLevel.1 := SIf.Cur.abytData[uinDataAdress].3;
+				SIf.Cur.stData.bolPrintPass := SIf.Cur.abytData[uinDataAdress].4;
+				SIf.Cur.stData.bolNozzleCheck := SIf.Cur.abytData[uinDataAdress].5;
+				SIf.Cur.stData.bolAligneCheck := SIf.Cur.abytData[uinDataAdress].6;
+			END_IF
+		END_IF
+		// UV-curing
+		IF (SIf.Cur.dwoJob = RFID_Data.cRFID_AllData) OR (SIf.Cur.dwoJob = RFID_Data.cRFID_UVcuring) THEN
+			uinDataAdress := DWORD_TO_UINT(RFID_Data.cRFID_UVcuring);
+			uinDataAdress := uinDataAdress  MOD 16#100;							// only 0..255
+			IF ((uinDataAdress >= 0) AND (uinDataAdress <= 255)) THEN
+				SIf.Cur.stData.usiUVPinningLevel := 0;
+				SIf.Cur.stData.usiUVPinningLevel.0 := SIf.Cur.abytData[uinDataAdress].0;
+				SIf.Cur.stData.usiUVPinningLevel.1 := SIf.Cur.abytData[uinDataAdress].1;
+				SIf.Cur.stData.usiUVPinningLevel.2 := SIf.Cur.abytData[uinDataAdress].2;
+				SIf.Cur.stData.usiUVPinningLevel.3 := SIf.Cur.abytData[uinDataAdress].3;
+	
+				SIf.Cur.stData.usiUVLampLevel := 0;
+				SIf.Cur.stData.usiUVLampLevel.0 := SIf.Cur.abytData[uinDataAdress].4;
+				SIf.Cur.stData.usiUVLampLevel.1 := SIf.Cur.abytData[uinDataAdress].5;
+				SIf.Cur.stData.usiUVLampLevel.2 := SIf.Cur.abytData[uinDataAdress].6;
+				SIf.Cur.stData.usiUVLampLevel.3 := SIf.Cur.abytData[uinDataAdress].7;
+			END_IF
+		END_IF
+		// Filename
+		IF (SIf.Cur.dwoJob = RFID_Data.cRFID_AllData) OR (SIf.Cur.dwoJob = RFID_Data.cRFID_Filename) THEN
+			uinDataAdress := DWORD_TO_UINT(RFID_Data.cRFID_Filename);
+			uinDataLengh := DWORD_TO_UINT(SHR(RFID_Data.cRFID_Filename,16));
+			uinDataAdress := uinDataAdress  MOD 16#100;							// only 0..255
+			IF ((uinDataAdress >= 0) AND (uinDataAdress <= 255)) THEN
+				strTemp := USINT_TO_STRING(SIf.Cur.abytData[uinDataAdress]);
+				strTemp := TC2_STANDARD.CONCAT('-', strTemp);
+				uliTemp := 0;
+				uinDataAdress := uinDataAdress+1;	// Next signs
+				Tc2_System.MEMCPY(destAddr := ADR(uliTemp), srcAddr := ADR(SIf.Cur.abytData[uinDataAdress]), n:= (uinDataLengh-1));
+	
+				SIf.Cur.stData.strFileName := TC2_STANDARD.CONCAT(ULINT_TO_STRING(uliTemp), strTemp);
+			END_IF
+		END_IF
+		// Brush
+		IF (SIf.Cur.dwoJob = RFID_Data.cRFID_AllData) OR (SIf.Cur.dwoJob = RFID_Data.cRFID_Brush) THEN
+			uinDataAdress := DWORD_TO_UINT(RFID_Data.cRFID_Brush);
+			uinDataAdress := uinDataAdress  MOD 16#100;							// only 0..255
+			IF ((uinDataAdress >= 0) AND (uinDataAdress <= 255)) THEN
+				SIf.Cur.stData.bolBrush := SIf.Cur.abytData[uinDataAdress].0;
+				SIf.Cur.stData.bolBrushClean := SIf.Cur.abytData[uinDataAdress].1;
+				SIf.Cur.stData.bolBrushFans := SIf.Cur.abytData[uinDataAdress].2;
+				SIf.Cur.stData.bolGutterClean := SIf.Cur.abytData[uinDataAdress].6;
+				SIf.Cur.stData.bolSpecialTray := SIf.Cur.abytData[uinDataAdress].7;
+			END_IF
+		END_IF
+		
+		// Tray ID
+		IF (SIf.Cur.dwoJob = RFID_Data.cRFID_TrayID) THEN
+			uinDataAdress := DWORD_TO_UINT(RFID_Data.cRFID_TrayID);
+			uinDataAdress := uinDataAdress  MOD 16#100;							// only 0..255
+			IF ((uinDataAdress >= 0) AND (uinDataAdress <= 255)) THEN
+				uinDataLengh := DWORD_TO_UINT(SHR(RFID_Data.cRFID_TrayID,16));
+				SIf.Cur.stData.strTrayID := '';
+				Tc2_System.MEMCPY(destAddr:=ADR(SIf.Cur.stData.strTrayID), srcAddr:=ADR(SIf.Cur.abytData[uinDataAdress]), n:=uinDataLengh);
+			END_IF
+		END_IF
+
+		// Tag ID
+		IF (SIf.Cur.dwoJob = RFID_Data.cRFID_TagID) THEN
+			uinDataAdress := DWORD_TO_UINT(RFID_Data.cRFID_TagID);
+			uinDataAdress := uinDataAdress  MOD 16#100;							// only 0..255
+			IF ((uinDataAdress >= 0) AND (uinDataAdress <= 255)) THEN
+				uinDataLengh := DWORD_TO_UINT(SHR(RFID_Data.cRFID_TagID,16));
+				SIf.Cur.stData.strTrayID := '';
+				Tc2_System.MEMCPY(destAddr:=ADR(SIf.Cur.stData.strTagID), srcAddr:=ADR(SIf.Cur.abytData[uinDataAdress]), n:=uinDataLengh);
+			END_IF
+		END_IF
+		
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="FB_init" Id="{2466329e-b43d-43d2-834b-e653f6526cd3}">
+      <Declaration><![CDATA[METHOD FB_init : BOOL
+VAR_INPUT
+	///if TRUE, the retain variables are initialized (warm start / cold start)
+	bInitRetains: BOOL;
+	///if TRUE, the instance afterwards gets moved into the copy code (online change)
+	bInCopyCode: BOOL;
+END_VAR
+VAR
+	udiTaskCnt: UDINT;
+	ii: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
+// to manually change in new FUB implementation!!!
+// define valid commands for this controller
+FOR ii:= 0 TO (SIZEOF(CIf.Job.aCmdList)/SIZEOF(CIf.Job.aCmdList[0])-1) BY 1 DO
+	IF (CIf.Job.aCmdList[ii].intCmd=cCMD_INITIALIZED) THEN
+		// found first empty array element
+		EXIT;
+	END_IF
+END_FOR
+CIf.Job.aCmdList[ii].intCmd := cCMD_READ;
+CIf.Job.aCmdList[ii].strName := 'Read'; 
+CIf.Job.aCmdList[ii].bolAvailable := TRUE;
+ii := ii +1;
+CIf.Job.aCmdList[ii].intCmd := cCMD_WRITE;
+CIf.Job.aCmdList[ii].strName := 'Write';
+CIf.Job.aCmdList[ii].bolAvailable := TRUE;
+ii := ii +1;
+CIf.Job.aCmdList[ii].intCmd := cCMD_RUN;
+CIf.Job.aCmdList[ii].strName := 'Run';
+CIf.Job.aCmdList[ii].bolAvailable := TRUE;
+
+// set name of class/typ
+CIf.Info.strType := 'FB_RFID'; 
+
+// set alarm class
+SIf.Alm[1].eAlmClass := E_AlmClass.TSTOP;
+SIf.Alm[1].strText := 'Communication Error between PLC and RFID Reader'; 
+SIf.Alm[2].eAlmClass := E_AlmClass.TSTOP;
+SIf.Alm[2].strText := 'Initialisation Error from RFID Reader';
+SIf.Alm[3].eAlmClass := E_AlmClass.TSTOP;
+SIf.Alm[3].strText := 'RFID Tag Error';
+SIf.Alm[4].eAlmClass := E_AlmClass.TSTOP;
+SIf.Alm[4].strText := 'timeout wait on Data';
+SIf.Alm[5].eAlmClass := E_AlmClass.TSTOP;
+SIf.Alm[5].strText := 'Command for this type of RFID not possible';
+
+
+//*******************************************************************************
+// initial values
+//*******************************************************************************
+
+// software configuration
+CIf.SwCfg.bolExist := TRUE;
+CIf.SwCfg.bolSimulation := FALSE;
+
+// parmeter
+SIf.Par.udiReadTime_ms := 30000;
+SIf.Par.udiWriteTime_ms := 300000;
+
+// Get correct type
+SIf.Cfg.eTyp := E_Typ_RFW.RF382R;
+SIf.Cfg.stNetId := '192.168.2.123.1.1'; //PLC NetId
+SIf.Cfg.uinSlaveAddr := 1039; //Io card Ethercat adress 
+SIf.Cfg.bolGetTrayIDAuto := FALSE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_WRITEBusy" Id="{3c4c8ac3-21d1-4748-b2e5-cdc99ef592dc}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_WRITEBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+		fbSimulationTimer.IN := FALSE;
+		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiWriteTime_ms / 2);
+		fbSimulationTimer(); // set time/reset timer
+		fbSimulationTimer.IN := TRUE; // start timer
+		
+		IF SIf.Cur.dwoJob = 0 THEN
+			SIf.Cur.dwoJob := RFID_Data.cRFID_AllData;
+		END_IF
+		
+		// Prepare Data for writing
+		// Repetition ID
+		IF (SIf.Cur.dwoJob = RFID_Data.cRFID_AllData) OR (SIf.Cur.dwoJob = RFID_Data.cRFID_RepetionID) THEN
+			uinDataAdress := DWORD_TO_UINT(RFID_Data.cRFID_RepetionID);
+			uinDataAdress := uinDataAdress MOD 16#100;							// Maximum 255 data
+			SIf.Cur.abytData[uinDataAdress] := SIf.Cur.stData.usiRepetitionID;
+		END_IF
+		// Tray Info
+		IF (SIf.Cur.dwoJob = RFID_Data.cRFID_AllData) OR (SIf.Cur.dwoJob = RFID_Data.cRFID_TrayInfo) THEN
+			uinDataAdress := DWORD_TO_UINT(RFID_Data.cRFID_TrayInfo);
+			uinDataAdress := uinDataAdress MOD 16#100;							// Maximum 255 data
+			SIf.Cur.abytData[uinDataAdress].0 := SIf.Cur.stData.bolWorkstation2;
+			SIf.Cur.abytData[uinDataAdress].6 := SIf.Cur.stData.bolDeleteFileAfterPrint;
+			SIf.Cur.abytData[uinDataAdress].7 := SIf.Cur.stData.bolPrintOk;
+		END_IF
+		// Height of tray
+		IF (SIf.Cur.dwoJob = RFID_Data.cRFID_AllData) OR (SIf.Cur.dwoJob = RFID_Data.cRFID_HeighOfTray) THEN
+			uinDataAdress := DWORD_TO_UINT(RFID_Data.cRFID_HeighOfTray);
+			uinDataAdress := uinDataAdress MOD 16#100;							// Maximum 255 data
+			SIf.Cur.abytData[uinDataAdress] := SHL(SIf.Cur.stData.usiHeightOffset,1);
+			SIf.Cur.abytData[uinDataAdress].0 := SIf.Cur.stData.bolHeightUseMeasure;
+			SIf.Cur.abytData[uinDataAdress].4 := SIf.Cur.stData.bolHeightOffsetSignMinus;
+		END_IF
+		// Pretreatment
+		IF (SIf.Cur.dwoJob = RFID_Data.cRFID_AllData) OR (SIf.Cur.dwoJob = RFID_Data.cRFID_Pretreatment) THEN
+			uinDataAdress := DWORD_TO_UINT(RFID_Data.cRFID_Pretreatment);
+			uinDataAdress := uinDataAdress MOD 16#100;							// Maximum 255 data
+			SIf.Cur.abytData[uinDataAdress] := SHL(SIf.Cur.stData.usiPlasmaLevel,2);
+			SIf.Cur.abytData[uinDataAdress].1 := SIf.Cur.stData.bolIonizer;
+			SIf.Cur.abytData[uinDataAdress].4 := SIf.Cur.stData.bolPrintPass;
+			SIf.Cur.abytData[uinDataAdress].5 := SIf.Cur.stData.bolNozzleCheck;
+			SIf.Cur.abytData[uinDataAdress].6 := SIf.Cur.stData.bolAligneCheck;
+		END_IF
+		// UV-curing
+		IF (SIf.Cur.dwoJob = RFID_Data.cRFID_AllData) OR (SIf.Cur.dwoJob = RFID_Data.cRFID_UVcuring) THEN
+			uinDataAdress := DWORD_TO_UINT(RFID_Data.cRFID_UVcuring);
+			uinDataAdress := uinDataAdress MOD 16#100;							// Maximum 255 data
+			SIf.Cur.abytData[uinDataAdress] := SHL(SIf.Cur.stData.usiUVLampLevel,4);
+			IF SIf.Cur.stData.usiUVPinningLevel < 16 THEN // Only 4 bit possible
+				usiTemp := SIf.Cur.stData.usiUVPinningLevel OR SIf.Cur.abytData[uinDataAdress];
+				SIf.Cur.abytData[uinDataAdress] := usiTemp;
+			END_IF
+		END_IF
+		// Filename
+		IF (SIf.Cur.dwoJob = RFID_Data.cRFID_AllData) OR (SIf.Cur.dwoJob = RFID_Data.cRFID_Filename) THEN
+			uinDataAdress := DWORD_TO_UINT(RFID_Data.cRFID_Filename);
+			uinDataAdress := uinDataAdress MOD 16#100;							// Maximum 255 data
+			strTemp := SIf.Cur.stData.strFileName;
+			intPositionPoint := TC2_STANDARD.FIND(strTemp,'.');
+			IF intPositionPoint > 1 THEN
+				intValue := intPositionPoint - 1;
+				strTemp := TC2_STANDARD.LEFT(strTemp, intValue);
+			END_IF
+			intPositionSign := TC2_STANDARD.FIND(strTemp,'-');
+			IF intPositionSign > 0 THEN
+				intValue :=  TC2_STANDARD.LEN(strTemp) - intPositionSign;
+				IF intValue >= 1 THEN
+					strTemp := TC2_STANDARD.RIGHT(strTemp, intValue);
+					intValue := STRING_TO_INT(strTemp);
+					SIf.Cur.abytData[uinDataAdress] := INT_TO_USINT(intValue);
+				END_IF
+				uliTemp := STRING_TO_ULINT(TC2_STANDARD.LEFT(SIf.Cur.stData.strFileName, (intPositionSign - 1)));
+				uinDataLengh := DWORD_TO_UINT(SHR(RFID_Data.cRFID_Filename,16));
+				FOR uinTemp := 1 TO  uinDataLengh DO
+					SIf.Cur.abytData[uinDataAdress+uinTemp] := ULINT_TO_USINT(uliTemp);
+					uliTemp := SHR(uliTemp,8);
+				END_FOR
+			
+			END_IF
+		END_IF
+				
+		// Brush
+		IF (SIf.Cur.dwoJob = RFID_Data.cRFID_AllData) OR (SIf.Cur.dwoJob = RFID_Data.cRFID_Brush) THEN
+			uinDataAdress := DWORD_TO_UINT(RFID_Data.cRFID_Brush);
+			uinDataAdress := uinDataAdress MOD 16#100;							// Maximum 255 data
+			SIf.Cur.abytData[uinDataAdress].0 := SIf.Cur.stData.bolBrush;
+			SIf.Cur.abytData[uinDataAdress].1 := SIf.Cur.stData.bolBrushClean;
+			SIf.Cur.abytData[uinDataAdress].2 := SIf.Cur.stData.bolBrushFans;
+			SIf.Cur.abytData[uinDataAdress].6 := SIf.Cur.stData.bolGutterClean;
+			SIf.Cur.abytData[uinDataAdress].7 := SIf.Cur.stData.bolSpecialTray;
+		END_IF
+		
+		// Tray ID
+		IF (SIf.Cur.dwoJob = RFID_Data.cRFID_TrayID) THEN	
+			uinDataAdress := DWORD_TO_UINT(RFID_Data.cRFID_TrayID);
+			uinDataAdress := uinDataAdress MOD 16#100;							// Maximum 255 data
+			uinDataLengh := DWORD_TO_UINT(SHR(RFID_Data.cRFID_TrayID,16));
+	
+			MEMCPY(destAddr:=ADR(SIf.Cur.abytData[uinDataAdress]), srcAddr:=ADR(SIf.Cur.stData.strTrayID), n:=uinDataLengh);
+		END_IF
+		
+		// Write commando
+		uinDataAdress := DWORD_TO_UINT(RFID_Data.cRFID_TrayID);
+		uinDataAdress := uinDataAdress MOD 16#100;							// Maximum 255 data
+		pRFD_SIf^.stCur.uinAdressData := uinDataAdress;
+		pRFD_SIf^.stCur.uinAdressTag := DWORD_TO_UINT(SIf.Cur.dwoJob);
+		pRFD_SIf^.stCur.usiCount := DWORD_TO_USINT(SHR(SIf.Cur.dwoJob,16));
+
+		pRFD_SIf^.intCmd := RFD_Cmd.cRFD_CMD_Write;
+
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			fbSimulationTimer(); // simulation time
+			IF (fbSimulationTimer.Q) THEN
+				pRFD_SIf^.intCmd := RFD_Cmd.cRFD_CMD_DONE;
+			END_IF
+		END_IF
+		
+		//no change action
+		 
+		
+		// State Change Condition
+		IF (pRFD_SIf^.stErr.bolErrorActive = TRUE) THEN //  
+			me.StateMachine.intStateNext :=  cSTA_ERROR;
+		ELSIF (me.StateMachine.udiTimeInState_ms > SIf.Par.udiWriteTime_ms) THEN
+			// SIf.Alm[4].strText := 'timeout wait on Data';
+			Global.g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,4,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext :=  cSTA_ERROR;
+		ELSIF (pRFD_SIf^.intCmd = RFD_Cmd.cRFD_CMD_DONE) THEN
+			me.StateMachine.intStateNext := cSTA_WRITE;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_RUN" Id="{46bc57c2-0644-460f-9f66-30454be7f552}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_RUN : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		bolNewTag := FALSE;
+		me.SubStateMachine.intState := cRFW_SUB_WaitTag-1; // init first state - string
+		me.SubStateMachine.intStateNext := cRFW_SUB_WaitTag;
+		fbSimulationTimer.IN := FALSE;
+		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiReadTime_ms / 2);
+		fbSimulationTimer(); // set time/reset timer
+		fbSimulationTimer.IN := TRUE; // start timer
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			fbSimulationTimer(); // simulation time
+			IF (fbSimulationTimer.IN = FALSE) THEN
+				fbSimulationTimer.IN := TRUE;
+			END_IF
+			IF pRFD_SIf^.intCmd <> RFD_Cmd.cRFD_CMD_DONE THEN
+				pRFD_SIf^.intCmd := RFD_Cmd.cRFD_CMD_DONE;
+			END_IF
+			IF (fbSimulationTimer.Q) THEN
+				fbSimulationTimer.IN := FALSE;
+				IF SIf.Cur.bolPresent = FALSE THEN
+					SIf.Cur.bolPresent := TRUE;
+					SIf.Cur.stData.uliTagID := SIf.Cur.stData.uliTagID + 1;
+					Tc2_System.MEMCPY(destAddr:=ADR(pRFD_SIf^.stStatus.abyteUID), srcAddr:=ADR(SIf.Cur.stData.uliTagID), n:=8);
+				ELSE
+					SIf.Cur.bolPresent := FALSE;
+				END_IF
+			END_IF
+		END_IF
+		
+		// Function
+		// If the RF ID Reader does not send automatically the Tag ID, read it if a new Tag is ready
+		IF (SIf.Cfg.eTyp = E_Typ_RFW.RF310R) THEN
+			IF ((SIf.Cur.bolPresent = TRUE) AND (bolRENewTag = FALSE)) THEN
+				bolNewTag := TRUE;
+				bolRENewTag := TRUE;
+			ELSIF (SIf.Cur.bolPresent = FALSE) THEN
+				bolRENewTag := FALSE;
+				bolNewTag := FALSE;
+			END_IF
+			
+			//--------------------------------------------------------------------------------------
+			// sub state machine for sequence
+			CASE me.SubStateMachine.intState OF
+				//--------------------------------------------------------------------------------------
+				cRFW_SUB_WaitTag:
+					IF (bolNewTag = TRUE) THEN
+						me.SubStateMachine.intStateNext := cRFW_SUB_SendJob;
+					END_IF
+				
+				cRFW_SUB_SendJob:
+					pRFD_SIf^.stCur.uinAdressData :=0;
+					pRFD_SIf^.stCur.uinAdressTag := DWORD_TO_UINT(RFID_Data.cRFID_TagID);
+					pRFD_SIf^.stCur.usiCount := DWORD_TO_USINT(SHR(RFID_Data.cRFID_TagID,16));
+				
+					pRFD_SIf^.intCmd := RFD_Cmd.cRFD_CMD_MDS;
+					
+					me.SubStateMachine.intStateNext := cRFW_SUB_GetData;
+					
+				cRFW_SUB_GetData:
+					IF pRFD_SIf^.intCmd = RFD_Cmd.cRFD_CMD_DONE THEN
+						me.SubStateMachine.intStateNext := cRFW_SUB_CheckData;
+					END_IF
+				
+				cRFW_SUB_CheckData:
+					SIf.Cur.stData.strTagID := '';
+					Tc2_System.MEMCPY(destAddr:=ADR(SIf.Cur.stData.uliTagID), srcAddr:=ADR(pRFD_SIf^.stStatus.abyteUID), n:=8);
+					SIf.Cur.stData.strTagID := FB_ULINT_TO_HEXSTRING(in_uliValue:= SIf.Cur.stData.uliTagID);	
+
+					IF (SIf.Cfg.bolGetTrayIDAuto = TRUE) THEN
+						me.SubStateMachine.intStateNext := cRFW_SUB_SendJobTrayID;
+					ELSE
+						me.SubStateMachine.intStateNext := cRFW_SUB_Finished;
+					END_IF
+					
+				cRFW_SUB_SendJobTrayID:
+					uinDataAdress := DWORD_TO_UINT(RFID_Data.cRFID_TrayID);
+					uinDataAdress := uinDataAdress MOD 16#100;							// Maximum 255 data
+					uinDataLengh := DWORD_TO_UINT(SHR(RFID_Data.cRFID_TrayID,16));
+					pRFD_SIf^.stCur.uinAdressData :=uinDataAdress;
+					pRFD_SIf^.stCur.uinAdressTag := DWORD_TO_UINT(RFID_Data.cRFID_TrayID);
+					pRFD_SIf^.stCur.usiCount := DWORD_TO_USINT(SHR(RFID_Data.cRFID_TrayID,16));
+				
+					pRFD_SIf^.intCmd := RFD_Cmd.cRFD_CMD_Read;
+					
+					me.SubStateMachine.intStateNext := cRFW_SUB_GetData;
+					
+				cRFW_SUB_GetDataTrayID:
+					IF pRFD_SIf^.intCmd = RFD_Cmd.cRFD_CMD_DONE THEN
+						me.SubStateMachine.intStateNext := cRFW_SUB_CheckData;
+					END_IF
+				
+				cRFW_SUB_CheckDataTrayID:
+					uinDataAdress := DWORD_TO_UINT(RFID_Data.cRFID_TrayID);
+					uinDataAdress := uinDataAdress MOD 16#100;							// Maximum 255 data
+					uinDataLengh := DWORD_TO_UINT(SHR(RFID_Data.cRFID_TrayID,16));
+					SIf.Cur.stData.strTagID := '';
+					Tc2_System.MEMCPY(destAddr:=ADR(SIf.Cur.stData.strTrayID), srcAddr:=ADR(pRFD_SIf^.stStatus.abyteUID[uinDataAdress]), n:=uinDataLengh);
+
+					me.SubStateMachine.intStateNext := cRFW_SUB_Finished;
+	
+				cRFW_SUB_Finished:
+					bolNewTag := FALSE;				
+					me.SubStateMachine.intStateNext := cRFW_SUB_WaitTag;
+					
+			END_CASE
+		ELSIF (SIf.Cfg.eTyp = E_Typ_RFW.RF382R) THEN
+			SIf.Cur.stData.strTagID := '';
+			Tc2_System.MEMCPY(destAddr:=ADR(SIf.Cur.stData.uliTagID), srcAddr:=ADR(pRFD_SIf^.stStatus.abyteUID), n:=8);
+			SIf.Cur.stData.strTagID := FB_ULINT_TO_HEXSTRING(in_uliValue:= SIf.Cur.stData.uliTagID);	
+			
+		END_IF
+		
+				
+		// State Change Condition
+		IF (pRFD_SIf^.stErr.bolErrorActive = TRUE) THEN  
+			me.StateMachine.intStateNext :=  cSTA_ERROR;
+		ELSIF ((me.intCmd=cCMD_READ) OR (me.intCmd=cCMD_WRITE)) AND (SIf.Cfg.eTyp = E_Typ_RFW.RF382R) THEN
+			// SIf.Alm[5].strText := 'Command for this type of RFID not possible';
+			Global.g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,5,UDINT_TO_DINT(pRFD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);			
+		ELSIF (me.intCmd=cCMD_READ) THEN
+			me.StateMachine.intStateNext := cSTA_READBusy;
+		ELSIF(me.intCmd=cCMD_WRITE) THEN
+			me.StateMachine.intStateNext := cSTA_WRITEBusy;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;		
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_WRITE" Id="{6276d9df-60df-4d83-9bba-319abc11c3e7}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_WRITE : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			;
+		END_IF
+		
+		// State Change Condition
+		IF(me.intCmd=cCMD_RUN) THEN
+			me.StateMachine.intStateNext := cSTA_RUNBusy;
+		ELSIF(me.intCmd=cCMD_READ) THEN
+			me.StateMachine.intStateNext := cSTA_READBusy;
+		ELSIF ((me.intCmd=cCMD_READ) OR (me.intCmd=cCMD_WRITE)) AND (SIf.Cfg.eTyp = E_Typ_RFW.RF382R) THEN
+			// SIf.Alm[5].strText := 'Command for this type of RFID not possible';
+			Global.g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,5,UDINT_TO_DINT(pRFD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);	
+		ELSIF(me.intCmd=cCMD_WRITE) THEN
+			me.StateMachine.intStateNext := cSTA_WRITEBusy;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_ERROR" Id="{78c3e269-fbac-4411-b2e6-439db1626e29}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_ERROR : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		IF (pRFD_SIf^.stErr.bolComError = TRUE) OR (pRFD_SIf^.stErr.bolProtcolError = TRUE) THEN
+			// SIf.Alm[1].strText := 'Communication Error between PLC and RFID Reader'; 
+			Global.g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,1,UDINT_TO_DINT(pRFD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+		ELSIF pRFD_SIf^.stErr.bolSDOError = TRUE THEN
+			// SIf.Alm[2].strText := 'Initialisation Error from RFID Reader';
+			Global.g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,2,UDINT_TO_DINT(pRFD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+		ELSIF (pRFD_SIf^.stErr.bolRFIDError = TRUE) THEN
+			// SIf.Alm[3].strText := 'RFID Tag Error';
+			Global.g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,3,UDINT_TO_DINT(pRFD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+		END_IF
+		
+		
+		// State Change Condition
+		IF (CIf.Job.bolAlmReset = TRUE) THEN
+			me.StateMachine.intStateNext := cSTA_ERRORQuit;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_READ" Id="{86bda3df-c859-4958-9531-9200c63b1d00}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_READ : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			;
+		END_IF
+		
+		// State Change Condition
+		IF(me.intCmd=cCMD_RUN) THEN
+			me.StateMachine.intStateNext := cSTA_RUNBusy;
+		ELSIF ((me.intCmd=cCMD_READ) OR (me.intCmd=cCMD_WRITE)) AND (SIf.Cfg.eTyp = E_Typ_RFW.RF382R) THEN
+			// SIf.Alm[5].strText := 'Command for this type of RFID not possible';
+			Global.g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,5,UDINT_TO_DINT(pRFD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);			
+		ELSIF(me.intCmd=cCMD_WRITE) THEN
+			me.StateMachine.intStateNext := cSTA_WRITEBusy;
+		ELSIF(me.intCmd=cCMD_READ) THEN
+			me.StateMachine.intStateNext := cSTA_READBusy;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_PON" Id="{87e8a09d-2f02-4a1b-a1fe-54ae166ca5ea}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		
+		
+		// State Change Condition
+		IF (me.intCmd<>cCMD_PON) AND (me.intCmd<>cCMD_DONE) THEN
+			me.StateMachine.intStateNext := cSTA_OFFBusy;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Always" Id="{8902c373-d4c2-4ae9-8b51-f6c891f2b9bf}">
+      <Declaration><![CDATA[METHOD PROTECTED Always : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.Always();
+
+// ----------------------------------------------------------------------------------
+// cyclic actions outside of statemachine
+IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
+	pRFD_SIf^.stCur.pData := ADR(SIf.Cur.abytData[0]);
+	SIf.Cur.bolPresent := pRFD_SIf^.stStatus.bolPresent;
+END_IF
+
+// config driver
+pRFD_SIf^.stCfg.bolSimulation := CIf.SwCfg.bolSimulation;
+pRFD_SIf^.stCfg.eTyp := SIf.Cfg.eTyp;
+pRFD_SIf^.stCfg.stNetId := SIf.Cfg.stNetId; //PLC NetId
+pRFD_SIf^.stCfg.uinSlaveAddr := SIf.Cfg.uinSlaveAddr; //Io card Ethercat adress 
+
+// ----------------------------------------------------------------------------------
+// Always change actions in Base Library
+// ----------------------------------------------------------------------------------
+// overrule error always from base -> no EOFF State!! in EOFF go to OFF
+IF (me.StateMachine.intStateNext = cSTA_EOFFBusy) THEN
+	IF (me.StateMachine.intState=cSTA_OFF) THEN
+		me.StateMachine.intStateNext := cSTA_OFF;
+	ELSE // stay in OFF
+		me.StateMachine.intStateNext := cSTA_OFFBusy;
+	END_IF
+END_IF
+
+// Conditions Always
+IF (((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.Alarm.eActivAlmClass=E_AlmClass.OFF) OR (me.intCmd=cCMD_OFF))
+		 AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) AND
+		(me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_OFFBusy)) THEN
+	// alarm evt EOFF, OFF or cmd off
+	me.StateMachine.intStateNext := cSTA_OFFBusy;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getCmdState" Id="{8bda8225-ec66-4101-959f-c29790a281c1}">
+      <Declaration><![CDATA[METHOD PROTECTED getCmdState : STRING
+VAR_INPUT
+	intCmdState: INT;
+	bolState: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
+IF (getCmdState='') THEN // global not defined get local
+	// get string cmd/state string information in runtime
+	IF (bolState=FALSE) THEN
+		// cmd's
+		CASE intCmdState OF
+			cCMD_READ: 
+				getCmdState := 'cCMD_READ';
+			cCMD_WRITE: 
+				getCmdState := 'cCMD_WRITE';
+		END_CASE;
+	ELSE
+	
+	// cmd's
+		CASE intCmdState OF
+			cSTA_READBusy: 
+				getCmdState := 'cSTA_READBusy';
+			cSTA_READ: 
+				getCmdState := 'cSTA_READ';
+			cSTA_WRITEBusy: 
+				getCmdState := 'cSTA_WRITEBusy';
+			cSTA_WRITE: 
+				getCmdState := 'cSTA_WRITE';
+				
+			// SUB States
+			cRFW_SUB_WaitTag:
+				getCmdState := 'cRFW_SUB_WaitTag';
+			cRFW_SUB_SendJob:
+				getCmdState := 'cRFW_SUB_SendJob';
+			cRFW_SUB_GetData:
+				getCmdState := 'cRFW_SUB_GetData';
+			cRFW_SUB_CheckData:
+				getCmdState := 'cRFW_SUB_CheckData';
+			cRFW_SUB_SendJobTrayID:
+				getCmdState := 'cRFW_SUB_SendJobTrayID';
+			cRFW_SUB_GetDataTrayID:
+				getCmdState := 'cRFW_SUB_GetDataTrayID';
+			cRFW_SUB_CheckDataTrayID:
+				getCmdState := 'cRFW_SUB_CheckDataTrayID';
+			cRFW_SUB_Finished: 			
+				getCmdState := 'cRFW_SUB_Finished';
+		END_CASE;
+	END_IF
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_OFF" Id="{9f489c99-0a43-4160-ae6a-7502a9d3df1e}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		
+		
+		// State Change Condition
+		IF (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.Alarm.eActivAlmClass<>E_AlmClass.OFF) THEN
+			IF(me.intCmd=cCMD_RUN) THEN
+				me.StateMachine.intStateNext := cSTA_RUNBusy;
+			ELSIF ((me.intCmd=cCMD_READ) OR (me.intCmd=cCMD_WRITE)) AND (SIf.Cfg.eTyp = E_Typ_RFW.RF382R) THEN
+				// SIf.Alm[5].strText := 'Command for this type of RFID not possible';
+				Global.g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,5,UDINT_TO_DINT(pRFD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);			
+			ELSIF(me.intCmd=cCMD_READ) THEN
+				me.StateMachine.intStateNext := cSTA_READBusy;
+			ELSIF(me.intCmd=cCMD_WRITE) THEN
+				me.StateMachine.intStateNext := cSTA_WRITEBusy;
+			END_IF
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="StateMachine" Id="{b7eb01f2-2310-4a76-a655-4a72aaf06f3b}">
+      <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.StateMachine();
+
+// main statemachine of base controller
+CASE me.StateMachine.intState OF
+    cSTA_READBusy: 
+        THIS^.sta_READBusy();
+    cSTA_READ: 
+        THIS^.sta_READ();
+    cSTA_WRITEBusy: 
+        THIS^.sta_WRITEBusy();
+    cSTA_WRITE: 
+        THIS^.sta_WRITE();
+    cSTA_RUNBusy: 
+        THIS^.sta_RUNBusy();
+    cSTA_RUN: 
+        THIS^.sta_RUN();		
+END_CASE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_PONBusy" Id="{cdbec308-30dd-4c57-83f1-ddef7452e89f}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_PONBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		fbSimulationTimer.IN := FALSE;
+		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiReadTime_ms / 2);
+		fbSimulationTimer(); // set time/reset timer
+		fbSimulationTimer.IN := TRUE; // start timer
+		
+		pRFD_SIf^.intCmd := RFD_Cmd.cRFD_CMD_CTRL_ON; // parameter initialisation on driver
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			fbSimulationTimer(); // simulation time
+			IF (fbSimulationTimer.Q) THEN
+				pRFD_SIf^.intCmd := RFD_Cmd.cRFD_CMD_DONE;
+				SIf.Cur.bolPresent := FALSE;
+			END_IF
+		END_IF
+		
+	
+		// State Change Condition
+		IF (pRFD_SIf^.stErr.bolErrorActive = TRUE) THEN // AND (me.StateMachine.udiTimeInState_ms>SIf.Par.udiWriteTime_ms) 
+			me.StateMachine.intStateNext :=  cSTA_ERROR;
+		ELSIF (pRFD_SIf^.intCmd = RFD_Cmd.cRFD_CMD_DONE) THEN
+			me.StateMachine.intStateNext := cSTA_PON;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_RUNbusy" Id="{d90c5631-2035-4e21-8e83-25a13672553f}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_RUNbusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		bolNewTag := FALSE;
+		me.SubStateMachine.intState := cRFW_SUB_WaitTag;
+		SIf.Cur.dwoJob := RFID_Data.cRFID_TrayID;
+		
+		fbSimulationTimer.IN := FALSE;
+		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiReadTime_ms / 2);
+		fbSimulationTimer(); // set time/reset timer
+		fbSimulationTimer.IN := TRUE; // start timer
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			fbSimulationTimer(); // simulation time
+			IF (fbSimulationTimer.Q) THEN
+				;
+			END_IF
+		END_IF
+		
+		// Function
+		
+		// State Change Condition
+		IF (pRFD_SIf^.stErr.bolErrorActive = TRUE) THEN  
+			me.StateMachine.intStateNext :=  cSTA_ERROR;
+		ELSIF(me.intCmd=cCMD_READ) THEN
+			me.StateMachine.intStateNext := cSTA_READBusy;
+		ELSIF(me.intCmd=cCMD_WRITE) THEN
+			me.StateMachine.intStateNext := cSTA_WRITEBusy;
+		ELSE
+			me.StateMachine.intStateNext := cSTA_RUN;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;		
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="IoOutBridge" Id="{e652e48d-9083-478d-b484-0f0664de3614}">
+      <Declaration><![CDATA[METHOD PROTECTED IoOutBridge : BOOL
+VAR
+	bolSwitchValvesOff: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
+IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+	// check interlocks to prevent damages
+	IF (CIf.Job.bolIlkOverwrite=FALSE) THEN
+		;
+	END_IF
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="IoInBridge" Id="{eb949a33-c8d2-4a04-a988-2e946c8e9b93}">
+      <Declaration><![CDATA[METHOD PROTECTED IoInBridge : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
+
+IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+	;
+	//ctrl.In.bol_PosSwitchBasicDefTyp.intern := getInBol(ctrl.ifc.Job.bol_Force ,ADR(ctrl.In.bol_PosSwitchBasicDefTyp);
+ELSE
+	//simulation of global IO
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getCtrlSIf" Id="{f748e6dd-171c-4567-9ed2-9c83bbc31f13}">
+      <Declaration><![CDATA[METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_RFW
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_OFFBusy" Id="{f88f72c1-2b8c-4419-ae4a-ec4625426ab9}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_OFFBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		fbSimulationTimer.IN := FALSE;
+		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiReadTime_ms / 2);
+		fbSimulationTimer(); // set time/reset timer
+		fbSimulationTimer.IN := TRUE; // start timer
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			fbSimulationTimer(); // simulation time
+			IF (fbSimulationTimer.Q) THEN
+				pRFD_SIf^.intCmd := RFD_Cmd.cRFD_CMD_DONE;
+				SIf.Cur.bolPresent := FALSE;
+			END_IF
+		END_IF
+		
+	
+		// State Change Condition
+		IF pRFD_SIf^.stErr.bolErrorActive = TRUE THEN // AND (me.StateMachine.udiTimeInState_ms>SIf.Par.udiWriteTime_ms) 
+			me.StateMachine.intStateNext :=  cSTA_ERROR;
+		ELSIF(pRFD_SIf^.intCmd = RFD_Cmd.cRFD_CMD_DONE) THEN
+			me.StateMachine.intStateNext := cSTA_OFF;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <ObjectProperties>﻿<XmlArchive>
+  <Data>
+    <o xml:space="preserve" t="POUImageProperty">
+      <n n="ImageData" />
+      <v n="TransparencyColor">"White"</v>
+      <v n="MakeTransparent">false</v>
+    </o>
+  </Data>
+  <TypeList>
+    <Type n="Boolean">System.Boolean</Type>
+    <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
+    <Type n="String">System.String</Type>
+  </TypeList>
+</XmlArchive></ObjectProperties>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,41 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <DUT Name="T_RFD_Cfg" Id="{f6a5f8d6-2bd2-4c90-8a22-3378c4b5783f}">
+    <Declaration><![CDATA[TYPE T_RFD_Cfg :
+STRUCT
+	bolSimulation: BOOL;
+	eTyp: E_Typ_RFW;
+	/// Reset parameter value
+	usiResetParameter: USINT := 2#101010;
+	/// Setting of the Air interface
+	usiFtimSetting: E_Typ_Ftim;
+	/// Reset option1 value
+	usiResetOption1: USINT := 2#10;
+	/// Set Baudrate
+	uinBaudrate: USINT;
+	/// Set Communikationsettings
+	uinComSettings: USINT;
+	/// Net ID oft EtherCat Master
+	stNetId: TC2_SYSTEM.T_AmsNetID;
+	/// Port Number of EtherCat Slave Comunication Module
+	uinSlaveAddr: UINT;
+	/// CoE Object Index for Communication Settings
+	uinCoeIndexComSettings: WORD := 16#8000;
+	/// CoE Object SubIndex for Baudrate
+	usiCoeSubindexComBaudrate: BYTE := 16#11;
+	/// CoE Object SubIndex for Dataframe
+	usiCoeSubindexComDataframe: BYTE := 16#15;
+	/// Retry Job to RFID Reader
+	udiRetry: UDINT := 10;
+	//////////////////////////////////////////////////
+	/// Reset Memory 00=RAM, 01=remanent
+	usiMemory: USINT := 0;
+	/// Scan Mode 00= Continous Read; 01=Single Read
+	usiScanMode: USINT := 1;
+	/// Lock Time in ms
+	uinLockTime_ms: UINT := 5000;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

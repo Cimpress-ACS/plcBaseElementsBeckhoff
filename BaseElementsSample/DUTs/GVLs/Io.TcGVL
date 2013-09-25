@@ -1,0 +1,21 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <GVL Name="Io" Id="{407668e5-83c7-4fef-b1ff-b6c883942ff7}">
+    <Declaration><![CDATA[VAR_GLOBAL
+	In_bol_11_0_B1_Doublestopper_full AT %I* : BOOL; //VOLLMELDUNG DOPPELSTOPPER
+	Out_bol_11_0_Q2_Doublestopper AT %Q* : BOOL; //DOPPELSTOPPER
+	In_bol_11_0_B3_Doublestopper_full AT %I* : BOOL; //VOLLMELDUNG DOPPELSTOPPER
+	Out_bol_11_0_Q4_Doublestopper AT %Q* : BOOL; //DOPPELSTOPPER
+	In_bol_11_0_B5_Seperator_full AT %I* : BOOL; //VOLLMELDUNG VEREINZELUNG
+	In_bol_11_0_B6_Hanger_in_Seperator AT %I* : BOOL; //BUEGEL IN VEREINZELUNG
+	Out_bol_11_0_Q7_Seperator AT %Q* : BOOL; //VEREINZELUNG
+	Out_bol_11_0_Q8_Control_stopper AT %Q* : BOOL; //KONTROLLSTOPPER
+	Out_bol_11_0_A1_Drive_On AT %Q* : BOOL; //ANTRIEB EIN
+	In_bol_11_0_A1_Motor_Protection AT %I* : BOOL; //MOTORSCHUTZ AUSGELOEST
+	In_bol_11_0_B13_Doublestopper_full AT %I* : BOOL; //VOLLMELDUNG DOPPELSTOPPER
+	Out_bol_11_0_Q14_Doublestopper AT %Q* : BOOL; //DOPPELSTOPPER
+	In_bol_11_0_B15_New_part AT %I* : BOOL; //NEUES TEIL
+	In_bol_EmergencyOff AT %I* : BOOL; // Emergency Off Button
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

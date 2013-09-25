@@ -1,0 +1,21 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.14">
+  <DUT Name="T_MOD_RUN_StateMachine" Id="{de408d88-5c1f-4f5b-87a8-e1a66488e920}">
+    <Declaration><![CDATA[TYPE T_MOD_RUN_StateMachine :
+STRUCT
+	///actual state
+	intState: INT;
+	strState: STRING;
+	///state of last cycle
+	intStateLastCycle: INT;
+	///save history backup p.e. in ERROR state
+	intStateHistory: INT;
+	///set state for next cycle
+	intStateNext: INT;
+	///[ms] time in one state
+	udiTimeInState_ms: UDINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,15 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <DUT Name="E_Typ_RFW" Id="{879fc782-15af-4f75-a012-e12eb427a762}">
+    <Declaration><![CDATA[TYPE E_Typ_RFW :
+(
+	/// RF310
+	RF310R := 0,
+	/// RF382R
+	RF382R := 1,
+	Max_E_Typ_CYL
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

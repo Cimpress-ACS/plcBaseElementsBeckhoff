@@ -1,0 +1,15 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <Task Name="Task_Fast" Id="{d33183fe-4cfc-4435-9302-e2f7aa6631ee}">
+    <!--CycleTime in micro seconds.-->
+    <CycleTime>2000</CycleTime>
+    <Priority>3</Priority>
+    <PouCall>
+      <Name>FastPRG_1</Name>
+    </PouCall>
+    <TaskFBGuid>{bc55d13e-535f-42ab-a8ba-d181692ec591}</TaskFBGuid>
+    <Fb_init>{06651589-bdbb-45b7-bfe0-3e31c5a86246}</Fb_init>
+    <Fb_exit>{83935168-f543-4774-821c-d4a2da7ba39b}</Fb_exit>
+    <CycleUpdate>{eb851234-f9fb-4c24-9c57-772c0ef61ff9}</CycleUpdate>
+    <PostCycleUpdate>{2c1ab7d9-b645-4dd7-a139-cf1afeb81319}</PostCycleUpdate>
+  </Task>
+</TcPlcObject>

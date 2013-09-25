@@ -1,0 +1,18 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <GVL Name="Global" Id="{7e4d3905-9bd8-4d24-9c31-71fd51336e6c}">
+    <Declaration><![CDATA[VAR_GLOBAL
+	/// instance array of all controller instances
+	g_a_pCtrlInst: ARRAY[0..E_CtrlId.E_CtrlIdMax] OF POINTER TO fb_CtrlBase;
+	/// common interface array of all controllers (main use for PLC)
+	g_a_pCtrlCIf: ARRAY[0..E_CtrlId.E_CtrlIdMax] OF POINTER TO T_Ctrl_CIf;
+	/// global alarm manager
+	g_fbAlm_Man: FB_Alm_Man;
+	
+	///Global accesss of driver init in faster cycles
+	g_pFB_RFR: POINTER TO FB_RFR;
+END_VAR
+
+]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

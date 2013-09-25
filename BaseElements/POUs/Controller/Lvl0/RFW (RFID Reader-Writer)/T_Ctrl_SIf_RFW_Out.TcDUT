@@ -1,0 +1,10 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <DUT Name="T_Ctrl_SIf_RFW_Out" Id="{c810c854-060a-4ded-9c4d-aededf9b3111}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_RFW_Out :
+STRUCT
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

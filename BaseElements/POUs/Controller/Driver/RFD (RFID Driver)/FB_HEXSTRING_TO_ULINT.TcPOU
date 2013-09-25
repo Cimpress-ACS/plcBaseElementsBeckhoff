@@ -1,0 +1,64 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <POU Name="FB_HEXSTRING_TO_ULINT" Id="{a360a7e4-3c1e-46a3-b61b-31cb88488a8b}">
+    <Declaration><![CDATA[FUNCTION FB_HEXSTRING_TO_ULINT : ULINT
+VAR_INPUT
+	in_strSTRING: STRING;
+END_VAR
+VAR
+	uinLenght: UINT;
+	intI: INT;
+	uliFact: ULINT;
+	usiSign: USINT;
+	uliReturn: ULINT;
+	ausiTemp: ARRAY[0..15] OF USINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[uinLenght := INT_TO_UINT(TC2_STANDARD.LEN(in_strSTRING));
+uliReturn := 0;
+
+IF (uinLenght > 16) THEN
+	FB_HEXSTRING_TO_ULINT := 0;
+	
+ELSE
+	MEMCPY(destAddr:=ADR(ausiTemp), srcAddr:=ADR(in_strSTRING), n:=uinLenght);		// COPY to buffer
+	intI := UINT_TO_INT(uinLenght)-1;
+	uliFact := 1;
+	WHILE intI >= 0 DO
+		IF (ausiTemp[intI] >= 16#30) AND (ausiTemp[intI] <= 16#39) THEN		// 0=16#30 ...9=16#39
+			usiSign := ausiTemp[intI] - 16#30;
+		ELSIF (ausiTemp[intI] >= 16#41) AND (ausiTemp[intI] <= 16#46) THEN		// A=16#41 ...F=16#46
+			usiSign := ausiTemp[intI] - 55;
+		ELSIF (ausiTemp[intI] >= 16#61) AND (ausiTemp[intI] <= 16#66) THEN		// a=16#61 ...f=16#66
+			usiSign := ausiTemp[intI] - 87;
+		ELSE
+			FB_HEXSTRING_TO_ULINT := 0;
+			RETURN;
+		END_IF
+		
+		uliReturn := uliReturn + usiSign * uliFact;
+		intI := intI - 1;
+		uliFact := uliFact * 16;
+	END_WHILE
+		
+END_IF
+
+	FB_HEXSTRING_TO_ULINT := uliReturn;
+]]></ST>
+    </Implementation>
+    <ObjectProperties>﻿<XmlArchive>
+  <Data>
+    <o xml:space="preserve" t="POUImageProperty">
+      <n n="ImageData" />
+      <v n="TransparencyColor">"White"</v>
+      <v n="MakeTransparent">false</v>
+    </o>
+  </Data>
+  <TypeList>
+    <Type n="Boolean">System.Boolean</Type>
+    <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
+    <Type n="String">System.String</Type>
+  </TypeList>
+</XmlArchive></ObjectProperties>
+  </POU>
+</TcPlcObject>

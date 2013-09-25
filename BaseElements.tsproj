@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0">
+	<Project ProjectGUID="{1927D6AA-E64E-4710-9987-139DA1D786B0}" ModifiedGUID="{1BB08E63-4F5A-4C58-BCF8-0EA4E8C424C5}">
+		<System>
+			<Tasks>
+				<Task Id="1" Priority="3" CycleTime="20000" AmsPort="350">
+					<Name>Task_Fast</Name>
+				</Task>
+				<Task Id="2" Priority="20" CycleTime="500000" AmsPort="351">
+					<Name>Task_Slow</Name>
+				</Task>
+				<Task Id="4" Priority="10" CycleTime="100000" AmsPort="352">
+					<Name>Task_Middle</Name>
+				</Task>
+			</Tasks>
+		</System>
+		<Plc>
+			<Project GUID="{62BBD5FB-17F2-4E98-9143-D240A873429A}" Name="BaseElements" PrjFilePath="BaseElements\BaseElements.plcProj" TmcFilePath="BaseElements\BaseElements.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e">
+				<Instance Id="#x01010010" TcSmClass="TComPlcObjDef">
+					<Name>BaseElements Instance</Name>
+					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
+				</Instance>
+			</Project>
+			<Project GUID="{DB7ED12F-35B8-4F3D-AF1C-4A012D966532}" Name="BaseElementsSample" PrjFilePath="BaseElementsSample\BaseElementsSample.plcProj" TmcFilePath="BaseElementsSample\BaseElementsSample.tmc" ReloadTmc="true" AmsPort="852" FileArchiveSettings="#x000e">
+				<Instance Id="#x01010020" TcSmClass="TComPlcObjDef">
+					<Name>BaseElementsSample Instance</Name>
+					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
+				</Instance>
+			</Project>
+		</Plc>
+	</Project>
+</TcSmProject>

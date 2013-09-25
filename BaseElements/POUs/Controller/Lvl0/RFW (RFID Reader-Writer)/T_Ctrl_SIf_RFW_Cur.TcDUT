@@ -1,0 +1,18 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <DUT Name="T_Ctrl_SIf_RFW_Cur" Id="{cbc1eee0-e47f-408a-9d03-6db73294d146}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_RFW_Cur :
+STRUCT
+	/// 1 = tag is present  
+	bolPresent: BOOL;
+	/// Data to read / write
+	abytData: ARRAY[0..255] OF BYTE;
+	/// Data in Structure
+	stData: T_RFW;
+	/// Job information, what data read or write
+	dwoJob: DWORD;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

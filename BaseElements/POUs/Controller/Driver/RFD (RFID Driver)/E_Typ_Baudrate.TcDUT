@@ -1,0 +1,17 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <DUT Name="E_Typ_Baudrate" Id="{4dac086b-9156-4981-ab7c-6e4177cd39a6}">
+    <Declaration><![CDATA[TYPE E_Typ_Baudrate :
+(
+	baud_2400 := 4,
+	baud_4800 := 5,
+	baud_9600 := 6,
+	baud_19200 := 7,
+	baud_38400 := 8,
+	baud_57600 := 9,
+	baud_115200 := 10
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

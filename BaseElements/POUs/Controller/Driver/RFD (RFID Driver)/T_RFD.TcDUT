@@ -1,0 +1,18 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <DUT Name="T_RFD" Id="{eaab37f2-ed1c-4b67-bac1-f10b4db1a221}">
+    <Declaration><![CDATA[TYPE T_RFD :
+STRUCT
+	strState: STRING;
+	strCmd: STRING;
+	intCmd: INT;
+	intServiceCmd: INT;
+	stStatus: T_RFD_Status;
+	stCfg: T_RFD_Cfg;
+	stCur: T_RFD_Cur;
+	stErr: T_RFD_Error;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

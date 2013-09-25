@@ -1,0 +1,23 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <GVL Name="RFID_Data" Id="{6afaa887-3afa-4537-928b-996534509c05}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	/// RFID Data connection
+	/// See RFID Specification
+	/// Defines the Start Adress and the lengh of the Data in the RF ID Tag
+	/// Every DoubleWord has to Words, Higher is lengh, lower word is Startadress
+	/// Example	
+	/// 16#010005 => Startadress 5 Byte 1 => UV Settings
+	cRFID_RepetionID: DWORD := 16#10101;
+	cRFID_TrayInfo: DWORD := 16#10102;
+	cRFID_HeighOfTray: DWORD := 16#10103;
+	cRFID_Pretreatment: DWORD := 16#10104;
+	cRFID_UVcuring: DWORD := 16#10105;
+	cRFID_Filename: DWORD := 16#80106;
+	cRFID_Brush: DWORD := 16#1010E;
+	cRFID_TrayID: DWORD := 16#E0000;
+	cRFID_TagID: DWORD := 16#8FFF0;
+	cRFID_AllData: DWORD := 16#F0100;
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

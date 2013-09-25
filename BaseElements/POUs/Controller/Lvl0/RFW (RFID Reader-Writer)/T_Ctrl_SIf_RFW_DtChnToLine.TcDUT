@@ -1,0 +1,11 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <DUT Name="T_Ctrl_SIf_RFW_DtChnToLine" Id="{691e189f-a29e-4fd6-a78c-50e8410d1145}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_RFW_DtChnToLine :
+STRUCT
+	stNewRfid: T_NewRFID_DtChn;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

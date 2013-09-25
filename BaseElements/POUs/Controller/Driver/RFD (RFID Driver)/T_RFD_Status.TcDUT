@@ -1,0 +1,30 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <DUT Name="T_RFD_Status" Id="{54fa781f-53ac-46eb-bdd5-6b787b2a4c94}">
+    <Declaration><![CDATA[TYPE T_RFD_Status :
+STRUCT
+	/// 1 = Antenna is initialized  
+	bolStartupOk: BOOL;
+	/// 1 = Antenna is initialized  
+	bolInitOk: BOOL;
+	/// 1 = Antenna is on 
+	bolOn: BOOL;
+	/// 1 = tag is present  
+	bolPresent: BOOL;
+	/// 1 = Communication to SLG is OK  
+	bolL_UEB: BOOL;
+	/// SLG State only actual on demand 
+	stSLG_State: T_RFD_SLG_State;
+	/// SLG Diagnose only actual on demand 
+	stSLG_Diag: T_RFD_SLG_Diagnose;
+	/// SLG State only actual on demand  
+	stMDS_State: T_RFD_MDS_State;
+	/// SLG Diagnose only actual on demand  
+	stMDS_Diag: T_RFD_MDS_Diagnose;
+	/// Tag ID
+	abyteUID: ARRAY[0..7] OF BYTE;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

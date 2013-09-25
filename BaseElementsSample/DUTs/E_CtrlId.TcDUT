@@ -1,0 +1,14 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <DUT Name="E_CtrlId" Id="{fbb9f2d2-c911-4ba8-bff4-7e84f684cb30}">
+    <Declaration><![CDATA[TYPE E_CtrlId :
+(
+	//not defined after startup...
+	NONE,
+	RFW_11 := 420,	
+	E_CtrlIdMax
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

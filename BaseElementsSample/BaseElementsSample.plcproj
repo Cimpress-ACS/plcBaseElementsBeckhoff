@@ -1,0 +1,190 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <!-- <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>-->
+    <FileVersion>1.0.0.0</FileVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{DB7ED12F-35B8-4F3D-AF1C-4A012D966532}</ProjectGuid>
+    <Name>BaseElementsSample</Name>
+    <ProgramVersion>3.1.0.5</ProgramVersion>
+    <Application>{77bc2f54-304d-4c4e-8f2b-40935bebee03}</Application>
+    <TypeSystem>{fc12f0d3-f021-4bca-bf61-a6da3fe60f26}</TypeSystem>
+    <Implicit_Task_Info>{fd706d8f-88f3-4413-a76c-833111793ef6}</Implicit_Task_Info>
+    <Implicit_KindOfTask>{dbe59e04-0e03-4a03-a385-b06d3d89eda5}</Implicit_KindOfTask>
+    <Implicit_Jitter_Distribution>{58fabe12-1a09-4c2f-8c9b-21723e2a2cbf}</Implicit_Jitter_Distribution>
+    <LibraryReferences>{d5382a1f-6d36-4562-80db-907f8b1c3804}</LibraryReferences>
+    <!--    <OutputType>Exe</OutputType>
+    <RootNamespace>MyApplication</RootNamespace>
+    <AssemblyName>MyApplication</AssemblyName>-->
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="DUTs\E_CtrlId.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\GVLs\Global.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\GVLs\Io.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Program\MiddlePRG_1.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Program\SlowPRG_1.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Program\FastPRG_1.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Task_Fast.TcTTO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Task_Middle.TcTTO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Task_Slow.TcTTO">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="DUTs\" />
+    <Folder Include="DUTs\GVLs\" />
+    <Folder Include="POUs\" />
+    <Folder Include="POUs\Controller\" />
+    <Folder Include="POUs\Controller\Lvl0\" />
+    <Folder Include="POUs\Controller\Lvl2\" />
+    <Folder Include="POUs\Controller\Lvl1" />
+    <Folder Include="POUs\Controller\Driver" />
+    <Folder Include="POUs\Controller\Lvl3" />
+    <Folder Include="POUs\Program\" />
+    <Folder Include="POUs\Utility Functions\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PlaceholderReference Include="Tc2_Standard">
+      <DefaultResolution>Tc2_Standard, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_Standard</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_System">
+      <DefaultResolution>Tc2_System, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_System</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc3_Interfaces">
+      <DefaultResolution>Tc3_Interfaces, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc3_Interfaces</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc3_Module">
+      <DefaultResolution>Tc3_Module, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc3_Module</Namespace>
+    </PlaceholderReference>
+  </ItemGroup>
+  <ItemGroup>
+    <LibraryReference Include="Base_Elements,0.0.0.1,Vistaprint">
+      <Namespace>Base_Elements</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Base_PLC,0.3.2.0,Vistaprint">
+      <Namespace>Base_PLC</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Tc2_EtherCAT,3.3.0.0,Beckhoff Automation GmbH">
+      <Namespace>Tc2_EtherCAT</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Tc2_SerialCom,3.3.0.0,Beckhoff Automation GmbH">
+      <Namespace>Tc2_SerialCom</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Tc2_Utilities,3.3.0.0,Beckhoff Automation GmbH">
+      <Namespace>Tc2_Utilities</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Tc3_MemMan,3.3.1.0,Beckhoff Automation GmbH">
+      <Namespace>Tc3_MemMan</Namespace>
+    </LibraryReference>
+  </ItemGroup>
+  <ItemGroup>
+    <SubObject Include="FB_DPJ_1.Always" />
+    <SubObject Include="FB_DPJ_1.checkChildAlmClass" />
+    <SubObject Include="FB_DPJ_1.CtrlInit" />
+    <SubObject Include="FB_DPJ_1.FB_init" />
+    <SubObject Include="FB_DPJ_1.getCtrlSIf" />
+    <SubObject Include="FB_DPJ_1.IoInBridge" />
+    <SubObject Include="FB_DPJ_1.IoOutBridge" />
+    <SubObject Include="FB_DPJ_1.StateMachine" />
+    <SubObject Include="FB_DPJ_1.sta_ERROR" />
+    <SubObject Include="FB_DPJ_1.sta_ERRORQuit" />
+    <SubObject Include="FB_DPJ_1.sta_OFF" />
+    <SubObject Include="FB_DPJ_1.sta_OFFBusy" />
+    <SubObject Include="FB_DPJ_1.sta_PON" />
+    <SubObject Include="FB_DPJ_1.sta_RUN" />
+    <SubObject Include="FB_DPJ_1.sta_RUNBusy" />
+    <SubObject Include="FB_ICB.AddDrive" />
+    <SubObject Include="FB_ICB.Always" />
+    <SubObject Include="FB_ICB.checkChildAlmClass" />
+    <SubObject Include="FB_ICB.checkChildPointer" />
+    <SubObject Include="FB_ICB.checkStateAllMultiChild" />
+    <SubObject Include="FB_ICB.CmdToAllMultiChild" />
+    <SubObject Include="FB_ICB.CtrlInit" />
+    <SubObject Include="FB_ICB.FB_init" />
+    <SubObject Include="FB_ICB.getCtrlSIf" />
+    <SubObject Include="FB_ICB.SetAlmClassAllMultiChild" />
+    <SubObject Include="FB_ICB.StateMachine" />
+    <SubObject Include="FB_ICB.sta_ERROR" />
+    <SubObject Include="FB_ICB.sta_ERRORQuit" />
+    <SubObject Include="FB_ICB.sta_OFF" />
+    <SubObject Include="FB_ICB.sta_OFFBusy" />
+    <SubObject Include="FB_ICB.sta_PON" />
+    <SubObject Include="FB_ICB.sta_RUN" />
+    <SubObject Include="FB_ICB.sta_RUNBusy" />
+    <SubObject Include="FB_ICB.sta_STOP" />
+    <SubObject Include="FB_ICB.sta_STOPBusy" />
+    <SubObject Include="FB_ICB_1.Always" />
+    <SubObject Include="FB_ICB_1.checkChildAlmClass" />
+    <SubObject Include="FB_ICB_1.CtrlInit" />
+    <SubObject Include="FB_ICB_1.FB_init" />
+    <SubObject Include="FB_ICB_1.getCmdState" />
+    <SubObject Include="FB_ICB_1.getCtrlSIf" />
+    <SubObject Include="FB_ICB_1.IoInBridge" />
+    <SubObject Include="FB_ICB_1.StateMachine" />
+    <SubObject Include="FB_ICB_1.sta_ERROR" />
+    <SubObject Include="FB_ICB_1.sta_ERRORQuit" />
+    <SubObject Include="FB_ICB_1.sta_OFF" />
+    <SubObject Include="FB_ICB_1.sta_OFFBusy" />
+    <SubObject Include="FB_ICB_1.sta_PON" />
+    <SubObject Include="FB_ICB_1.sta_RUN" />
+    <SubObject Include="FB_ICB_1.sta_RUNBusy" />
+    <SubObject Include="FB_ICB_1.sta_STOP" />
+    <SubObject Include="FB_ICB_1.sta_STOPBusy" />
+    <SubObject Include="FB_IDR_1.CtrlInit" />
+    <SubObject Include="FB_IDR_1.FB_init" />
+    <SubObject Include="FB_IDR_1.getCtrlSIf" />
+    <SubObject Include="FB_IDR_1.IoInBridge" />
+    <SubObject Include="FB_IDR_1.IoOutBridge" />
+    <SubObject Include="FB_IDR_1.StateMachine" />
+    <SubObject Include="FB_IDR_1.sta_ERROR" />
+    <SubObject Include="FB_IDR_1.sta_ERRORQuit" />
+    <SubObject Include="FB_IDR_1.sta_OFF" />
+    <SubObject Include="FB_IDR_1.sta_OFFBusy" />
+    <SubObject Include="FB_IDR_1.sta_PON" />
+    <SubObject Include="FB_IDR_1.sta_RUN" />
+    <SubObject Include="FB_IDR_1.sta_RUNBusy" />
+    <SubObject Include="FB_SLB.AddBufferZone_1" />
+    <SubObject Include="FB_SLB.checkStateAllZones_1" />
+    <SubObject Include="FB_SLB.CmdToAllZones_1" />
+    <SubObject Include="FB_SLB.StopAllZones_1" />
+    <SubObject Include="FB_SLB.StopAllZones_1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="BaseElementsSample.tmc">
+      <SubType>Content</SubType>
+    </Content>
+  </ItemGroup>
+  <ProjectExtensions />
+  <!-- 
+   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug\</OutputPath>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Release\</OutputPath>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+-->
+</Project>

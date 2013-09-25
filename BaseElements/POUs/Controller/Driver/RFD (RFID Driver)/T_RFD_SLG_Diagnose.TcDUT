@@ -1,0 +1,26 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <DUT Name="T_RFD_SLG_Diagnose" Id="{8440531f-c5ee-4b68-b480-2af3a7af51cc}">
+    <Declaration><![CDATA[TYPE T_RFD_SLG_Diagnose :
+STRUCT
+	/// Mode SLG Diagnose
+	usiS_Info: USINT;
+	/// Errorcounter inactive mode
+	usiFZP: USINT;
+	/// Counter abort
+	usiABZ: USINT;
+	/// Errorcounter code errors
+	usiCFZ: USINT;
+	/// Errorcounter signature errors
+	usiSFZ: USINT;
+	/// Errorcounter CRC
+	usiCRCFZ: USINT;
+	/// Actual command state
+	usiBSTAT: USINT;
+	/// Counter interface errors to host (Parity, BCC, Frame)
+	usiASMFZ: USINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

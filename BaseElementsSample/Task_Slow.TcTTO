@@ -1,0 +1,15 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <Task Name="Task_Slow" Id="{acad6e5c-2fdc-48a0-8f88-74730f47e5e5}">
+    <!--CycleTime in micro seconds.-->
+    <CycleTime>50000</CycleTime>
+    <Priority>20</Priority>
+    <PouCall>
+      <Name>SlowPRG_1</Name>
+    </PouCall>
+    <TaskFBGuid>{c3746e40-4c3d-4001-bd54-c22ef2d6edf2}</TaskFBGuid>
+    <Fb_init>{9565ffe6-703d-4ec4-b160-e6db77424a71}</Fb_init>
+    <Fb_exit>{5bb17cde-730b-4699-939d-8c299fd5d7b4}</Fb_exit>
+    <CycleUpdate>{e8e7091e-4b3c-4e04-aaef-b44830624bcf}</CycleUpdate>
+    <PostCycleUpdate>{42dce12a-6e61-450e-b855-b328c4efcb98}</PostCycleUpdate>
+  </Task>
+</TcPlcObject>

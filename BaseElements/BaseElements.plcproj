@@ -1,0 +1,272 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <!-- <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>-->
+    <FileVersion>1.0.0.0</FileVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{62bbd5fb-17f2-4e98-9143-d240a873429a}</ProjectGuid>
+    <Name>BaseElements</Name>
+    <ProgramVersion>3.1.0.5</ProgramVersion>
+    <Application>{84ae8d91-d8f9-4b8b-8d1b-864ed6cb383d}</Application>
+    <TypeSystem>{84b8bf35-c3e3-432c-b94a-9f4aaa4025f6}</TypeSystem>
+    <Implicit_Task_Info>{afef96a8-cee5-4db1-9b26-7b70ef99be80}</Implicit_Task_Info>
+    <Implicit_KindOfTask>{2e254881-7802-47ab-9d98-49e00c236e02}</Implicit_KindOfTask>
+    <Implicit_Jitter_Distribution>{57f05b07-3808-4313-9cc7-0ab158ea60a2}</Implicit_Jitter_Distribution>
+    <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
+    <Company>Vistaprint</Company>
+    <Title>Base_Elements</Title>
+    <ProjectVersion>0.0.0.1</ProjectVersion>
+    <Released>True</Released>
+    <!--    <OutputType>Exe</OutputType>
+    <RootNamespace>MyApplication</RootNamespace>
+    <AssemblyName>MyApplication</AssemblyName>-->
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="POUs\Controller\Driver\RFD %28RFID Driver%29\E_Typ_Baudrate.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\RFD %28RFID Driver%29\E_Typ_Ftim.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\RFD %28RFID Driver%29\FB_Com_3964R.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\RFD %28RFID Driver%29\FB_ExCom.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\RFD %28RFID Driver%29\FB_HEXSTRING_TO_ULINT.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\RFD %28RFID Driver%29\FB_RFD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\RFD %28RFID Driver%29\FB_RFR.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\RFD %28RFID Driver%29\RFD_Cmd.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\RFD %28RFID Driver%29\RFD_Constants.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\RFD %28RFID Driver%29\T_RFD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\RFD %28RFID Driver%29\T_RFD_Cfg.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\RFD %28RFID Driver%29\T_RFD_Cur.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\RFD %28RFID Driver%29\T_RFD_Error.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\RFD %28RFID Driver%29\T_RFD_MDS_Diagnose.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\RFD %28RFID Driver%29\T_RFD_MDS_State.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\RFD %28RFID Driver%29\T_RFD_SLG_Diagnose.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\RFD %28RFID Driver%29\T_RFD_SLG_State.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\RFD %28RFID Driver%29\T_RFD_StateMachine.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\RFD %28RFID Driver%29\T_RFD_Status.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\RFD %28RFID Driver%29\T_StateWord.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29\E_Typ_RFW.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29\FB_DtChnToLine_NewRFID.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29\FB_RFW.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29\FB_ULINT_TO_HEXSTRING.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29\RFID_Data.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29\RFW_CmdState.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29\T_Ctrl_SIf_RFW.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29\T_Ctrl_SIf_RFW_Cfg.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29\T_Ctrl_SIf_RFW_Cur.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29\T_Ctrl_SIf_RFW_DtChnToLine.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29\T_Ctrl_SIf_RFW_In.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29\T_Ctrl_SIf_RFW_Out.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29\T_Ctrl_SIf_RFW_Par.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29\T_NewRFID_DtChn.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29\T_RFW.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Version\Global_Version.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="POUs\" />
+    <Folder Include="POUs\Controller\" />
+    <Folder Include="POUs\Controller\Driver\RFD %28RFID Driver%29\" />
+    <Folder Include="POUs\Controller\Lvl0\" />
+    <Folder Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29" />
+    <Folder Include="POUs\Controller\Lvl2\" />
+    <Folder Include="POUs\Controller\Driver" />
+    <Folder Include="POUs\Controller\Lvl3" />
+    <Folder Include="POUs\Controller\Lvl1" />
+    <Folder Include="POUs\Utility Functions\" />
+    <Folder Include="Version\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PlaceholderReference Include="Tc2_Standard">
+      <DefaultResolution>Tc2_Standard, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_Standard</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_System">
+      <DefaultResolution>Tc2_System, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_System</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc3_Interfaces">
+      <DefaultResolution>Tc3_Interfaces, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc3_Interfaces</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc3_Module">
+      <DefaultResolution>Tc3_Module, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc3_Module</Namespace>
+    </PlaceholderReference>
+  </ItemGroup>
+  <ItemGroup>
+    <LibraryReference Include="Base_PLC,0.3.2.0,Vistaprint">
+      <Namespace>Base_PLC</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Tc2_EtherCAT,3.3.0.0,Beckhoff Automation GmbH">
+      <Namespace>Tc2_EtherCAT</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Tc2_SerialCom,3.3.0.0,Beckhoff Automation GmbH">
+      <Namespace>Tc2_SerialCom</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Tc2_Utilities,3.3.0.0,Beckhoff Automation GmbH">
+      <Namespace>Tc2_Utilities</Namespace>
+    </LibraryReference>
+  </ItemGroup>
+  <ItemGroup>
+    <SubObject Include="FB_CYL_1.CtrlInit" />
+    <SubObject Include="FB_CYL_1.FB_init" />
+    <SubObject Include="FB_CYL_1.getCmdState" />
+    <SubObject Include="FB_CYL_1.getCtrlSIf" />
+    <SubObject Include="FB_CYL_1.IoInBridge" />
+    <SubObject Include="FB_CYL_1.IoOutBridge" />
+    <SubObject Include="FB_CYL_1.StateMachine" />
+    <SubObject Include="FB_CYL_1.sta_ERROR" />
+    <SubObject Include="FB_CYL_1.sta_ERRORQuit" />
+    <SubObject Include="FB_CYL_1.sta_OFF" />
+    <SubObject Include="FB_CYL_1.sta_OFFBusy" />
+    <SubObject Include="FB_CYL_1.sta_PON" />
+    <SubObject Include="FB_LDS_1.Always" />
+    <SubObject Include="FB_LDS_1.CtrlInit" />
+    <SubObject Include="FB_LDS_1.FB_init" />
+    <SubObject Include="FB_LDS_1.getCmdState" />
+    <SubObject Include="FB_LDS_1.getCtrlSIf" />
+    <SubObject Include="FB_LDS_1.IoInBridge" />
+    <SubObject Include="FB_LDS_1.IoOutBridge" />
+    <SubObject Include="FB_LDS_1.StateMachine" />
+    <SubObject Include="FB_LDS_1.sta_ERROR" />
+    <SubObject Include="FB_LDS_1.sta_ERRORQuit" />
+    <SubObject Include="FB_LDS_1.sta_OFF" />
+    <SubObject Include="FB_LDS_1.sta_OFFBusy" />
+    <SubObject Include="FB_LDS_1.sta_PON" />
+    <SubObject Include="FB_LDS_1.sta_PONBusy" />
+    <SubObject Include="FB_LDS_1.sta_RUN" />
+    <SubObject Include="FB_LDS_1.sta_RUNBusy" />
+    <SubObject Include="FB_LST.Always" />
+    <SubObject Include="FB_LST.Always" />
+    <SubObject Include="FB_LST.CtrlInit" />
+    <SubObject Include="FB_LST.FB_init" />
+    <SubObject Include="FB_LST.getCmdState" />
+    <SubObject Include="FB_LST.getCtrlSIf" />
+    <SubObject Include="FB_LST.IoInBridge" />
+    <SubObject Include="FB_LST.IoOutBridge" />
+    <SubObject Include="FB_LST.StateMachine" />
+    <SubObject Include="FB_LST.sta_ERROR" />
+    <SubObject Include="FB_LST.sta_ERRORQuit" />
+    <SubObject Include="FB_LST.sta_OFF" />
+    <SubObject Include="FB_LST.sta_OFFBusy" />
+    <SubObject Include="FB_LST.sta_PON" />
+    <SubObject Include="FB_LST.sta_PONBusy" />
+    <SubObject Include="FB_LST.sta_RUN" />
+    <SubObject Include="FB_LST.sta_RUN" />
+    <SubObject Include="FB_LST.sta_RUNBusy" />
+    <SubObject Include="FB_LST.sta_RUNBusy" />
+    <SubObject Include="FB_LST_1.CtrlInit" />
+    <SubObject Include="FB_LST_1.FB_init" />
+    <SubObject Include="FB_LST_1.getCmdState" />
+    <SubObject Include="FB_LST_1.getCtrlSIf" />
+    <SubObject Include="FB_LST_1.IoInBridge" />
+    <SubObject Include="FB_LST_1.IoOutBridge" />
+    <SubObject Include="FB_LST_1.StateMachine" />
+    <SubObject Include="FB_LST_1.sta_ERROR" />
+    <SubObject Include="FB_LST_1.sta_ERRORQuit" />
+    <SubObject Include="FB_LST_1.sta_OFF" />
+    <SubObject Include="FB_LST_1.sta_OFFBusy" />
+    <SubObject Include="FB_LST_1.sta_PON" />
+    <SubObject Include="FB_LST_1.sta_PONBusy" />
+    <SubObject Include="FB_PTL.CtrlInit" />
+    <SubObject Include="FB_PTL.FB_init" />
+    <SubObject Include="FB_PTL.getCmdState" />
+    <SubObject Include="FB_PTL.getCtrlSIf" />
+    <SubObject Include="FB_PTL.IoInBridge" />
+    <SubObject Include="FB_PTL.IoOutBridge" />
+    <SubObject Include="FB_PTL.StateMachine" />
+    <SubObject Include="FB_PTL.sta_ERROR" />
+    <SubObject Include="FB_PTL.sta_ERRORQuit" />
+    <SubObject Include="FB_PTL.sta_OFF" />
+    <SubObject Include="FB_PTL.sta_OFFBusy" />
+    <SubObject Include="FB_PTL.sta_PON" />
+    <SubObject Include="FB_PTL.sta_PONBusy" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="BaseElements.tmc">
+      <SubType>Content</SubType>
+    </Content>
+  </ItemGroup>
+  <ProjectExtensions />
+  <!-- 
+   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug\</OutputPath>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Release\</OutputPath>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+-->
+</Project>

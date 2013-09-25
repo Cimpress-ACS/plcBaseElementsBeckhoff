@@ -1,0 +1,23 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <DUT Name="T_RFD_Error" Id="{dd9f466c-845d-4e6a-aa70-0b0f9512822a}">
+    <Declaration><![CDATA[TYPE T_RFD_Error :
+STRUCT
+	/// Reset failure
+	bolErrAck: BOOL;
+	/// atleast one failure active
+	bolErrorActive: BOOL;
+	/// error at communication card
+	bolComError: BOOL;
+	bolProtcolError: BOOL;
+	/// Error with RF ID Tag
+	bolRFIDError: BOOL;
+	/// Error at setting of the communication Card (SDO Write)
+	bolSDOError: BOOL;
+	/// information to Communication Card error
+	udiErrorID: UDINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

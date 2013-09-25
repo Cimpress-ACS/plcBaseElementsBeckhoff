@@ -1,0 +1,26 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+  <DUT Name="T_StateWord" Id="{686b79f1-4a31-4865-bdd7-0e5ad042dd57}">
+    <Declaration><![CDATA[TYPE T_StateWord :
+STRUCT
+	///Acknowledge the datachange of this Command bit
+	bolTransmitAccepted: BOOL;
+	///New Datat at the input
+	bolReceiveRequest: BOOL;
+	///0=Ready for Data exchange; 1=initialisation of the clam
+	bolInputAccepted: BOOL;
+	///Input Buffer is full, all new arriveing data lost
+	bolBufferFull: BOOL;
+	///Parity Error occured
+	bolParityErr: BOOL;
+	///Framing Error occured
+	bolFramingErr: BOOL;
+	///Overrun Error occured
+	bolOverrunErr: BOOL;
+	///Amounth of the reached Input Bytes
+	usiInLenght: USINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>
