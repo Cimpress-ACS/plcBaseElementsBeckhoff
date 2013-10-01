@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
   <DUT Name="T_Ctrl_SIf_RFW" Id="{d9a4a247-421c-44e7-8bfc-57fcfe0b5511}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_RFW :
 STRUCT
@@ -12,8 +12,10 @@ STRUCT
 	In: T_Ctrl_SIf_RFW_In;
 	///io output
 	Out: T_Ctrl_SIf_RFW_Out;
+	///Data Channel from PLC to Line Controller
+	DtChnToLine: T_Ctrl_SIf_RFW_DtChnToLine;	
 	///alarm number used in this controller
-	Alm: ARRAY[1..5] OF T_Ctrl_Alm;
+	Alm: ARRAY[1..6] OF T_Ctrl_Alm;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

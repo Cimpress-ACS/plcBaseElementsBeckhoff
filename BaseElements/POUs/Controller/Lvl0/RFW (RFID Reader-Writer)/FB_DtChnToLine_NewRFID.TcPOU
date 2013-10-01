@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
   <POU Name="FB_DtChnToLine_NewRFID" Id="{d2424dfa-b7d9-443b-93a4-71c9c3c9f6a5}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_DtChnToLine_NewRFID
 VAR_INPUT
@@ -74,7 +74,7 @@ History:
 Version		Date			Author		Comment
 ---------------------------------------------------------------------------------------------------
 0.00.1		26.08.2013		AVM/PRE		Start history
-
+0.00.2		30.09.2013		AVM/PRE		Date and time with string, not with DT Type
 
 ___________________________________________________________________________________________________*)
 
@@ -105,7 +105,7 @@ CASE intStatemachine OF
 	cSTA_SUB_Data_SendData:	
 		pSIf^.DtChnToLine.stNewRfid.uliTagID := aBuffer[intPBufferOutput].uliTagID;
 		pSIf^.DtChnToLine.stNewRfid.strID := aBuffer[intPBufferOutput].strID;
-		pSIf^.DtChnToLine.stNewRfid.dtTimestamp := aBuffer[intPBufferOutput].dtTimestamp;
+		pSIf^.DtChnToLine.stNewRfid.strTimestamp := aBuffer[intPBufferOutput].strTimestamp;
 		pSIf^.DtChnToLine.stNewRfid.intDataState := cDataState_Ready;
 		intStatemachine := cSTA_SUB_Data_Acknowledge;	
 		
@@ -113,7 +113,7 @@ CASE intStatemachine OF
 		IF pSIf^.DtChnToLine.stNewRfid.intDataState = cDataState_DONE THEN
 			// Data read from Line Controller
 			// Reset Buffer Element
-			aBuffer[intPBufferOutput].dtTimestamp := DINT_TO_DT(0);
+			aBuffer[intPBufferOutput].strTimestamp := '';
 			aBuffer[intPBufferOutput].intDataState := 0;
 			aBuffer[intPBufferOutput].uliTagID := 0;
 			aBuffer[intPBufferOutput].strID := '';
@@ -167,7 +167,7 @@ IF ((intPBufferInput + 1) = intPBufferOutput) OR ((intPBufferInput = cDtChnBuffe
 ELSE
 	aBuffer[intPBufferInput].uliTagID := In_uliTagID;
 	aBuffer[intPBufferInput].strID := In_strID;
-	aBuffer[intPBufferInput].dtTimestamp := dtActualTime;
+	aBuffer[intPBufferInput].strTimestamp := DT_TO_STRING(dtActualTime);
 	IF intPBufferInput < cDtChnBuffer THEN
 		intPBufferInput := intPBufferInput + 1;
 	ELSE

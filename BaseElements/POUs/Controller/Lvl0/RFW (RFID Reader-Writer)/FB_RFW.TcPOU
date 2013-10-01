@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
   <POU Name="FB_RFW" Id="{d13514ee-e1c4-4d04-872e-3bccbbe8ba69}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_RFW EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -15,6 +15,8 @@ VAR
 	uinDataAdress: UINT;
 	/// Lengh of data to read or write
 	uinDataLengh: UINT;
+	/// old Tag ID to know a new RFID Tag is on antenna
+	uliTagID_old : ULINT;
 	/// Temporary Help Variable
 	usiTemp: USINT;
 	/// Temporary Help Variable
@@ -32,6 +34,9 @@ VAR
 	intPositionPoint: INT;
 	/// Temporary Help Variable to save to position of the - in the string
 	intPositionSign: INT;
+	/// Data Channel to Line new RFID Tag
+	fbDtChnToLine_NewRFID : FB_DtChnToLine_NewRFID;
+	intDtChnToLineState :INT;	
 END_VAR
 VAR CONSTANT
 	///sub States for RUN Function
@@ -65,6 +70,7 @@ Version		Date			Author		Comment
 0.00.1		09.07.2013		AVME/PRE	Start history
 0.00.2		19.09.2013		AVME/PRE	Implement new Base Concept
 0.00.3		24.09.2013		AVME/KVO	Parameter init from element controller to driver
+0.00.4		01.10.2013		AVME/PRE	Insert DataChanel to Line
 ___________________________________________________________________________________________________*)
 
 
@@ -314,7 +320,8 @@ SIf.Alm[4].eAlmClass := E_AlmClass.TSTOP;
 SIf.Alm[4].strText := 'timeout wait on Data';
 SIf.Alm[5].eAlmClass := E_AlmClass.TSTOP;
 SIf.Alm[5].strText := 'Command for this type of RFID not possible';
-
+SIf.Alm[6].eAlmClass := E_AlmClass.INFO;
+SIf.Alm[6].strText := 'Data Channel Error Send Data';
 
 //*******************************************************************************
 // initial values
@@ -332,7 +339,8 @@ SIf.Par.udiWriteTime_ms := 300000;
 SIf.Cfg.eTyp := E_Typ_RFW.RF382R;
 SIf.Cfg.stNetId := '192.168.2.123.1.1'; //PLC NetId
 SIf.Cfg.uinSlaveAddr := 1039; //Io card Ethercat adress 
-SIf.Cfg.bolGetTrayIDAuto := FALSE;]]></ST>
+SIf.Cfg.bolGetTrayIDAuto := FALSE;
+SIf.Cfg.bolDtChToLine_send := TRUE;]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_WRITEBusy" Id="{3c4c8ac3-21d1-4748-b2e5-cdc99ef592dc}">
@@ -623,6 +631,24 @@ SIf.Cfg.bolGetTrayIDAuto := FALSE;]]></ST>
 			
 		END_IF
 		
+		IF uliTagID_old <> SIf.Cur.stData.uliTagID THEN
+			IF SIf.Cfg.bolDtChToLine_send = TRUE THEN
+				IF SIf.Cfg.bolGetTrayIDAuto THEN
+					intDtChnToLineState	:= fbDtChnToLine_NewRFID.Creat(In_uliTagID:= SIf.Cur.stData.uliTagID, In_strID:= SIf.Cur.stData.strTrayID);
+				ELSE
+					intDtChnToLineState	:= fbDtChnToLine_NewRFID.Creat(In_uliTagID:= SIf.Cur.stData.uliTagID, In_strID:= SIf.Cur.stData.strTagID);						
+				END_IF
+				IF intDtChnToLineState >= 0 THEN
+					uliTagID_old := SIf.Cur.stData.uliTagID;
+				ELSE
+					// Set Alarm: SIf.Alm[6].strText := 'Data Channel Error Send Data';
+					//g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,6,intDtChnToLineState,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);					
+				END_IF
+			ELSE
+				uliTagID_old := SIf.Cur.stData.uliTagID;
+			END_IF		
+		END_IF
+		
 				
 		// State Change Condition
 		IF (pRFD_SIf^.stErr.bolErrorActive = TRUE) THEN  
@@ -830,6 +856,14 @@ SIf.Cfg.bolGetTrayIDAuto := FALSE;]]></ST>
 IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 	pRFD_SIf^.stCur.pData := ADR(SIf.Cur.abytData[0]);
 	SIf.Cur.bolPresent := pRFD_SIf^.stStatus.bolPresent;
+	
+	fbDtChnToLine_NewRFID.pSIf := ADR(SIf);
+	fbDtChnToLine_NewRFID.bolResetError := CIf.Job.bolAlmReset;
+	fbDtChnToLine_NewRFID();
+	IF fbDtChnToLine_NewRFID.intError <> 0 THEN
+		// Set Alarm: SIf.Alm[6].strText := 'Data Channel Error Send Data';
+		//g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,6,fbDtChnToLine_NewRFID.intError,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);	
+	END_IF
 END_IF
 
 // config driver
