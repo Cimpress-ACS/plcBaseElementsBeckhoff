@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
   <POU Name="FB_RFD" Id="{45fa8d34-3730-4fa9-aa96-e7e273ead233}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_RFD
 VAR
@@ -556,7 +556,7 @@ SIf.stCfg.usiFtimSetting := E_Typ_Ftim.RF300;
 
 // Communication Settings
 SIf.stCfg.eTyp := E_Typ_RFW.RF310R;
-SIf.stCfg.uinBaudrate := UINT_TO_USINT(E_Typ_Baudrate.baud_57600);
+SIf.stCfg.uinBaudrate := INT_TO_USINT(E_Typ_Baudrate.baud_57600);
 SIf.stCfg.stNetId := '192.168.70.26.3.1';
 SIf.stCfg.uinSlaveAddr := 1002;]]></ST>
       </Implementation>

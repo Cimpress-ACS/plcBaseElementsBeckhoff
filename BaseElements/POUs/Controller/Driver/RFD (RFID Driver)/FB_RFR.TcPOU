@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
   <POU Name="FB_RFR" Id="{69c60fe8-63b9-4ceb-aa9e-89eb04e1522c}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_RFR
 VAR
@@ -127,7 +127,7 @@ stStateMachine.intStateLastCycle  := cRFD_CMD_DONE; //EntryStop of power BASE_PL
 
 // Communication Settings
 SIf.stCfg.eTyp := E_Typ_RFW.RF382R;
-SIf.stCfg.uinBaudrate := UINT_TO_USINT(E_Typ_Baudrate.baud_38400);
+SIf.stCfg.uinBaudrate := INT_TO_USINT(E_Typ_Baudrate.baud_38400);
 SIf.stCfg.stNetId := '192.168.70.26.3.1';
 SIf.stCfg.uinSlaveAddr := 1002;]]></ST>
       </Implementation>
