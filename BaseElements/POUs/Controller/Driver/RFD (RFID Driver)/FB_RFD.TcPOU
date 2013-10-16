@@ -853,8 +853,11 @@ SIf.strCmd := THIS^.getCmdState(intCmdState:=SIf.intCmd,bolState:=FALSE);
 
 			// original set parameter to RFID
 			IF bolInitComDone=FALSE THEN
-				stSubStateMachine.intState := cRFD_SUB_SetBaudrate;		// First Time set Baudrate and communication Settings
-				stSubStateMachine.intStateNext := cRFD_SUB_SetBaudrate;		// First Time set Baudrate and communication Settings
+				//stSubStateMachine.intState := cRFD_SUB_SetBaudrate;		// First Time set Baudrate and communication Settings
+				//stSubStateMachine.intStateNext := cRFD_SUB_SetBaudrate;		// First Time set Baudrate and communication Settings
+				// pre 2013-10-11 Not setting Baudrate because this is done in HW Configuration
+				stSubStateMachine.intState := cRFD_SUB_ClearBuffer;
+				stSubStateMachine.intStateNext := cRFD_SUB_ClearBuffer;
 			ELSE
 				stSubStateMachine.intState := cRFD_SUB_ClearBuffer;
 				stSubStateMachine.intStateNext := cRFD_SUB_ClearBuffer;
