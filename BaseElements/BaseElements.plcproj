@@ -15,8 +15,9 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.0.4</ProjectVersion>
+    <ProjectVersion>0.0.0.5</ProjectVersion>
     <Released>True</Released>
+    <Description>0.0.0.5 - Added the UMC and VPC controller</Description>
     <!--    <OutputType>Exe</OutputType>
     <RootNamespace>MyApplication</RootNamespace>
     <AssemblyName>MyApplication</AssemblyName>-->
@@ -127,6 +128,90 @@
     <Compile Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29\T_RFW.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]\E_ALM_UMC.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]\E_CFG_UMC.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]\E_TURN_DIRECTION.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]\E_UMC_MOTOR_STATUS.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]\FB_UMC.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]\T_Ctrl_SIf_UMC.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]\T_Ctrl_SIf_UMC_Cfg.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]\T_Ctrl_SIf_UMC_Cur.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]\T_Ctrl_SIf_UMC_Ilk.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]\T_Ctrl_SIf_UMC_In.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]\T_Ctrl_SIf_UMC_Out.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]\T_Ctrl_SIf_UMC_Par.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]\T_UMC_Lenze_Control.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]\T_UMC_Lenze_Status.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]\UMC_CmdState.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]\U_UMC_Lenze_Control.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]\U_UMC_Lenze_Status.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\VPC [Vacuum Pump Controller]\E_ALM_VPC.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\VPC [Vacuum Pump Controller]\E_CFG_VPC.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\VPC [Vacuum Pump Controller]\FB_VPC.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\VPC [Vacuum Pump Controller]\T_Ctrl_SIf_VPC.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\VPC [Vacuum Pump Controller]\T_Ctrl_SIf_VPC_Cfg.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\VPC [Vacuum Pump Controller]\T_Ctrl_SIf_VPC_Cur.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\VPC [Vacuum Pump Controller]\T_Ctrl_SIf_VPC_Ilk.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\VPC [Vacuum Pump Controller]\T_Ctrl_SIf_VPC_In.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\VPC [Vacuum Pump Controller]\T_Ctrl_SIf_VPC_Out.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\VPC [Vacuum Pump Controller]\T_Ctrl_SIf_VPC_Par.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\VPC [Vacuum Pump Controller]\VPC_CmdState.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Version\Global_Version.TcGVL">
       <SubType>Code</SubType>
     </Compile>
@@ -136,6 +221,8 @@
     <Folder Include="POUs\Controller\" />
     <Folder Include="POUs\Controller\Driver\RFD %28RFID Driver%29\" />
     <Folder Include="POUs\Controller\Lvl0\" />
+    <Folder Include="POUs\Controller\Lvl0\VPC [Vacuum Pump Controller]" />
+    <Folder Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]" />
     <Folder Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29" />
     <Folder Include="POUs\Controller\Lvl2\" />
     <Folder Include="POUs\Controller\Driver" />
@@ -163,7 +250,7 @@
     </PlaceholderReference>
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_PLC,0.3.2.0,Vistaprint">
+    <LibraryReference Include="Base_PLC,newest,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_EtherCAT,3.3.0.0,Beckhoff Automation GmbH">

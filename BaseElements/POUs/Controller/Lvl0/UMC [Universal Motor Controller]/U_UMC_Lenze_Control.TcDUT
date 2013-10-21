@@ -1,0 +1,12 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="U_UMC_Lenze_Control" Id="{ee731394-96a1-4716-a04f-7fd149420a24}">
+    <Declaration><![CDATA[TYPE U_UMC_Lenze_Control :
+UNION
+	Output		: UINT;
+	Data		: T_UMC_Lenze_Control;
+END_UNION
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

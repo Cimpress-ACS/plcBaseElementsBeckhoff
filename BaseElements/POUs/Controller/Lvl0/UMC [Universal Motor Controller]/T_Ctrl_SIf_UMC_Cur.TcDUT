@@ -1,0 +1,20 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_UMC_Cur" Id="{79579b77-0a5c-4a94-86ce-53943095d635}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_UMC_Cur :
+STRUCT	
+	/// Actual Turning Direction
+	eDirection								: E_TURN_DIRECTION;
+	/// Actual speed as output 16384 = 100% of L-C11 (1500RPM)
+	uinSpeedOuput							: UINT;
+	/// Actual speed as output in [rpm]
+	uinSpeed_rpm							: UINT;
+	/// Motor Limit as Output value
+	uinSpeedLimit							: UINT;
+	/// Motor reset retries
+	uinMotorResetCnt					: UINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,24 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_UMC" Id="{853f656d-7b87-4868-8ec7-dbe013149948}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_UMC :
+STRUCT
+	///configuration
+	Cfg: T_Ctrl_SIf_UMC_Cfg;
+	///parameter
+	Par: T_Ctrl_SIf_UMC_Par;
+	///current values
+	Cur: T_Ctrl_SIf_UMC_Cur;
+	///io input
+	In: T_Ctrl_SIf_UMC_In;
+	///io output
+	Out: T_Ctrl_SIf_UMC_Out;
+	///alarm number used in this controller
+	Alm: ARRAY[1..MAX_E_ALM_UMC] OF T_Ctrl_Alm;
+	///interlock of output/movements
+	Ilk: T_Ctrl_SIf_UMC_Ilk;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,23 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="E_UMC_MOTOR_STATUS" Id="{a00c482e-a1d9-4f83-b34f-446df71818fe}">
+    <Declaration><![CDATA[TYPE E_UMC_MOTOR_STATUS :
+(
+	FirmwareUpdate 		:= 0,
+	Init				:= 1,
+	MotorIdent			:= 2,
+	ReadyToSwitchON		:= 3,
+	SwitchedON			:= 4,
+	OperationEnabled	:= 5,
+	Warning				:= 6,
+	Trouble				:= 7,
+	Fault				:= 8,
+	TroubleQSP			:= 9,
+	SafeTorqueOff		:= 10,
+	SystemFail			:= 11,
+	MAX_E_UMC_MOTOR_STATUS
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,14 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_VPC_In" Id="{795b3629-5b6f-4e97-ae8f-a8fc1eb2d28f}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_VPC_In :
+STRUCT
+	/// 0 = Vacuum is NOK; 1 = Vacuum is Ok --> Vacuum Pump is probably running
+	bolVacuumOk				: BASE_PLC.T_Ctrl_IoBool;
+	/// Pump has a feedback
+	bolPumpOn				: BASE_PLC.T_Ctrl_IoBool;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

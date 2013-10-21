@@ -1,0 +1,18 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_VPC_Par" Id="{52622a75-45f7-47dc-bd6c-9f66efa9aa4f}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_VPC_Par :
+STRUCT
+	/// [ms] time the pump has time to go from OFF to ON
+	udiVacuumPumpTime_ms				: UDINT;
+	/// [ms] vacuum stabilization time if no vacuum sensor is available
+	udiVacuumStabilizationTime_ms		: UDINT;
+	/// [ms] time to wait until the vacuum sensor off is acknowledged as off.
+	udiVacuumSensorDebounceTime_ms		: UDINT;
+	/// [ms] simulation time for Vacuum Pump ON
+	udiSimVacuumPumpOnTime_ms			: UDINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

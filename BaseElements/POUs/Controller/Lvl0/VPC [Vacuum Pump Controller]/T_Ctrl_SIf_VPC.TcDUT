@@ -1,0 +1,24 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_VPC" Id="{a6b281d7-742d-4faf-bfb4-49a6e5ac6322}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_VPC :
+STRUCT
+	///configuration
+	Cfg: T_Ctrl_SIf_VPC_Cfg;
+	///parameter
+	Par: T_Ctrl_SIf_VPC_Par;
+	///current values
+	Cur: T_Ctrl_SIf_VPC_Cur;
+	///io input
+	In: T_Ctrl_SIf_VPC_In;
+	///io output
+	Out: T_Ctrl_SIf_VPC_Out;
+	///alarm number used in this controller
+	Alm: ARRAY[1..E_ALM_VPC.MAX_E_ALM_VPC] OF T_Ctrl_Alm;
+	///interlock of output/movements
+	Ilk: T_Ctrl_SIf_VPC_Ilk;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

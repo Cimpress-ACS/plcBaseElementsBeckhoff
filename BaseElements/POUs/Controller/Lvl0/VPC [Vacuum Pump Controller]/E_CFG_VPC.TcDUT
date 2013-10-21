@@ -1,0 +1,15 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="E_CFG_VPC" Id="{5608cec9-c1c7-4f6f-980c-656a02cd221c}">
+    <Declaration><![CDATA[TYPE E_CFG_VPC :
+(
+	/// Only Vacuum Motor with no feedback
+	Standard					:= 0,
+	VaccumSensor				:= 1,
+	MotorFeedback				:= 2,
+	MAY_E_CFG_CYL
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

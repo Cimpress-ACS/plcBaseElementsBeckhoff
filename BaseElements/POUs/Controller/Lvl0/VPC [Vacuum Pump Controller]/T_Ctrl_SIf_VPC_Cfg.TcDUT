@@ -1,0 +1,12 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_VPC_Cfg" Id="{1dee7cde-c5ef-47a6-bc46-81e0cd8ddff8}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_VPC_Cfg :
+STRUCT
+	VacuumPumpFeedback			: BOOL;				// VacuumPump has a feedback
+	VacuumSensorAvailable		: BOOL;				// Vacuum Sensor available
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

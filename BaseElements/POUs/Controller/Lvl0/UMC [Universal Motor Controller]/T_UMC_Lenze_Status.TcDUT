@@ -1,0 +1,26 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_UMC_Lenze_Status" Id="{d6cc818c-48ee-4793-8e96-a356d1963e5c}">
+    <Declaration><![CDATA[TYPE T_UMC_Lenze_Status :
+STRUCT
+	FreeStatusBit0			: BIT;
+	PowerDisabled_IMP		: BIT;
+	ImaxActive				: BIT;
+	SpeedSetReached			: BIT;
+	SpeedActEqualSet		: BIT;
+	NActualCompare			: BIT;
+	ActSpeedIsZero			: BIT;
+	ControllerInhibit		: BIT;
+	Status_1				: BIT;
+	Status_2				: BIT;
+	Status_3				: BIT;
+	Status_4				: BIT;
+	Warning					: BIT;
+	Trouble					: BIT;
+	SpeedCcw				: BIT;
+	DriveReady				: BIT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

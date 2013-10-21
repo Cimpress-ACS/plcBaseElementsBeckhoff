@@ -1,0 +1,16 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_UMC_In" Id="{83dfa7d0-2e20-4749-a793-9db1285c3cad}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_UMC_In :
+STRUCT
+	/// Status Word of Lenze
+	intStatus				: Base_PLC.T_Ctrl_IoUint;
+	/// Motor actual speed
+	intMotorActualSpeed		: Base_PLC.T_Ctrl_IoUint;
+	/// Motor actual speed setpoint 
+	intMotorSetSpeed		: Base_PLC.T_Ctrl_IoUint;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

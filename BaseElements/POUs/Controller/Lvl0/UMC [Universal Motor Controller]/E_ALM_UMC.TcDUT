@@ -1,0 +1,18 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="E_ALM_UMC" Id="{1dc2b6bb-ec31-4f5e-a1fc-10724ff27799}">
+    <Declaration><![CDATA[TYPE E_ALM_UMC :
+(
+	MotorOnTimeout 					:= 1,
+	MotorError						:= 2,
+	MotorWarning					:= 3,
+	MotorOverCurrent				:= 4,
+	MotorNotReady					:= 5,
+	DirectionParameterOverflow		:= 6,
+	SpeedOverLimit					:= 7,
+	MAX_E_ALM_UMC
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

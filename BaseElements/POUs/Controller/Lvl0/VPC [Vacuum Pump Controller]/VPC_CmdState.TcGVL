@@ -1,0 +1,9 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <GVL Name="VPC_CmdState" Id="{3cafe79f-fa4f-4674-b801-a9597a583bd0}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	///ctrl specific states definitions
+	cSTA_VPC_StabilizeBusy: INT := 201;
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

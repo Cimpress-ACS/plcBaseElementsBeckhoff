@@ -1,0 +1,10 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_VPC_Ilk" Id="{6c772d6d-1891-4e4d-ae3b-c60994dc1743}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_VPC_Ilk :
+STRUCT
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>
