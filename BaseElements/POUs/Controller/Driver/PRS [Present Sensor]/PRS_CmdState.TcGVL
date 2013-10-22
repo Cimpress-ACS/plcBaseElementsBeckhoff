@@ -1,0 +1,15 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <GVL Name="PRS_CmdState" Id="{01651ab3-2c2c-4701-adfc-9d38c8613551}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	///ctrl commands definitions
+	///specific commands >200 - every command has to be a even number
+;
+	///ctrl specific states definitions
+	cSTA_PRESENTBusy  			: INT := 201;
+	cSTA_PRESENT      			: INT := 202;
+	cSTA_ABSENTBusy 			: INT := 203;
+	cSTA_ABSENT			     	: INT := 204;
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

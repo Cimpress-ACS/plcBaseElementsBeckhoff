@@ -1,0 +1,24 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_PRS" Id="{e69bb677-6853-4824-9f34-f19f504014af}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_PRS :
+STRUCT
+	///configuration
+	Cfg: T_Ctrl_SIf_PRS_Cfg;
+	///parameter
+	Par: T_Ctrl_SIf_PRS_Par;
+	///current values
+	Cur: T_Ctrl_SIf_PRS_Cur;
+	///io input
+	In: T_Ctrl_SIf_PRS_In;
+	///io output
+	Out: T_Ctrl_SIf_PRS_Out;
+	///alarm number used in this controller
+	Alm: ARRAY[1..E_ALM_PRS.MAX_E_ALM_PRS] OF T_Ctrl_Alm;
+	///interlock of output/movements
+	Ilk: T_Ctrl_SIf_PRS_Ilk;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

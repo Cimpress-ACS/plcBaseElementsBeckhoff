@@ -1,0 +1,12 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_PRS_In" Id="{5626a472-a15a-4f04-a51f-80d3b3aec087}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_PRS_In :
+STRUCT
+	/// Input Sensor is present
+	bolPresent					: BASE_PLC.T_Ctrl_IoBool;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

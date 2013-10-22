@@ -1,0 +1,12 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="E_ALM_PRS" Id="{aff47857-208f-4a05-ade5-9bdd57b44296}">
+    <Declaration><![CDATA[TYPE E_ALM_PRS :
+(
+	Dummy		 		:= 1,
+	MAX_E_ALM_PRS
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

@@ -15,14 +15,45 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.0.5</ProjectVersion>
+    <ProjectVersion>0.0.0.6</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.0.5 - Added the UMC and VPC controller</Description>
+    <Description>0.0.0.6 - Added the PRS controller
+0.0.0.5 - Added the UMC and VPC controller</Description>
     <!--    <OutputType>Exe</OutputType>
     <RootNamespace>MyApplication</RootNamespace>
     <AssemblyName>MyApplication</AssemblyName>-->
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="POUs\Controller\Driver\PRS [Present Sensor]\E_ALM_PRS.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\PRS [Present Sensor]\FB_PRS.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\PRS [Present Sensor]\PRS_CmdState.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\PRS [Present Sensor]\T_Ctrl_SIf_PRS.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\PRS [Present Sensor]\T_Ctrl_SIf_PRS_Cfg.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\PRS [Present Sensor]\T_Ctrl_SIf_PRS_Cur.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\PRS [Present Sensor]\T_Ctrl_SIf_PRS_Ilk.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\PRS [Present Sensor]\T_Ctrl_SIf_PRS_In.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\PRS [Present Sensor]\T_Ctrl_SIf_PRS_Out.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\PRS [Present Sensor]\T_Ctrl_SIf_PRS_Par.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\Controller\Driver\RFD %28RFID Driver%29\E_Typ_Baudrate.TcDUT">
       <SubType>Code</SubType>
     </Compile>
@@ -219,6 +250,7 @@
   <ItemGroup>
     <Folder Include="POUs\" />
     <Folder Include="POUs\Controller\" />
+    <Folder Include="POUs\Controller\Driver\PRS [Present Sensor]" />
     <Folder Include="POUs\Controller\Driver\RFD %28RFID Driver%29\" />
     <Folder Include="POUs\Controller\Lvl0\" />
     <Folder Include="POUs\Controller\Lvl0\VPC [Vacuum Pump Controller]" />
