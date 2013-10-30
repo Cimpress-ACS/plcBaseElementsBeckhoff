@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.0.7</ProjectVersion>
+    <ProjectVersion>0.0.0.8</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.0.7 - Updated to newest tc2_utilities
+    <Description>0.0.0.8 - Update to Base PLC 0.3.3.0
+0.0.0.7 - Updated to newest tc2_utilities
 0.0.0.6 - Added the PRS controller
 0.0.0.5 - Added the UMC and VPC controller</Description>
     <!--    <OutputType>Exe</OutputType>
@@ -283,7 +284,10 @@
     </PlaceholderReference>
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_PLC,newest,Vistaprint">
+    <LibraryReference Include="Base_Elements,0.0.0.8,Vistaprint">
+      <Namespace>Base_Elements</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Base_PLC,0.3.3.0,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_EtherCAT,3.3.0.0,Beckhoff Automation GmbH">
