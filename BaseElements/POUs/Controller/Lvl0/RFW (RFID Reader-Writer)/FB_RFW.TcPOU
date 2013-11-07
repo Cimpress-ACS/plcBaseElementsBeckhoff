@@ -141,7 +141,7 @@ END_IF;
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
 		ELSIF (me.StateMachine.udiTimeInState_ms > SIf.Par.udiWriteTime_ms) THEN
 			// SIf.Alm[4].strText := 'timeout wait on Data';
-			Global.g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,4,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,4,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
 		ELSIF (pRFD_SIf^.intCmd = RFD_Cmd.cRFD_CMD_DONE) THEN
 			me.StateMachine.intStateNext := cSTA_READ;
@@ -486,7 +486,7 @@ SIf.Cfg.bolDtChToLine_send := TRUE;]]></ST>
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
 		ELSIF (me.StateMachine.udiTimeInState_ms > SIf.Par.udiWriteTime_ms) THEN
 			// SIf.Alm[4].strText := 'timeout wait on Data';
-			Global.g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,4,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,4,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
 		ELSIF (pRFD_SIf^.intCmd = RFD_Cmd.cRFD_CMD_DONE) THEN
 			me.StateMachine.intStateNext := cSTA_WRITE;
@@ -642,7 +642,7 @@ SIf.Cfg.bolDtChToLine_send := TRUE;]]></ST>
 					uliTagID_old := SIf.Cur.stData.uliTagID;
 				ELSE
 					// Set Alarm: SIf.Alm[6].strText := 'Data Channel Error Send Data';
-					//g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,6,intDtChnToLineState,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);					
+					//pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,6,intDtChnToLineState,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);					
 				END_IF
 			ELSE
 				uliTagID_old := SIf.Cur.stData.uliTagID;
@@ -655,7 +655,7 @@ SIf.Cfg.bolDtChToLine_send := TRUE;]]></ST>
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
 		ELSIF ((me.intCmd=cCMD_READ) OR (me.intCmd=cCMD_WRITE)) AND (SIf.Cfg.eTyp = E_Typ_RFW.RF382R) THEN
 			// SIf.Alm[5].strText := 'Command for this type of RFID not possible';
-			Global.g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,5,UDINT_TO_DINT(pRFD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);			
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,5,UDINT_TO_DINT(pRFD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);			
 		ELSIF (me.intCmd=cCMD_READ) THEN
 			me.StateMachine.intStateNext := cSTA_READBusy;
 		ELSIF(me.intCmd=cCMD_WRITE) THEN
@@ -702,7 +702,7 @@ SIf.Cfg.bolDtChToLine_send := TRUE;]]></ST>
 			me.StateMachine.intStateNext := cSTA_READBusy;
 		ELSIF ((me.intCmd=cCMD_READ) OR (me.intCmd=cCMD_WRITE)) AND (SIf.Cfg.eTyp = E_Typ_RFW.RF382R) THEN
 			// SIf.Alm[5].strText := 'Command for this type of RFID not possible';
-			Global.g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,5,UDINT_TO_DINT(pRFD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);	
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,5,UDINT_TO_DINT(pRFD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);	
 		ELSIF(me.intCmd=cCMD_WRITE) THEN
 			me.StateMachine.intStateNext := cSTA_WRITEBusy;
 		END_IF
@@ -738,13 +738,13 @@ SIf.Cfg.bolDtChToLine_send := TRUE;]]></ST>
 		
 		IF (pRFD_SIf^.stErr.bolComError = TRUE) OR (pRFD_SIf^.stErr.bolProtcolError = TRUE) THEN
 			// SIf.Alm[1].strText := 'Communication Error between PLC and RFID Reader'; 
-			Global.g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,1,UDINT_TO_DINT(pRFD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,1,UDINT_TO_DINT(pRFD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 		ELSIF pRFD_SIf^.stErr.bolSDOError = TRUE THEN
 			// SIf.Alm[2].strText := 'Initialisation Error from RFID Reader';
-			Global.g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,2,UDINT_TO_DINT(pRFD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,2,UDINT_TO_DINT(pRFD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 		ELSIF (pRFD_SIf^.stErr.bolRFIDError = TRUE) THEN
 			// SIf.Alm[3].strText := 'RFID Tag Error';
-			Global.g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,3,UDINT_TO_DINT(pRFD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,3,UDINT_TO_DINT(pRFD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 		END_IF
 		
 		
@@ -791,7 +791,7 @@ SIf.Cfg.bolDtChToLine_send := TRUE;]]></ST>
 			me.StateMachine.intStateNext := cSTA_RUNBusy;
 		ELSIF ((me.intCmd=cCMD_READ) OR (me.intCmd=cCMD_WRITE)) AND (SIf.Cfg.eTyp = E_Typ_RFW.RF382R) THEN
 			// SIf.Alm[5].strText := 'Command for this type of RFID not possible';
-			Global.g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,5,UDINT_TO_DINT(pRFD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);			
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,5,UDINT_TO_DINT(pRFD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);			
 		ELSIF(me.intCmd=cCMD_WRITE) THEN
 			me.StateMachine.intStateNext := cSTA_WRITEBusy;
 		ELSIF(me.intCmd=cCMD_READ) THEN
@@ -862,7 +862,7 @@ IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 	fbDtChnToLine_NewRFID();
 	IF fbDtChnToLine_NewRFID.intError <> 0 THEN
 		// Set Alarm: SIf.Alm[6].strText := 'Data Channel Error Send Data';
-		//g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,6,fbDtChnToLine_NewRFID.intError,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);	
+		//pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,6,fbDtChnToLine_NewRFID.intError,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);	
 	END_IF
 END_IF
 
@@ -974,7 +974,7 @@ END_IF
 				me.StateMachine.intStateNext := cSTA_RUNBusy;
 			ELSIF ((me.intCmd=cCMD_READ) OR (me.intCmd=cCMD_WRITE)) AND (SIf.Cfg.eTyp = E_Typ_RFW.RF382R) THEN
 				// SIf.Alm[5].strText := 'Command for this type of RFID not possible';
-				Global.g_fbAlm_Man.setAlarm(CIf.Info.intCtrlId,5,UDINT_TO_DINT(pRFD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);			
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,5,UDINT_TO_DINT(pRFD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);			
 			ELSIF(me.intCmd=cCMD_READ) THEN
 				me.StateMachine.intStateNext := cSTA_READBusy;
 			ELSIF(me.intCmd=cCMD_WRITE) THEN

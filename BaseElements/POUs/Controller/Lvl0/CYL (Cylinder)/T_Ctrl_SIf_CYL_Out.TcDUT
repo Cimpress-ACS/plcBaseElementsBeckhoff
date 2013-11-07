@@ -1,0 +1,14 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_CYL_Out" Id="{3b004f65-cb6d-45b8-9ae1-390b26ec4067}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_CYL_Out :
+STRUCT
+	///switch valve retract
+	bolRetract: T_Ctrl_IoBool;
+	///switch valve extend
+	bolExtend: T_Ctrl_IoBool;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

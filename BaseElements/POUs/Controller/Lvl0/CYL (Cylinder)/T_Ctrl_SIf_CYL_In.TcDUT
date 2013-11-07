@@ -1,0 +1,14 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_CYL_In" Id="{4601b753-b0b2-4566-871e-c444d9f36dcf}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_CYL_In :
+STRUCT
+	///sensor feedback position extended reached
+	bolExtended: T_Ctrl_IoBool;
+	///sensor feedback position retracted reached
+	bolRetracted: T_Ctrl_IoBool;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

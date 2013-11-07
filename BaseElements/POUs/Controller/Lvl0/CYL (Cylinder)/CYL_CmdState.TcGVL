@@ -1,0 +1,16 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <GVL Name="CYL_CmdState" Id="{1352af2f-7e80-4ea0-bd89-71a4376b7c42}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	///ctrl commands definitions
+	///specific commands >200 - every command has to be a even number
+	cCMD_RETRACT: INT := 202;
+	cCMD_EXTEND: INT := 204;
+	///ctrl specific states definitions
+	cSTA_RETRACTBusy: INT := 201;
+	cSTA_RETRACT: INT := CYL_CmdState.cCMD_RETRACT;
+	cSTA_EXTENDBusy: INT := 203;
+	cSTA_EXTEND: INT := CYL_CmdState.cCMD_EXTEND;
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.0.8</ProjectVersion>
+    <ProjectVersion>0.0.0.9</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.0.8 - Update to Base PLC 0.3.3.0
+    <Description>0.0.0.9 - Add cylinder Level0, Update to Base PLC 0.3.3.2
+0.0.0.8 - Update to Base PLC 0.3.3.0
 0.0.0.7 - Updated to newest tc2_utilities
 0.0.0.6 - Added the PRS controller
 0.0.0.5 - Added the UMC and VPC controller</Description>
@@ -114,6 +115,39 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Controller\Driver\RFD %28RFID Driver%29\T_StateWord.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\CYL %28Cylinder%29\CYL_CmdState.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\CYL (Cylinder)\E_ALM_CYL.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\CYL %28Cylinder%29\E_Typ_CYL.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\CYL %28Cylinder%29\FB_CYL.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\CYL %28Cylinder%29\T_Ctrl_SIf_CYL.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\CYL %28Cylinder%29\T_Ctrl_SIf_CYL_Cfg.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\CYL %28Cylinder%29\T_Ctrl_SIf_CYL_Cur.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\CYL %28Cylinder%29\T_Ctrl_SIf_CYL_Ilk.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\CYL %28Cylinder%29\T_Ctrl_SIf_CYL_In.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\CYL %28Cylinder%29\T_Ctrl_SIf_CYL_Out.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\CYL %28Cylinder%29\T_Ctrl_SIf_CYL_Par.TcDUT">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29\E_Typ_RFW.TcDUT">
@@ -255,6 +289,7 @@
     <Folder Include="POUs\Controller\Driver\PRS [Present Sensor]" />
     <Folder Include="POUs\Controller\Driver\RFD %28RFID Driver%29\" />
     <Folder Include="POUs\Controller\Lvl0\" />
+    <Folder Include="POUs\Controller\Lvl0\CYL %28Cylinder%29" />
     <Folder Include="POUs\Controller\Lvl0\VPC [Vacuum Pump Controller]" />
     <Folder Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]" />
     <Folder Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29" />
@@ -284,10 +319,7 @@
     </PlaceholderReference>
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_Elements,0.0.0.8,Vistaprint">
-      <Namespace>Base_Elements</Namespace>
-    </LibraryReference>
-    <LibraryReference Include="Base_PLC,0.3.3.0,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.3.2,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_EtherCAT,3.3.0.0,Beckhoff Automation GmbH">

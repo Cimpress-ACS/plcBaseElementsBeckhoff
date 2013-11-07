@@ -4,7 +4,7 @@
 (
 	Dummy		 		:= 1,
 	MAX_E_ALM_PRS
-);
+) UINT;
 END_TYPE
 ]]></Declaration>
     <ObjectProperties />
