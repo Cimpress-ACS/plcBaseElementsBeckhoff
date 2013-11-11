@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.0.9</ProjectVersion>
+    <ProjectVersion>0.0.0.10</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.0.9 - Add cylinder Level0, Update to Base PLC 0.3.3.2
+    <Description>0.0.0.10 - Newest Base_PLC added
+0.0.0.9 - Add cylinder Level0, Update to Base PLC 0.3.3.2
 0.0.0.8 - Update to Base PLC 0.3.3.0
 0.0.0.7 - Updated to newest tc2_utilities
 0.0.0.6 - Added the PRS controller
@@ -319,7 +320,7 @@
     </PlaceholderReference>
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_PLC,0.3.3.2,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.3.3,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_EtherCAT,3.3.0.0,Beckhoff Automation GmbH">
