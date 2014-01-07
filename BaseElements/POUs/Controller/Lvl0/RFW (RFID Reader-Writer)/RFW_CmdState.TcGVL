@@ -1,14 +1,17 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
-  <GVL Name="RFW_CmdState" Id="{4469a4c9-a979-465d-a814-f992d5eb5f95}">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <GVL Name="RFW_CmdState" Id="{076eb220-029f-4365-935e-6bd6b509e191}">
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
 	///ctrl commands definitions
 	///specific commands >200 - every command has to be a even number
-	cCMD_READ: INT := 202;
-	cCMD_WRITE: INT := 204;
+	cCMD_ON: INT := 202;
+	cCMD_READ: INT := 204;
+	cCMD_WRITE: INT := 206;
 	///ctrl specific states definitions
-	cSTA_READBusy: INT := 201;
+	cSTA_ONBusy: INT := 201;
+	cSTA_ON: INT := cCMD_ON;
+	cSTA_READBusy: INT := 203;
 	cSTA_READ: INT := cCMD_READ;
-	cSTA_WRITEBusy: INT := 203;
+	cSTA_WRITEBusy: INT := 205;
 	cSTA_WRITE: INT := cCMD_WRITE;
 END_VAR]]></Declaration>
     <ObjectProperties />

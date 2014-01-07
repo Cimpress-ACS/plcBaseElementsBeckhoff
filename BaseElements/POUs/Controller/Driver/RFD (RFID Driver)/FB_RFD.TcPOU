@@ -1,5 +1,5 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <POU Name="FB_RFD" Id="{45fa8d34-3730-4fa9-aa96-e7e273ead233}">
+  <POU Name="FB_RFD" Id="{b594bd4c-d2d6-4c09-8c7a-e195807dfb70}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_RFD
 VAR
 	bolActivate: BOOL := TRUE;
@@ -39,6 +39,8 @@ VAR
 	udiResetCount: UDINT;
 	/// Count Job Tryals
 	udiJobCount: UDINT;
+	/// Time in State ms
+	udiTimeInState_ms: UDINT;
 	/// State information from RF ID Tag
 	bytRFIDState: BYTE;
 	/// driver specific interface
@@ -67,6 +69,8 @@ VAR
 	udiLoopBuffer: UDINT;
 	udiLoopData: UDINT;
 	udiLoopSend: UDINT;
+	fbTimeoutState: TON;
+
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -107,195 +111,7 @@ IF (bolActivate) THEN // cyclic call enabled
 	
 END_IF;]]></ST>
     </Implementation>
-    <Method Name="StateMachine_Service" Id="{0c3e82ee-9f52-4f52-843b-3a8e92ececb3}">
-      <Declaration><![CDATA[METHOD PROTECTED StateMachine_Service : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[
-
-// main statemachine of base controller
-CASE SIf.intServiceCmd OF
-//	cRFD_CMD_MDS: 
-//		THIS^.sJobWriteParameter();
-//	cYAD_SCMD_READ_PARA: 
-//		THIS^.sJobReadParameter();
-//	cYAD_SCMD_RESET_ABSENCODER: 
-//		THIS^.sJobAbsEncReset();
-ELSE
-	usiCaseScmd := 0;
-	
-
-	
-END_CASE;]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="getSIf" Id="{0fec4c18-b2fd-411a-ac80-eaab799ccccb}">
-      <Declaration><![CDATA[METHOD getSIf : POINTER TO T_RFD
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[getSIf := ADR(SIf);]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_WaitForJob" Id="{23960d71-61b3-4880-8bcf-ac4f75db397c}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_WaitForJob : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
-		stStateMachine.intStateLastCycle := stStateMachine.intState;
-		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
-
-		
-		// State Change Condition
-		IF (FALSE) THEN
-			stStateMachine.intStateNext := cRFD_STA_Error;
-		ELSIF (SIf.intCmd=cRFD_CMD_Read) THEN
-			stStateMachine.intStateNext := cRFD_STA_ReadBusy;
-		ELSIF (SIf.intCmd=cRFD_CMD_CTRL_ON) THEN
-			stStateMachine.intStateNext := cRFD_STA_PowerOnBusy;
-		ELSIF (SIf.intCmd=cRFD_CMD_Write) THEN
-			stStateMachine.intStateNext := cRFD_STA_WriteBusy;
-		ELSIF (SIf.intCmd=cRFD_CMD_MDS) THEN
-			stStateMachine.intStateNext := cRFD_STA_MDSBusy;
-		ELSIF (SIf.intCmd=cRFD_CMD_SLG) THEN
-			stStateMachine.intStateNext := cRFD_STA_SLGBusy;
-		ELSIF (SIf.intCmd=cRFD_CMD_CTRL_OFF) THEN
-			stStateMachine.intStateNext := cRFD_STA_OFFBusy;
-		ELSIF (SIf.intCmd=cRFD_STA_CheckBusy) THEN
-			stStateMachine.intStateNext := cRFD_STA_CheckBusy;
-		END_IF
-		
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_CheckBusy" Id="{28aea369-5524-4dec-9aa6-5c9515004091}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_CheckBusy : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
-		stStateMachine.intStateLastCycle := stStateMachine.intState;
-			// Byte 0 => Lenght
-			aTxData[0] := 2;
-			// Byte 1 => Command read 4=single; 14=continious
-			aTxData[1] := 16#FF;
-			// Byte 2 => Spare
-			aTxData[2] := 0;
-						
-			udiComSizeSendData := 3;
-			bolComSend := TRUE;	
-			SIf.stStatus.bolL_UEB := FALSE;
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
-
-		
-		// State Change Condition
-		IF (SIf.stErr.bolErrorActive = TRUE) THEN
-			stStateMachine.intStateNext := cRFD_STA_Error;
-		ELSIF (SIf.stStatus.bolL_UEB = TRUE) THEN
-			stStateMachine.intStateNext := cRFD_STA_WaitForJob;
-		END_IF
-		
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
-		SIf.intCmd := cRFD_CMD_DONE;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_TagInitBusy" Id="{37594d87-d12d-4ca5-992c-5f71f85993d2}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_TagInitBusy : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
-		stStateMachine.intStateLastCycle := stStateMachine.intState;
-		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
-
-		
-		// State Change Condition
-		IF (FALSE) THEN
-			stStateMachine.intStateNext := cRFD_STA_Error;
-		ELSIF (TRUE) THEN
-			stStateMachine.intStateNext := cRFD_STA_WaitForJob;
-		END_IF
-		
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
-		IF SIf.intCmd = stStateMachine.intState THEN
-			SIf.intCmd := cRFD_CMD_DONE;
-		END_IF
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_Off" Id="{4e411b7e-115c-48af-9953-dfb260f8ba8d}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_Off : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
-		stStateMachine.intStateLastCycle := stStateMachine.intState;
-		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
-
-		
-		// State Change Condition
-		IF (FALSE) THEN
-			stStateMachine.intStateNext := cRFD_STA_Error;
-		ELSIF (SIf.intCmd=cRFD_CMD_CTRL_ON) THEN
-			stStateMachine.intStateNext := cRFD_STA_PowerOnBusy;
-		END_IF
-		
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_OffBusy" Id="{717823b1-64df-48e6-aeab-62ecaee5a757}">
+    <Method Name="sta_OffBusy" Id="{03703202-28a8-4d2a-a1b0-5332d30b71cd}">
       <Declaration><![CDATA[METHOD PROTECTED sta_OffBusy : BOOL
 ]]></Declaration>
       <Implementation>
@@ -377,7 +193,258 @@ END_CASE;]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_SLGBusy" Id="{7d6585dc-7f51-449d-b547-1b4b14998895}">
+    <Method Name="FB_init" Id="{3a4f3afc-c211-4c62-93a6-011c55a0a61c}">
+      <Declaration><![CDATA[METHOD FB_init : BOOL
+VAR_INPUT
+	///if TRUE, the retain variables are initialized (warm start / cold start)
+	bInitRetains: BOOL;
+	///if TRUE, the instance afterwards gets moved into the copy code (online change)
+	bInCopyCode: BOOL;
+END_VAR
+VAR
+	udiTaskCnt: UDINT;
+	ii: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SIf.intCmd := cRFD_CMD_DONE;
+SIf.intServiceCmd := cRFD_CMD_DONE; // not used at the moment
+stStateMachine.intStateLastCycle  := cRFD_CMD_DONE; //EntryStop of power BASE_PLC.OFF enable
+
+// Vaild Values into the Configuration
+SIf.stCfg.usiFtimSetting := E_Typ_Ftim.RF300;
+
+// Communication Settings
+SIf.stCfg.eTyp := E_Typ_RFW.RF310R;
+SIf.stCfg.uinBaudrate := INT_TO_USINT(E_Typ_Baudrate.baud_57600);
+SIf.stCfg.stNetId := '192.168.70.26.3.1';
+SIf.stCfg.uinSlaveAddr := 1002;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_MDSBusy" Id="{3ede119d-38cd-4cb9-b505-5d1e5aedf1bb}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_MDSBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+		stStateMachine.intStateLastCycle := stStateMachine.intState;
+			stSubStateMachine.intState := cRFD_SUB_Write1;
+			stSubStateMachine.intStateNext := cRFD_SUB_Write1;
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+		CASE stSubStateMachine.intState OF
+			cRFD_SUB_Write1:
+				// Byte 0 => Lenght
+				aTxData[0] := 5;
+				// Byte 1 => Command read 4=single; 14=continious
+				aTxData[1] := 16#B;
+				// Byte 2 => Spare
+				aTxData[2] := 0;
+				// Byte 3 => Mode
+				aTxData[3] := 3;
+				// Byte 4 => Spare
+				aTxData[4] := 0;
+				// Byte 5 => Spare
+				aTxData[5] := 0; 
+
+						
+				udiComSizeSendData := 6;
+				bolComSend := TRUE;	
+				stSubStateMachine.intState := cRFD_SUB_Wait1;
+		
+			cRFD_SUB_Wait1:
+				IF bolMDSJobDone = TRUE THEN
+					stSubStateMachine.intState := cRFD_SUB_SubStatesEnd;
+					bolMDSJobDone := FALSE;
+				END_IF
+		cRFD_SUB_SubStatesEnd:
+				;
+				
+		END_CASE
+		
+		// State Change Condition
+		IF (SIf.stErr.bolComError = TRUE) OR ((SIf.stErr.bolRFIDError = TRUE) AND (udiJobCount > SIf.stCfg.udiRetry)) THEN
+			stStateMachine.intStateNext := cRFD_STA_Error;
+		ELSIF (SIf.stErr.bolRFIDError = TRUE) THEN
+			udiJobCount := udiJobCount + 1;
+			stStateMachine.intStateLastCycle := 0; // Startcycle again
+		ELSIF (stSubStateMachine.intState = cRFD_SUB_SubStatesEnd) THEN
+			udiJobCount := 0;
+			stStateMachine.intStateNext := cRFD_STA_WaitForJob;
+		END_IF
+		
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		SIf.intCmd := cRFD_CMD_DONE;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_WaitForJob" Id="{4d0b986f-c899-4646-821a-7771a4512614}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_WaitForJob : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+		stStateMachine.intStateLastCycle := stStateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+
+		
+		// State Change Condition
+		IF (FALSE) THEN
+			stStateMachine.intStateNext := cRFD_STA_Error;
+		ELSIF (SIf.intCmd=cRFD_CMD_Read) THEN
+			stStateMachine.intStateNext := cRFD_STA_ReadBusy;
+		ELSIF (SIf.intCmd=cRFD_CMD_CTRL_ON) THEN
+			stStateMachine.intStateNext := cRFD_STA_PowerOnBusy;
+		ELSIF (SIf.intCmd=cRFD_CMD_Write) THEN
+			stStateMachine.intStateNext := cRFD_STA_WriteBusy;
+		ELSIF (SIf.intCmd=cRFD_CMD_MDS) THEN
+			stStateMachine.intStateNext := cRFD_STA_MDSBusy;
+		ELSIF (SIf.intCmd=cRFD_CMD_SLG) THEN
+			stStateMachine.intStateNext := cRFD_STA_SLGBusy;
+		ELSIF (SIf.intCmd=cRFD_CMD_CTRL_OFF) THEN
+			stStateMachine.intStateNext := cRFD_STA_OFFBusy;
+		ELSIF (SIf.intCmd=cRFD_STA_CheckBusy) THEN
+			stStateMachine.intStateNext := cRFD_STA_CheckBusy;
+		END_IF
+		
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CycleEndDuty" Id="{59e56c20-bece-436c-8448-36d6f279dc82}">
+      <Declaration><![CDATA[METHOD PROTECTED CycleEndDuty : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SIf.strState := THIS^.getCmdState(intCmdState:=stStateMachine.intState,bolState:=TRUE);
+
+IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+	stStateMachine.intState := stStateMachine.intStateNext;  // set next state for next cycle
+END_IF
+
+(***************************************************************
+        Function Block Calls
+***************************************************************)
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getCmdState" Id="{5c4f1ecf-65dd-4c86-b3ac-a58e77e6cbb7}">
+      <Declaration><![CDATA[METHOD PROTECTED getCmdState : STRING
+VAR_INPUT
+	intCmdState: INT;
+	bolState: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// get string cmd/state string information in runtime
+IF (bolState=FALSE) THEN
+	// cmd's
+	CASE intCmdState OF
+		cRFD_CMD_DONE: 
+			getCmdState := 'cRFD_CMD_DONE';
+		cRFD_CMD_CTRL_ON: 
+			getCmdState := 'cRFD_CMD_CTRL_ON';
+		cRFD_CMD_CTRL_OFF: 
+			getCmdState := 'cRFD_CMD_CTRL_OFF';
+		cRFD_CMD_Write: 
+			getCmdState := 'cRFD_CMD_Write';
+		cRFD_CMD_Read: 
+			getCmdState := 'cRFD_CMD_Read';
+		cRFD_CMD_MDS: 
+			getCmdState := 'cRFD_CMD_MDS';
+		cRFD_CMD_SLG: 
+			getCmdState := 'cRFD_CMD_SLG';
+	END_CASE;
+ELSE
+
+// States
+	CASE intCmdState OF
+		cRFD_STA_Error: 
+			getCmdState := 'cRFD_STA_Error';
+		cRFD_STA_WaitForJob: 
+			getCmdState := 'cRFD_STA_WaitForJob';
+		cRFD_STA_PowerOnBusy: 
+			getCmdState := 'cRFD_STA_PowerOnBusy';
+		cRFD_STA_OffBusy: 
+			getCmdState := 'cRFD_STA_OffBusy';
+		cRFD_STA_Off: 
+			getCmdState := 'cRFD_STA_Off';
+		cRFD_STA_WriteBusy: 
+			getCmdState := 'cRFD_STA_WriteBusy';
+		cRFD_STA_ReadBusy: 
+			getCmdState := 'cRFD_STA_ReadBusy';
+		cRFD_STA_TagInitBusy: 
+			getCmdState := 'cRFD_STA_TagInitBusy';
+		cRFD_STA_CheckBusy: 
+			getCmdState := 'cRFD_STA_CheckBusy';
+		cRFD_STA_MDSBusy: 
+			getCmdState := 'cRFD_STA_MDSBusy';
+		cRFD_STA_SLGBusy: 
+			getCmdState := 'cRFD_STA_SLGBusy';
+
+	END_CASE;
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_Off" Id="{5e1fa1e9-9cfb-43ec-bc63-2d4261fdd039}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_Off : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+		stStateMachine.intStateLastCycle := stStateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+
+		
+		// State Change Condition
+		IF (FALSE) THEN
+			stStateMachine.intStateNext := cRFD_STA_Error;
+		ELSIF (SIf.intCmd<>RFD_Cmd.cRFD_CMD_DONE) THEN
+			stStateMachine.intStateNext := cRFD_STA_PowerOnBusy;
+		END_IF
+		
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_SLGBusy" Id="{63d0ab9e-464f-46dc-af42-14ae4e8edd3d}">
       <Declaration><![CDATA[METHOD PROTECTED sta_SLGBusy : BOOL
 ]]></Declaration>
       <Implementation>
@@ -471,97 +538,7 @@ END_CASE;]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_WriteBusy" Id="{8fc709b9-52e1-4fe7-b6e0-fadbfdb71c3b}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_WriteBusy : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
-			stStateMachine.intStateLastCycle := stStateMachine.intState;
-			// Byte 0 => Lenght
-			aTxData[0] := 5 + SIf.stCur.usiCount;
-			// Byte 1 => Command write 1=single; 11=continious
-			aTxData[1] := 1;
-			// Byte 2 => Spare
-			aTxData[2] := 0;
-			// Byte 3 => Adress MSB
-			uinValue := SIf.stCur.uinAdressTag;
-			uinValue := ROL(uinValue,8);
-			aTxData[3] := UINT_TO_USINT(uinValue);
-			// Byte 4 => Adress LSB
-			aTxData[4] := UINT_TO_USINT(SIf.stCur.uinAdressTag);
-			// Byte 5 =>Lenght
-			aTxData[5] := SIf.stCur.usiCount;
- 
-			IF ((SIf.stCur.uinAdressData+SIf.stCur.usiCount <= 255) AND (SIf.stCur.usiCount+6 <= 255)) THEN
-				FOR udiLoopBuffer := 0 TO (SIf.stCur.usiCount) DO
-					aTxData[udiLoopBuffer+6] := SIf.stCur.pData^[SIf.stCur.uinAdressData+udiLoopBuffer];
-				END_FOR	
-				udiComSizeSendData := SIf.stCur.usiCount+6;
-				bolComSend := TRUE;		
-			ELSE
-				SIf.stErr.bolComError := TRUE;
-			END_IF
-							
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
-		
-		// State Change Condition
-		IF (SIf.stErr.bolComError = TRUE) OR ((SIf.stErr.bolRFIDError = TRUE) AND (udiJobCount > SIf.stCfg.udiRetry)) THEN
-			stStateMachine.intStateNext := cRFD_STA_Error;
-		ELSIF (SIf.stErr.bolRFIDError = TRUE) THEN
-			udiJobCount := udiJobCount + 1;
-			stStateMachine.intStateLastCycle := 0; // Startcycle again
-		ELSIF ((SIf.stErr.bolComError = 0) AND (bolWriteDone = TRUE)) THEN
-			bolWriteDone := FALSE;
-			udiJobCount := 0;
-			stStateMachine.intStateNext := cRFD_STA_WaitForJob;
-		END_IF
-	
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
-		SIf.intCmd := cRFD_CMD_DONE;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="FB_init" Id="{91adcc62-6a66-4e1d-9993-44ed022327fc}">
-      <Declaration><![CDATA[METHOD FB_init : BOOL
-VAR_INPUT
-	///if TRUE, the retain variables are initialized (warm start / cold start)
-	bInitRetains: BOOL;
-	///if TRUE, the instance afterwards gets moved into the copy code (online change)
-	bInCopyCode: BOOL;
-END_VAR
-VAR
-	udiTaskCnt: UDINT;
-	ii: UINT;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[SIf.intCmd := cRFD_CMD_DONE;
-SIf.intServiceCmd := cRFD_CMD_DONE; // not used at the moment
-stStateMachine.intStateLastCycle  := cRFD_CMD_DONE; //EntryStop of power BASE_PLC.OFF enable
-
-// Vaild Values into the Configuration
-SIf.stCfg.usiFtimSetting := E_Typ_Ftim.RF300;
-
-// Communication Settings
-SIf.stCfg.eTyp := E_Typ_RFW.RF310R;
-SIf.stCfg.uinBaudrate := INT_TO_USINT(E_Typ_Baudrate.baud_57600);
-SIf.stCfg.stNetId := '192.168.70.26.3.1';
-SIf.stCfg.uinSlaveAddr := 1002;]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="CtrlInit" Id="{93b86e80-6a2a-4e65-88d3-07a1649b9101}">
+    <Method Name="CtrlInit" Id="{8a227cbf-355b-4819-ba87-ac46a9b85d5d}">
       <Declaration><![CDATA[METHOD PROTECTED CtrlInit : BOOL
 ]]></Declaration>
       <Implementation>
@@ -569,7 +546,7 @@ SIf.stCfg.uinSlaveAddr := 1002;]]></ST>
 ;]]></ST>
       </Implementation>
     </Method>
-    <Method Name="CycleStartDuty" Id="{9d61d29b-d21d-420c-8dbc-8d9f4c0ca887}">
+    <Method Name="CycleStartDuty" Id="{9170cccc-2464-4937-8f3b-792a481b31e2}">
       <Declaration><![CDATA[METHOD PROTECTED CycleStartDuty : BOOL
 ]]></Declaration>
       <Implementation>
@@ -624,7 +601,7 @@ IF bolInitComDone=TRUE THEN
 				END_IF
 			2, 66:		//16#02 16#42 Read Acknowledge
 				bytRFIDState := aRxData[2];	// Stetebyte copy 1:1
-				IF (bytRFIDState=0) AND (SIf.stCur.uinAdressData+SIf.stCur.usiCount <= 255) AND (SIf.stCur.usiCount+6 <= 255) AND (SIf.stCur.usiCount = (aRxData[0]-5)) THEN
+				IF (bytRFIDState=0) AND (SIf.stCur.uinAdressData+SIf.stCur.usiCount <= 255) AND (SIf.stCur.usiCount+6 <= 255) THEN		// AND (SIf.stCur.usiCount = (aRxData[0]-5))
 					FOR udiLoopBuffer := 0 TO (SIf.stCur.usiCount) DO
 						SIf.stCur.pData^[SIf.stCur.uinAdressData+udiLoopBuffer] := aRxData[udiLoopBuffer+6];
 					END_FOR	
@@ -742,7 +719,8 @@ IF bolInitComDone=TRUE THEN
 					bolAntennaJobDone := TRUE;
 				ELSE
 					SIf.stErr.bolRFIDError := TRUE;
-				END_IF
+					SIf.stErr.udiErrorID := 1000 + bytRFIDState;
+			END_IF
 			16#FF:		//Communication Check to SLG
 				SIf.stStatus.bolL_UEB := TRUE;		
 		
@@ -774,74 +752,7 @@ SIf.strCmd := THIS^.getCmdState(intCmdState:=SIf.intCmd,bolState:=FALSE);
 ]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_MDSBusy" Id="{9ee2f98b-805b-4095-b2c0-79c48a01be1e}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_MDSBusy : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
-		stStateMachine.intStateLastCycle := stStateMachine.intState;
-			stSubStateMachine.intState := cRFD_SUB_Write1;
-			stSubStateMachine.intStateNext := cRFD_SUB_Write1;
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
-		CASE stSubStateMachine.intState OF
-			cRFD_SUB_Write1:
-				// Byte 0 => Lenght
-				aTxData[0] := 5;
-				// Byte 1 => Command read 4=single; 14=continious
-				aTxData[1] := 16#B;
-				// Byte 2 => Spare
-				aTxData[2] := 0;
-				// Byte 3 => Mode
-				aTxData[3] := 3;
-				// Byte 4 => Spare
-				aTxData[4] := 0;
-				// Byte 5 => Spare
-				aTxData[5] := 0; 
-
-						
-				udiComSizeSendData := 6;
-				bolComSend := TRUE;	
-				stSubStateMachine.intState := cRFD_SUB_Wait1;
-		
-			cRFD_SUB_Wait1:
-				IF bolMDSJobDone = TRUE THEN
-					stSubStateMachine.intState := cRFD_SUB_SubStatesEnd;
-					bolMDSJobDone := FALSE;
-				END_IF
-		cRFD_SUB_SubStatesEnd:
-				;
-				
-		END_CASE
-		
-		// State Change Condition
-		IF (SIf.stErr.bolComError = TRUE) OR ((SIf.stErr.bolRFIDError = TRUE) AND (udiJobCount > SIf.stCfg.udiRetry)) THEN
-			stStateMachine.intStateNext := cRFD_STA_Error;
-		ELSIF (SIf.stErr.bolRFIDError = TRUE) THEN
-			udiJobCount := udiJobCount + 1;
-			stStateMachine.intStateLastCycle := 0; // Startcycle again
-		ELSIF (stSubStateMachine.intState = cRFD_SUB_SubStatesEnd) THEN
-			udiJobCount := 0;
-			stStateMachine.intStateNext := cRFD_STA_WaitForJob;
-		END_IF
-		
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
-		SIf.intCmd := cRFD_CMD_DONE;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_PowerOnBusy" Id="{d3d08d02-8daa-47d3-8952-ac829e44a703}">
+    <Method Name="sta_PowerOnBusy" Id="{9b4c54c8-447c-40a1-a67d-a6f8268dd36e}">
       <Declaration><![CDATA[METHOD PROTECTED sta_PowerOnBusy : BOOL
 ]]></Declaration>
       <Implementation>
@@ -865,6 +776,10 @@ SIf.strCmd := THIS^.getCmdState(intCmdState:=SIf.intCmd,bolState:=FALSE);
 
 			bolSdoExecute := FALSE;
 			bolResetJobDone := FALSE;
+			fbTimeoutState.IN := FALSE;
+			fbTimeoutState.PT := T#5S;
+			fbTimeoutState();
+			fbTimeoutState.IN := TRUE;
 	END_IF
 
 
@@ -986,6 +901,7 @@ SIf.strCmd := THIS^.getCmdState(intCmdState:=SIf.intCmd,bolState:=FALSE);
 		END_CASE
 		
 		stSubStateMachine.intStateLastCycle := stSubStateMachine.intState;
+		fbTimeoutState();
 		IF (stSubStateMachine.intState<>stSubStateMachine.intStateNext) THEN
 			stSubStateMachine.intState := stSubStateMachine.intStateNext;  // set next state for next cycle
 			//stSubStateMachine.udiTimeInState_ms := 0; // reset timer
@@ -997,7 +913,7 @@ SIf.strCmd := THIS^.getCmdState(intCmdState:=SIf.intCmd,bolState:=FALSE);
 		
 
 		// State Change Condition
-		IF (SIf.stErr.bolComError = TRUE) OR (SIf.stErr.bolSDOError = TRUE) OR (udiResetCount >= SIf.stCfg.udiRetry) THEN
+		IF (SIf.stErr.bolComError = TRUE) OR (SIf.stErr.bolSDOError = TRUE) OR (udiResetCount >= SIf.stCfg.udiRetry) OR (fbTimeoutState.Q = TRUE) THEN
 			stStateMachine.intStateNext := cRFD_STA_Error;
 		ELSIF (stSubStateMachine.intStateNext = cRFD_SUB_SubStatesEnd) THEN
 			stStateMachine.intStateNext := cRFD_STA_WaitForJob;
@@ -1016,80 +932,7 @@ SIf.strCmd := THIS^.getCmdState(intCmdState:=SIf.intCmd,bolState:=FALSE);
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_Error" Id="{dc820c17-642e-48cf-8464-85182b9a93a2}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_Error : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
-		stStateMachine.intStateHistory := stStateMachine.intStateLastCycle;
-		stStateMachine.intStateLastCycle := stStateMachine.intState;
-		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
-		SIf.stErr.bolErrorActive := TRUE;
-		IF (SIf.stErr.bolComError = TRUE) OR (SIf.stErr.bolProtcolError = TRUE) THEN
-			SIf.stErr.udiErrorID := udi3964R_Error_Nbr;
-		ELSIF SIf.stErr.bolSDOError = TRUE THEN
-			SIf.stErr.udiErrorID := udiSdoErrorNbr;
-		ELSIF (udiResetCount >=SIf.stCfg.udiRetry) OR (udiJobCount >= SIf.stCfg.udiRetry) THEN
-			SIf.stErr.udiErrorID := SIf.stCfg.udiRetry;
-		ELSE
-			SIf.stErr.udiErrorID := 0;
-		END_IF
-
-		
-		// State Change Condition
-		IF (SIf.stErr.bolErrAck = TRUE) THEN
-			// Reset all active errors
-			SIf.stErr.bolErrorActive := FALSE;
-			SIf.stErr.bolComError := FALSE;
-			SIf.stErr.bolProtcolError := FALSE;
-			SIf.stErr.bolSDOError := FALSE;
-			SIf.stErr.udiErrorID := 0;
-		
-		
-			IF stStateMachine.intStateHistory < cRFD_STA_WaitForJob THEN
-				stStateMachine.intStateNext := cRFD_STA_Off;
-			ELSE
-				stStateMachine.intStateNext := cRFD_STA_WaitForJob;		
-			END_IF
-		END_IF
-	END_IF
-
-
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="CycleEndDuty" Id="{e47b832e-ad79-42ca-80f6-48d420d699af}">
-      <Declaration><![CDATA[METHOD PROTECTED CycleEndDuty : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[SIf.strState := THIS^.getCmdState(intCmdState:=stStateMachine.intState,bolState:=TRUE);
-
-IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
-	stStateMachine.intState := stStateMachine.intStateNext;  // set next state for next cycle
-END_IF
-
-(***************************************************************
-        Function Block Calls
-***************************************************************)
-]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="StateMachine" Id="{efd2df81-9841-45f3-919e-2e569c9cb8c2}">
+    <Method Name="StateMachine" Id="{a4b08c0d-52bf-42cf-a099-426a19fd2b72}">
       <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL
 ]]></Declaration>
       <Implementation>
@@ -1121,67 +964,101 @@ CASE stStateMachine.intState OF
 END_CASE;]]></ST>
       </Implementation>
     </Method>
-    <Method Name="getCmdState" Id="{f9121670-42b3-4ed2-8548-495b8be2500c}">
-      <Declaration><![CDATA[METHOD PROTECTED getCmdState : STRING
-VAR_INPUT
-	intCmdState: INT;
-	bolState: BOOL;
-END_VAR
+    <Method Name="getSIf" Id="{b01bdf44-93a1-4aba-b776-3b5e0d3596c7}">
+      <Declaration><![CDATA[METHOD getSIf : POINTER TO T_RFD
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// get string cmd/state string information in runtime
-IF (bolState=FALSE) THEN
-	// cmd's
-	CASE intCmdState OF
-		cRFD_CMD_DONE: 
-			getCmdState := 'cRFD_CMD_DONE';
-		cRFD_CMD_CTRL_ON: 
-			getCmdState := 'cRFD_CMD_CTRL_ON';
-		cRFD_CMD_CTRL_OFF: 
-			getCmdState := 'cRFD_CMD_CTRL_OFF';
-		cRFD_CMD_Write: 
-			getCmdState := 'cRFD_CMD_Write';
-		cRFD_CMD_Read: 
-			getCmdState := 'cRFD_CMD_Read';
-		cRFD_CMD_MDS: 
-			getCmdState := 'cRFD_CMD_MDS';
-		cRFD_CMD_SLG: 
-			getCmdState := 'cRFD_CMD_SLG';
-	END_CASE;
-ELSE
-
-// States
-	CASE intCmdState OF
-		cRFD_STA_Error: 
-			getCmdState := 'cRFD_STA_Error';
-		cRFD_STA_WaitForJob: 
-			getCmdState := 'cRFD_STA_WaitForJob';
-		cRFD_STA_PowerOnBusy: 
-			getCmdState := 'cRFD_STA_PowerOnBusy';
-		cRFD_STA_OffBusy: 
-			getCmdState := 'cRFD_STA_OffBusy';
-		cRFD_STA_Off: 
-			getCmdState := 'cRFD_STA_Off';
-		cRFD_STA_WriteBusy: 
-			getCmdState := 'cRFD_STA_WriteBusy';
-		cRFD_STA_ReadBusy: 
-			getCmdState := 'cRFD_STA_ReadBusy';
-		cRFD_STA_TagInitBusy: 
-			getCmdState := 'cRFD_STA_TagInitBusy';
-		cRFD_STA_CheckBusy: 
-			getCmdState := 'cRFD_STA_CheckBusy';
-		cRFD_STA_MDSBusy: 
-			getCmdState := 'cRFD_STA_MDSBusy';
-		cRFD_STA_SLGBusy: 
-			getCmdState := 'cRFD_STA_SLGBusy';
-
-	END_CASE;
-END_IF
-
-]]></ST>
+        <ST><![CDATA[getSIf := ADR(SIf);]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_ReadBusy" Id="{ff535b7d-688d-4960-9e72-fb5ad1f71c3d}">
+    <Method Name="StateMachine_Service" Id="{c3684090-4fb6-4ef6-a4ac-d510ac32a760}">
+      <Declaration><![CDATA[METHOD PROTECTED StateMachine_Service : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+// main statemachine of base controller
+CASE SIf.intServiceCmd OF
+//	cRFD_CMD_MDS: 
+//		THIS^.sJobWriteParameter();
+//	cYAD_SCMD_READ_PARA: 
+//		THIS^.sJobReadParameter();
+//	cYAD_SCMD_RESET_ABSENCODER: 
+//		THIS^.sJobAbsEncReset();
+ELSE
+	usiCaseScmd := 0;
+	
+
+	
+END_CASE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_Error" Id="{c9726f97-2ec3-491f-ad20-1387022bcb8d}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_Error : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+		stStateMachine.intStateHistory := stStateMachine.intStateLastCycle;
+		stStateMachine.intStateLastCycle := stStateMachine.intState;
+		
+		SIf.stErr.bolErrorActive := TRUE;
+		IF (SIf.stErr.bolComError = TRUE) OR (SIf.stErr.bolProtcolError = TRUE) THEN
+			SIf.stErr.udiErrorID := udi3964R_Error_Nbr;
+		ELSIF SIf.stErr.bolSDOError = TRUE THEN
+			SIf.stErr.udiErrorID := udiSdoErrorNbr;
+		ELSIF SIf.stErr.bolRFIDError = TRUE THEN	
+			SIf.stErr.udiErrorID := 1000 * aRxData[1] + bytRFIDState;
+		ELSIF (udiResetCount >=SIf.stCfg.udiRetry) OR (udiJobCount >= SIf.stCfg.udiRetry) THEN
+			SIf.stErr.udiErrorID := SIf.stCfg.udiRetry;
+		ELSE
+			SIf.stErr.udiErrorID := 0;
+		END_IF
+
+
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+		
+		// State Change Condition
+		IF (SIf.stErr.bolErrAck = TRUE) THEN
+			// Reset all active errors
+			SIf.stErr.bolErrorActive := FALSE;
+			SIf.stErr.bolRFIDError := FALSE;
+			SIf.stErr.bolComError := FALSE;
+			SIf.stErr.bolProtcolError := FALSE;
+			SIf.stErr.bolSDOError := FALSE;
+			SIf.stErr.udiErrorID := 0;
+			bolComSend := FALSE;
+			SIf.stStatus.bolInitOk := FALSE;
+			SIf.stStatus.bolOn := FALSE;
+			SIf.stStatus.bolStartupOk := FALSE;
+			SIf.stStatus.bolPresent := FALSE;
+		
+			IF stStateMachine.intStateHistory < cRFD_STA_WaitForJob THEN
+				stStateMachine.intStateNext := cRFD_STA_Off;
+			//ELSE
+			//	stStateMachine.intStateNext := cRFD_STA_WaitForJob;		
+			END_IF
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_ReadBusy" Id="{d268e993-aeaf-42c1-99c6-e7738254e331}">
       <Declaration><![CDATA[METHOD PROTECTED sta_ReadBusy : BOOL
 ]]></Declaration>
       <Implementation>
@@ -1237,19 +1114,147 @@ END_IF
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <ObjectProperties>﻿<XmlArchive>
-  <Data>
-    <o xml:space="preserve" t="POUImageProperty">
-      <n n="ImageData" />
-      <v n="TransparencyColor">"White"</v>
-      <v n="MakeTransparent">false</v>
-    </o>
-  </Data>
-  <TypeList>
-    <Type n="Boolean">System.Boolean</Type>
-    <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
-    <Type n="String">System.String</Type>
-  </TypeList>
-</XmlArchive></ObjectProperties>
+    <Method Name="sta_TagInitBusy" Id="{d9a9e724-5447-4119-a4ae-f432c03d3ae5}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_TagInitBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+		stStateMachine.intStateLastCycle := stStateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+
+		
+		// State Change Condition
+		IF (FALSE) THEN
+			stStateMachine.intStateNext := cRFD_STA_Error;
+		ELSIF (TRUE) THEN
+			stStateMachine.intStateNext := cRFD_STA_WaitForJob;
+		END_IF
+		
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		IF SIf.intCmd = stStateMachine.intState THEN
+			SIf.intCmd := cRFD_CMD_DONE;
+		END_IF
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_WriteBusy" Id="{dba4f76a-fbf7-4b6b-9d1a-59baba331ecc}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_WriteBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+			stStateMachine.intStateLastCycle := stStateMachine.intState;
+			// Byte 0 => Lenght
+			aTxData[0] := 5 + SIf.stCur.usiCount;
+			// Byte 1 => Command write 1=single; 11=continious
+			aTxData[1] := 1;
+			// Byte 2 => Spare
+			aTxData[2] := 0;
+			// Byte 3 => Adress MSB
+			uinValue := SIf.stCur.uinAdressTag;
+			uinValue := ROL(uinValue,8);
+			aTxData[3] := UINT_TO_USINT(uinValue);
+			// Byte 4 => Adress LSB
+			aTxData[4] := UINT_TO_USINT(SIf.stCur.uinAdressTag);
+			// Byte 5 =>Lenght
+			aTxData[5] := SIf.stCur.usiCount;
+ 
+			IF ((SIf.stCur.uinAdressData+SIf.stCur.usiCount <= 255) AND (SIf.stCur.usiCount+6 <= 255)) THEN
+				FOR udiLoopBuffer := 0 TO (SIf.stCur.usiCount) DO
+					aTxData[udiLoopBuffer+6] := SIf.stCur.pData^[SIf.stCur.uinAdressData+udiLoopBuffer];
+				END_FOR	
+				udiComSizeSendData := SIf.stCur.usiCount+6;
+				bolComSend := TRUE;		
+			ELSE
+				SIf.stErr.bolComError := TRUE;
+			END_IF
+							
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+		
+		// State Change Condition
+		IF (SIf.stErr.bolComError = TRUE) OR ((SIf.stErr.bolRFIDError = TRUE) AND (udiJobCount > SIf.stCfg.udiRetry)) THEN
+			stStateMachine.intStateNext := cRFD_STA_Error;
+		ELSIF (SIf.stErr.bolRFIDError = TRUE) THEN
+			udiJobCount := udiJobCount + 1;
+			stStateMachine.intStateLastCycle := 0; // Startcycle again
+		ELSIF ((SIf.stErr.bolComError = 0) AND (bolWriteDone = TRUE)) THEN
+			bolWriteDone := FALSE;
+			udiJobCount := 0;
+			stStateMachine.intStateNext := cRFD_STA_WaitForJob;
+		END_IF
+	
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		SIf.intCmd := cRFD_CMD_DONE;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_CheckBusy" Id="{f6386934-9b5e-4e99-874f-72a7f6c4ad05}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_CheckBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+		stStateMachine.intStateLastCycle := stStateMachine.intState;
+			// Byte 0 => Lenght
+			aTxData[0] := 2;
+			// Byte 1 => Command read 4=single; 14=continious
+			aTxData[1] := 16#FF;
+			// Byte 2 => Spare
+			aTxData[2] := 0;
+						
+			udiComSizeSendData := 3;
+			bolComSend := TRUE;	
+			SIf.stStatus.bolL_UEB := FALSE;
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+
+		
+		// State Change Condition
+		IF (SIf.stErr.bolErrorActive = TRUE) THEN
+			stStateMachine.intStateNext := cRFD_STA_Error;
+		ELSIF (SIf.stStatus.bolL_UEB = TRUE) THEN
+			stStateMachine.intStateNext := cRFD_STA_WaitForJob;
+		END_IF
+		
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		SIf.intCmd := cRFD_CMD_DONE;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <ObjectProperties />
   </POU>
 </TcPlcObject>

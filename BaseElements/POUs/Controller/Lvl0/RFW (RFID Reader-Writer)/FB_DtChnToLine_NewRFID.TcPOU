@@ -1,5 +1,5 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <POU Name="FB_DtChnToLine_NewRFID" Id="{d2424dfa-b7d9-443b-93a4-71c9c3c9f6a5}">
+  <POU Name="FB_DtChnToLine_NewRFID" Id="{7377b839-51b4-4ecb-8121-1fca29d92915}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_DtChnToLine_NewRFID
 VAR_INPUT
 	bolResetError: BOOL;
@@ -8,10 +8,6 @@ END_VAR
 VAR_OUTPUT
 	///Error value
 	intError: INT;
-	/// Error Description
-	// -99 = Buffer FULL
-	//  -100 = No SIf Pointer
-	// positive Value = count of retrys
 END_VAR
 VAR
 	/// Internal Variable
@@ -47,12 +43,10 @@ VAR CONSTANT
 	cDataState_Ready: INT := 1;
 	cDataState_Retry: INT := -99;
 	cDataState_Error: INT := -100;
-	
 	cMAX_RETRY: INT := 10;
-	
-	// Error Codes
-	cERR_BufferFull : INT := -99;
-	cERR_NoSIF : INT := -100;
+	/// Error Codes
+	cERR_BufferFull: INT := -99;
+	cERR_NoSIF: INT := -100;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -147,13 +141,17 @@ CASE intStatemachine OF
 			
 END_CASE]]></ST>
     </Implementation>
-    <Method Name="Creat" Id="{a0bcf7e1-091f-4cb3-9289-35babae36823}">
+    <Method Name="Creat" Id="{4dd6ebf1-4c8c-47ab-b5bc-e6fa305fe01c}">
       <Declaration><![CDATA[METHOD Creat : INT
 VAR_INPUT
-	In_strID: STRING;			// configurable if Tag or Tray ID
-	In_uliTagID: ULINT;	
+	/// configurable if Tag or Tray ID
+	In_strID: STRING;
+	In_uliTagID: ULINT;
 END_VAR
-]]></Declaration>
+
+VAR
+	strTemp : STRING;
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// Insert a new Job to send at Line controller
 // Only insert the job, if the buffer is not full, next input dosn't cross input and Outputpointer
@@ -167,7 +165,10 @@ IF ((intPBufferInput + 1) = intPBufferOutput) OR ((intPBufferInput = cDtChnBuffe
 ELSE
 	aBuffer[intPBufferInput].uliTagID := In_uliTagID;
 	aBuffer[intPBufferInput].strID := In_strID;
-	aBuffer[intPBufferInput].strTimestamp := DT_TO_STRING(dtActualTime);
+	strTemp := DT_TO_STRING(dtActualTime);
+	strTemp := Tc2_Standard.RIGHT(STR:=strTemp, SIZE:= (LEN(strTemp)-3));
+	strTemp := CONCAT(strTemp,'.000');	
+	aBuffer[intPBufferInput].strTimestamp := strTemp;
 	IF intPBufferInput < cDtChnBuffer THEN
 		intPBufferInput := intPBufferInput + 1;
 	ELSE
@@ -177,19 +178,6 @@ ELSE
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <ObjectProperties>﻿<XmlArchive>
-  <Data>
-    <o xml:space="preserve" t="POUImageProperty">
-      <n n="ImageData" />
-      <v n="TransparencyColor">"White"</v>
-      <v n="MakeTransparent">false</v>
-    </o>
-  </Data>
-  <TypeList>
-    <Type n="Boolean">System.Boolean</Type>
-    <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
-    <Type n="String">System.String</Type>
-  </TypeList>
-</XmlArchive></ObjectProperties>
+    <ObjectProperties />
   </POU>
 </TcPlcObject>

@@ -12,6 +12,8 @@
 	///Global accesss of driver init in faster cycles
 	g_pFB_RFR: POINTER TO FB_RFR;	
 	g_pFB_BCD: POINTER TO FB_BCD;
+	g_pFB_RFW: POINTER TO FB_RFD;
+	
 END_VAR
 
 ]]></Declaration>

@@ -1,5 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
-  <POU Name="FB_Com_3964R" Id="{d707ab29-ba77-483b-b221-0a21aec348f3}">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <POU Name="FB_Com_3964R" Id="{9bceef52-2457-40a4-b7ac-c12c1c6d63b4}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_Com_3964R
 VAR_INPUT
 	/// Pointer to Received Data Array
@@ -653,13 +653,16 @@ CASE intState OF
 				bolIntReset := FALSE;
 				In_bolErrorAck := FALSE;
 				bolInitRequest := FALSE;
+				InOut_bolRec := FALSE;
+				InOut_bolSend := FALSE;
+				bolSLGInitialized := FALSE;
 			END_IF
 		
 END_CASE
 
 // Write parallel Outputs to commando word
 //Out_stEL6outData.Ctrl.2 := bolInitRequest;
-//Out_stEL6outData.Ctrl.3 := bolSendContinious;
+Out_stEL6outData.Ctrl.3 := bolSendContinious;
 
 // make History of States
 IF intStateOld <> intState THEN
@@ -679,19 +682,6 @@ ELSE
 	END_IF
 END_IF]]></ST>
     </Implementation>
-    <ObjectProperties>﻿<XmlArchive>
-  <Data>
-    <o xml:space="preserve" t="POUImageProperty">
-      <n n="ImageData" />
-      <v n="TransparencyColor">"White"</v>
-      <v n="MakeTransparent">false</v>
-    </o>
-  </Data>
-  <TypeList>
-    <Type n="Boolean">System.Boolean</Type>
-    <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
-    <Type n="String">System.String</Type>
-  </TypeList>
-</XmlArchive></ObjectProperties>
+    <ObjectProperties />
   </POU>
 </TcPlcObject>

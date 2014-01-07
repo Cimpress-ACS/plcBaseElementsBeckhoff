@@ -1,11 +1,13 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
-  <DUT Name="T_Ctrl_SIf_RFW_Par" Id="{481ccba7-2a72-4dd3-9394-2a1d5ee78261}">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_RFW_Par" Id="{d8376c7a-9f8f-4b58-9129-6407a4608458}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_RFW_Par :
 STRUCT
 	///[ms] until failure to long time for read
 	udiReadTime_ms: UDINT;
 	///[ms] until failure to long time for write
 	udiWriteTime_ms: UDINT;
+	///[ms] minimum wait time between two read command
+	udiMinCmdTime: UDINT;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

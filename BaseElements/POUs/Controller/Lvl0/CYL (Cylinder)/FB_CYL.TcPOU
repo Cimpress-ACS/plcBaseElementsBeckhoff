@@ -101,6 +101,12 @@ END_IF;
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
 		ELSIF (SIf.In.bolRetracted.intern) AND(SIf.In.bolExtended.intern=FALSE) THEN
 			me.StateMachine.intStateNext := CYL_CmdState.cSTA_RETRACT;
+		ELSIF ((SIf.Cfg.eTyp = E_Typ_CYL.Valve1_SensorExtended) OR (SIf.Cfg.eTyp = E_Typ_CYL.Valve2_SensorExtended))
+				 AND (SIf.In.bolExtended.intern=FALSE) AND (me.StateMachine.udiTimeInState_ms>SIf.Par.udiSimRetractTime_ms) THEN
+			me.StateMachine.intStateNext := CYL_CmdState.cSTA_RETRACT;
+		ELSIF ((SIf.Cfg.eTyp = E_Typ_CYL.Valve1_Sensor0) OR (SIf.Cfg.eTyp = E_Typ_CYL.Valve2_Sensor0))
+				AND (me.StateMachine.udiTimeInState_ms>SIf.Par.udiSimRetractTime_ms) THEN
+			me.StateMachine.intStateNext := CYL_CmdState.cSTA_RETRACT;		
 		ELSIF(me.intCmd=cCMD_STOP) THEN
 			me.StateMachine.intStateNext := cSTA_STOPBusy;
 		ELSIF(me.intCmd=CYL_CmdState.cCMD_EXTEND) THEN
@@ -264,6 +270,12 @@ END_CASE;]]></ST>
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
 		ELSIF (SIf.In.bolExtended.intern) AND (SIf.In.bolRetracted.intern=FALSE) THEN
 			me.StateMachine.intStateNext := CYL_CmdState.cSTA_EXTEND;
+		ELSIF ((SIf.Cfg.eTyp = E_Typ_CYL.Valve1_SensorRetracted) OR (SIf.Cfg.eTyp = E_Typ_CYL.Valve2_SensorRetracted))
+				 AND (SIf.In.bolRetracted.intern=FALSE) AND (me.StateMachine.udiTimeInState_ms>SIf.Par.udiSimExtendTime_ms) THEN
+			me.StateMachine.intStateNext := CYL_CmdState.cSTA_EXTEND;
+		ELSIF ((SIf.Cfg.eTyp = E_Typ_CYL.Valve1_Sensor0) OR (SIf.Cfg.eTyp = E_Typ_CYL.Valve2_Sensor0))
+				AND (me.StateMachine.udiTimeInState_ms>SIf.Par.udiSimExtendTime_ms) THEN
+			me.StateMachine.intStateNext := CYL_CmdState.cSTA_EXTEND;		
 		ELSIF(me.intCmd=cCMD_STOP) THEN
 			me.StateMachine.intStateNext := cSTA_STOPBusy;
 		ELSIF(me.intCmd=cCMD_RETRACT) THEN
@@ -350,7 +362,7 @@ END_CASE;]]></ST>
 			// sensor retract always on
 			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_CYL.SensorRetractAlwaysOn,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
-		ELSIF (SIf.In.bolExtended.intern = FALSE) THEN // wait time until error?
+		ELSIF ((SIf.In.bolExtended.intern = FALSE) AND ((SIf.Cfg.eTyp = E_Typ_CYL.Valve1_SensorExtended) OR (SIf.Cfg.eTyp = E_Typ_CYL.Valve2_SensorExtended))) THEN // wait time until error?
 			me.StateMachine.intStateNext := CYL_CmdState.cSTA_EXTENDBusy;
 		ELSIF(me.intCmd=cCMD_STOP) THEN
 			me.StateMachine.intStateNext := cSTA_STOPBusy;
@@ -764,7 +776,7 @@ END_IF]]></ST>
 			// sensor retract always on
 			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_CYL.SensorExtendAlwaysOn,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
-		ELSIF (SIf.In.bolRetracted.intern = FALSE) THEN // wait time until error?
+		ELSIF ((SIf.In.bolRetracted.intern = FALSE) AND ((SIf.Cfg.eTyp = E_Typ_CYL.Valve1_SensorRetracted) OR (SIf.Cfg.eTyp = E_Typ_CYL.Valve2_SensorRetracted))) THEN // wait time until error?
 			me.StateMachine.intStateNext := CYL_CmdState.cSTA_RETRACTBusy;
 		ELSIF(me.intCmd=cCMD_STOP) THEN
 			me.StateMachine.intStateNext := cSTA_STOPBusy;
