@@ -10,7 +10,8 @@
 	g_p_fbAlm_Man: POINTER TO FB_Alm_Man;
 	
 	///Global accesss of driver init in faster cycles
-	g_pFB_RFR: POINTER TO FB_RFR;
+	g_pFB_RFR: POINTER TO FB_RFR;	
+	g_pFB_BCD: POINTER TO FB_BCD;
 END_VAR
 
 ]]></Declaration>

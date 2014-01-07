@@ -8,11 +8,13 @@ VAR
 	bolHostInitDone: BOOL := FALSE;
 	bolInitDone: BOOL := FALSE;
 	fbRFW_11: FB_RFW;
+	fbBCC_1: FB_BCC;
 	fbCYL_1: FB_CYL;
 	fbPRS_1: FB_PRS;
 	fbUMC_1: FB_UMC;
 	fbVPC_1: FB_VPC;
 	pTmpSIf_RFW: POINTER TO Base_Elements.T_Ctrl_SIf_RFW;
+	pTmpSIf_BCC: POINTER TO T_Ctrl_SIf_BCC;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -33,7 +35,7 @@ Version		Date			Author		Comment
 ---------------------------------------------------------------------------------------------------
 0.00.1		25.09.2013		AVME/KVO	Start history
 0.00.2		12.11.2013		VP/RE		Local AlarmManager
-
+0.00.3		07.01.2014		AVME/DSC 	Insert barcode reader example
 
 ___________________________________________________________________________________________________*)
 
@@ -45,7 +47,7 @@ IF (NOT bolPlcStartupDone) THEN
 	// init	
 	// Level0 -------------------------------------------------------------------
 	
-	// RFID Reader, element Controller in this Task, Drive in fastest Task class
+	// RFID Reader, element Controller in this Task, Driver in fastest Task class
 	fbRFW_11.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.RFW_11); // init and entry fb_instance in global fb pointer array
 	fbRFW_11.pRFD_SIf := g_pFB_RFR^.getSIf();
 	pTmpSIf_RFW := fbRFW_11.getCtrlSIf();
@@ -54,6 +56,16 @@ IF (NOT bolPlcStartupDone) THEN
 	pTmpSIf_RFW^.Cfg.stNetId := '192.168.2.123.1.1'; //PLC NetId
 	pTmpSIf_RFW^.Cfg.uinSlaveAddr := 1024; //Io card Ethercat adress 
 	pTmpSIf_RFW^.Cfg.bolGetTrayIDAuto := FALSE;
+	
+	
+	// Barcode reader, element Controller in this Task, Driver in fastest Task class
+	fbBCC_1.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.BCC_1); // init and entry fb_instance in global fb pointer array
+	fbBCC_1.pBCD_SIf_In := g_pFB_BCD^.getSIf();
+	pTmpSIf_BCC := fbBCC_1.getCtrlSIf();
+	// configuration	
+	pTmpSIf_BCC^.Cfg.strSensorIPAdr := '192.168.70.28';
+	pTmpSIf_BCC^.Cfg.udiSensorPort := 2111;
+
 	
 	// cylinder example
 	fbCYL_1.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.CYL_1); // init and entry fb_instance in global fb pointer array
@@ -98,6 +110,7 @@ IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone) THEN
 	// cyclic controller calls
 	//****************************************************************************************************
 	fbRFW_11();
+	fbBCC_1();
 	fbCYL_1();
 	fbPRS_1();
 	fbUMC_1();

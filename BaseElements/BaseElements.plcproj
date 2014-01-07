@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.0.12</ProjectVersion>
+    <ProjectVersion>0.0.0.15</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.0.11 - Newest Base_PLC added
+    <Description>0.0.0.15 - Basic versions of Barcode driver and controller added
+0.0.0.11 - Newest Base_PLC added
 0.0.0.10 - Newest Base_PLC added
 0.0.0.9 - Add cylinder Level0, Update to Base PLC 0.3.3.2
 0.0.0.8 - Update to Base PLC 0.3.3.0
@@ -29,6 +30,45 @@
     <AssemblyName>MyApplication</AssemblyName>-->
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="POUs\Controller\Driver\BCD %28Bar code driver%29\BCD_CmdState.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\BCD %28Bar code driver%29\FB_BCD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\BCD %28Bar code driver%29\FC_StrComp.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\BCD %28Bar code driver%29\T_BCD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\BCD %28Bar code driver%29\T_BCD_Cfg.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\BCD %28Bar code driver%29\T_BCD_Data.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\BCD %28Bar code driver%29\T_BCD_DeviceInfo.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\BCD %28Bar code driver%29\T_BCD_Error.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\BCD %28Bar code driver%29\T_BCD_OperatingData.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\BCD %28Bar code driver%29\T_BCD_Par.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\BCD %28Bar code driver%29\T_BCD_ServiceInfo.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\BCD %28Bar code driver%29\T_BCD_StateMachine.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\BCD %28Bar code driver%29\T_BCD_Status.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\Controller\Driver\PRS [Present Sensor]\E_ALM_PRS.TcDUT">
       <SubType>Code</SubType>
     </Compile>
@@ -117,6 +157,33 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Controller\Driver\RFD %28RFID Driver%29\T_StateWord.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\BCC %28Barcode controller%29\BCC_CmdState.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\BCC %28Barcode controller%29\FB_BCC.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\BCC %28Barcode controller%29\T_BCC_Data.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\BCC %28Barcode controller%29\T_Ctrl_SIf_BCC.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\BCC %28Barcode controller%29\T_Ctrl_SIf_BCC_Cfg.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\BCC %28Barcode controller%29\T_Ctrl_SIf_BCC_Cur.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\BCC %28Barcode controller%29\T_Ctrl_SIf_BCC_In.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\BCC %28Barcode controller%29\T_Ctrl_SIf_BCC_Out.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\BCC %28Barcode controller%29\T_Ctrl_SIf_BCC_Par.TcDUT">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\CYL %28Cylinder%29\CYL_CmdState.TcGVL">
@@ -291,6 +358,7 @@
     <Folder Include="POUs\Controller\Driver\PRS [Present Sensor]" />
     <Folder Include="POUs\Controller\Driver\RFD %28RFID Driver%29\" />
     <Folder Include="POUs\Controller\Lvl0\" />
+    <Folder Include="POUs\Controller\Lvl0\BCC %28Barcode controller%29\" />
     <Folder Include="POUs\Controller\Lvl0\CYL %28Cylinder%29" />
     <Folder Include="POUs\Controller\Lvl0\VPC [Vacuum Pump Controller]" />
     <Folder Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]" />
@@ -330,11 +398,47 @@
     <LibraryReference Include="Tc2_SerialCom,3.3.0.0,Beckhoff Automation GmbH">
       <Namespace>Tc2_SerialCom</Namespace>
     </LibraryReference>
+    <LibraryReference Include="Tc2_TcpIp,3.3.1.0,Beckhoff Automation GmbH">
+      <Namespace>Tc2_TcpIp</Namespace>
+    </LibraryReference>
     <LibraryReference Include="Tc2_Utilities,3.3.5.0,Beckhoff Automation GmbH">
       <Namespace>Tc2_Utilities</Namespace>
     </LibraryReference>
   </ItemGroup>
   <ItemGroup>
+    <SubObject Include="FB_BCC.Always" />
+    <SubObject Include="FB_BCC.FB_init" />
+    <SubObject Include="FB_BCC.getCmdState" />
+    <SubObject Include="FB_BCC.getCtrlSIf" />
+    <SubObject Include="FB_BCC.IoInBridge" />
+    <SubObject Include="FB_BCC.IoOutBridge" />
+    <SubObject Include="FB_BCC.StateMachine" />
+    <SubObject Include="FB_BCC.sta_ERROR" />
+    <SubObject Include="FB_BCC.sta_OFF" />
+    <SubObject Include="FB_BCC.sta_OFFBusy" />
+    <SubObject Include="FB_BCC.sta_PON" />
+    <SubObject Include="FB_BCC.sta_PONBusy" />
+    <SubObject Include="FB_BCC.sta_READ" />
+    <SubObject Include="FB_BCC.sta_READBusy" />
+    <SubObject Include="FB_BCD.CtrlInit" />
+    <SubObject Include="FB_BCD.CycleEndDuty" />
+    <SubObject Include="FB_BCD.CycleStartDuty" />
+    <SubObject Include="FB_BCD.FB_init" />
+    <SubObject Include="FB_BCD.getCmdState" />
+    <SubObject Include="FB_BCD.getSIf" />
+    <SubObject Include="FB_BCD.HandleRxData" />
+    <SubObject Include="FB_BCD.HandleTxData" />
+    <SubObject Include="FB_BCD.PrepareBarCodeData" />
+    <SubObject Include="FB_BCD.PrepareReadMsg" />
+    <SubObject Include="FB_BCD.PrepareSendMsg" />
+    <SubObject Include="FB_BCD.StateMachine" />
+    <SubObject Include="FB_BCD.sta_CloseSocketBusy" />
+    <SubObject Include="FB_BCD.sta_ComTestBusy" />
+    <SubObject Include="FB_BCD.sta_ConnectSocketBusy" />
+    <SubObject Include="FB_BCD.sta_Error" />
+    <SubObject Include="FB_BCD.sta_ReadCodeBusy" />
+    <SubObject Include="FB_BCD.sta_SocketClosed" />
+    <SubObject Include="FB_BCD.sta_WaitForJob" />
     <SubObject Include="FB_CYL_1.CtrlInit" />
     <SubObject Include="FB_CYL_1.FB_init" />
     <SubObject Include="FB_CYL_1.getCmdState" />

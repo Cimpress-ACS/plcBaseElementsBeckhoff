@@ -1,0 +1,13 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_BCD_ServiceInfo" Id="{14277e6a-26dc-46bc-a8f5-fc4f4a4f9c27}">
+    <Declaration><![CDATA[TYPE T_BCD_ServiceInfo :
+STRUCT
+	strLastUsername: STRING(25);
+	strLastParChangeDate: STRING(10);
+	strLastParChangeTime: STRING(5);
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

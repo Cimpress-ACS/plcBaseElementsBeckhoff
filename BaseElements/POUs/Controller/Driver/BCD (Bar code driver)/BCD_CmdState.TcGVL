@@ -1,0 +1,52 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <GVL Name="BCD_CmdState" Id="{751d0634-e0a5-4225-99d9-1b999eecfebb}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	/// ctrl commands definitions
+	cBCD_CMD_DONE: INT := -1;
+	/// Connect TCP socket
+	cBCD_CMD_CONNECT_SOCKET: INT := 1002;
+	/// Close TCP socket
+	cBCD_CMD_CLOSE_SOCKET: INT := 1004;
+	/// Communication test 
+	cBCD_CMD_COM_TEST: INT := 1006;
+	/// Readout device information
+	cBCD_CMD_READ_DEV_INFO: INT := 1008;
+	/// Readout operating data
+	cBCD_CMD_READ_OP_DATA: INT := 1010;
+	/// Readout service information	
+	cBCD_CMD_READ_SERVICE_INFO: INT := 1012;
+	/// Command enable the sensor gate for X-TIME ("duration" setting of sensor object trigger)
+	cBCD_CMD_READ_BARCODE: INT := 1014;
+	/// Sensor try to detect a barcode.
+	/// ctrl state definitions
+	cBCD_STA_WaitForJob: INT := 1000;
+	/// Open TCP socket busy
+	cBCD_STA_ConnectSocketBusy: INT := 1002;
+	/// Close TCP socket busy
+	cBCD_STA_CloseSocketBusy: INT := 1004;
+	/// TCP socket closed
+	cBCD_STA_SocketClosed: INT := 1006;
+	/// Communication test busy
+	cBCD_STA_ComTestBusy: INT := 1008;
+	/// Read bar code busy
+	cBCD_STA_ReadCodeBusy: INT := 1010;
+	/// Error
+	cBCD_STA_Error: INT := 256;
+END_VAR]]></Declaration>
+    <ObjectProperties>﻿<XmlArchive>
+  <Data>
+    <o xml:space="preserve" t="FileLink">
+      <v n="FileName">""</v>
+      <v n="LinkType" t="LinkType">ExportBeforeCompile</v>
+      <v n="lTimeStamp">0L</v>
+    </o>
+  </Data>
+  <TypeList>
+    <Type n="FileLink">{0e9188e9-4f07-4676-afb5-399bcddbc44b}</Type>
+    <Type n="Int64">System.Int64</Type>
+    <Type n="LinkType">{926664ef-7286-4d12-8220-5000ab511fa6}</Type>
+    <Type n="String">System.String</Type>
+  </TypeList>
+</XmlArchive></ObjectProperties>
+  </GVL>
+</TcPlcObject>

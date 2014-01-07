@@ -1,0 +1,20 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_BCD_StateMachine" Id="{4cc61288-aa1e-4db2-9592-f79e2b81c392}">
+    <Declaration><![CDATA[TYPE T_BCD_StateMachine :
+STRUCT
+	/// actual state
+	intState: INT;
+	/// state of last cycle
+	intStateLastCycle: INT;
+	/// save history backup p.e. in ERROR state
+	intStateHistory: INT;
+	/// set state for next cycle
+	intStateNext: INT;
+	/// Time in this State
+	udiTimeInState_ms: UDINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

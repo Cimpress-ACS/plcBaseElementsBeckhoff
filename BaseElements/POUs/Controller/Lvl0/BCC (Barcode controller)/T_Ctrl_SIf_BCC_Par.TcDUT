@@ -1,0 +1,14 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_BCC_Par" Id="{90b76374-37b0-4beb-b62b-68d686a8cbe7}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_BCC_Par :
+STRUCT
+	/// [ms] Timeout power on
+	udiTOPowerOn_ms: UDINT;
+	/// [ms] Timeout read
+	udiTORead_ms: UDINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

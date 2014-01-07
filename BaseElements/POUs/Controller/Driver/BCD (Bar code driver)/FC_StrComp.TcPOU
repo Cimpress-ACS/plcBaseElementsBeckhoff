@@ -1,0 +1,45 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <POU Name="FC_StrComp" Id="{748ff53c-7693-4e74-9eca-02a4c9519a4a}">
+    <Declaration><![CDATA[FUNCTION FC_StrComp : DINT
+VAR_INPUT
+	strArg1: STRING(255);
+	strArg2: STRING(255);
+END_VAR
+VAR
+	stArg1: TC2_UTILITIES.T_Arg;
+	stArg2: TC2_UTILITIES.T_Arg;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+// String compare function use F_ARGCMP from beckhoff lib. TC2_UTILITIES
+
+// set parameter for arg1
+stArg1.cbLen:= INT_TO_UDINT(TC2_STANDARD.LEN(strArg1));
+stArg1.pData:= ADR(strArg1);
+stArg1.eType:= ARGTYPE_STRING;
+
+// set parameter for arg2
+stArg2.cbLen:= INT_TO_UDINT(TC2_STANDARD.LEN(strArg2));
+stArg2.pData:= ADR(strArg2);
+stArg2.eType:= ARGTYPE_STRING;
+
+// call F_ARGCMP
+FC_StrComp:= TC2_UTILITIES.F_ARGCMP(TRUE,stArg1,stArg2);]]></ST>
+    </Implementation>
+    <ObjectProperties>﻿<XmlArchive>
+  <Data>
+    <o xml:space="preserve" t="POUImageProperty">
+      <n n="ImageData" />
+      <v n="TransparencyColor">"White"</v>
+      <v n="MakeTransparent">false</v>
+    </o>
+  </Data>
+  <TypeList>
+    <Type n="Boolean">System.Boolean</Type>
+    <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
+    <Type n="String">System.String</Type>
+  </TypeList>
+</XmlArchive></ObjectProperties>
+  </POU>
+</TcPlcObject>

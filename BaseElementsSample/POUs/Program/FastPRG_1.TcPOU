@@ -1,12 +1,16 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.20">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
   <POU Name="FastPRG_1" Id="{b624d175-54f8-4f4a-ae3e-53272a249758}">
     <Declaration><![CDATA[PROGRAM FastPRG_1
 VAR
 	bolPlcStartupDone: BOOL := FALSE;
 	bolHostInitDone: BOOL := FALSE;
 	bolInitDone: BOOL := FALSE;
-	
+
+	// RFID driver
 	fbRFR_11: FB_RFR;
+	// Barcode driver
+	fbBCD_1: FB_BCD;
+
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -27,7 +31,7 @@ History:
 Version		Date			Author		Comment
 ---------------------------------------------------------------------------------------------------
 0.00.1		25.09.2013		AVME/KVO	Start history
-
+0.00.2		07.01.2014		AVME/DSC 	Insert barcode driver example
 
 ___________________________________________________________________________________________________*)
 
@@ -39,7 +43,7 @@ IF (NOT bolPlcStartupDone) THEN
 	
 	// init	
 	g_pFB_RFR := ADR(fbRFR_11);
-
+	g_pFB_BCD := ADR(fbBCD_1);
 END_IF
 // -----------------------------------------------------------------------------------------------
 
@@ -71,9 +75,10 @@ IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone) THEN
 	//****************************************************************************************************
 	// cyclic controller calls
 	//****************************************************************************************************
-	
 	fbRFR_11();
+	fbBCD_1();
 
+	
 END_IF
 // -----------------------------------------------------------------------------------------------]]></ST>
     </Implementation>

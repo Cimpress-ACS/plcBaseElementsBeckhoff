@@ -1,0 +1,10 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_BCC_In" Id="{e04ca927-def1-45e9-889f-6cc98fd4b1fe}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_BCC_In :
+STRUCT
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

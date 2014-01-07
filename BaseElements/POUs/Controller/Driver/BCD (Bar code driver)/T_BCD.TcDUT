@@ -1,0 +1,18 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_BCD" Id="{e9c59ab3-53ff-480f-ad9e-ae238e565edd}">
+    <Declaration><![CDATA[TYPE T_BCD :
+STRUCT
+	strState: STRING;
+	strCmd: STRING;
+	intCmd: INT;
+	stStatus: T_BCD_Status;
+	stErr: T_BCD_Error;
+	stCfg: T_BCD_Cfg;
+	stPar: T_BCD_Par;
+	stData: T_BCD_Data;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

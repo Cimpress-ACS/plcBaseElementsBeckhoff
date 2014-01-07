@@ -1,0 +1,18 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_BCD_DeviceInfo" Id="{038bacbf-6fa8-44ac-8707-050e7941f124}">
+    <Declaration><![CDATA[TYPE T_BCD_DeviceInfo :
+STRUCT
+	strComTestResult: STRING(40);
+	strManufacturer: STRING(25);
+	strDeviceType: STRING(25);
+	strOrderNumber: STRING(20);
+	strSWVersion: STRING(10);
+	/// shows the firmware version of the device
+	strFWVersion: STRING(10);
+	strSerialNumber: STRING(20);
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

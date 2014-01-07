@@ -78,7 +78,7 @@
     </PlaceholderReference>
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_Elements,0.0.0.12,Vistaprint">
+    <LibraryReference Include="Base_Elements,0.0.0.15,Vistaprint">
       <Namespace>Base_Elements</Namespace>
     </LibraryReference>
     <LibraryReference Include="Base_PLC,0.3.3.5,Vistaprint">
@@ -89,6 +89,9 @@
     </LibraryReference>
     <LibraryReference Include="Tc2_SerialCom,3.3.0.0,Beckhoff Automation GmbH">
       <Namespace>Tc2_SerialCom</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Tc2_TcpIp,3.3.1.0,Beckhoff Automation GmbH">
+      <Namespace>Tc2_TcpIp</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_Utilities,3.3.5.0,Beckhoff Automation GmbH">
       <Namespace>Tc2_Utilities</Namespace>
