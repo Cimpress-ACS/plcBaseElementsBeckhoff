@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.0.16</ProjectVersion>
+    <ProjectVersion>0.0.0.17</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.0.16 - Newest Base_PLC added 0.3.3.7
+    <Description>0.0.0.17 - DRV added
+0.0.0.16 - Newest Base_PLC added 0.3.3.7
 0.0.0.15 - Basic versions of Barcode driver and controller added
 0.0.0.11 - Newest Base_PLC added
 0.0.0.10 - Newest Base_PLC added
@@ -220,6 +221,33 @@
     <Compile Include="POUs\Controller\Lvl0\CYL %28Cylinder%29\T_Ctrl_SIf_CYL_Par.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\Controller\Lvl0\DRV %28Drive%29\Const_DRV.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\DRV %28Drive%29\E_Typ_DRV.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\DRV %28Drive%29\FB_DRV.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\DRV %28Drive%29\T_Ctrl_SIf_DRV.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\DRV %28Drive%29\T_Ctrl_SIf_DRV_Cfg.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\DRV %28Drive%29\T_Ctrl_SIf_DRV_Cur.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\DRV %28Drive%29\T_Ctrl_SIf_DRV_In.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\DRV %28Drive%29\T_Ctrl_SIf_DRV_Out.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\DRV %28Drive%29\T_Ctrl_SIf_DRV_Par.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29\E_Typ_RFW.TcDUT">
       <SubType>Code</SubType>
     </Compile>
@@ -362,6 +390,7 @@
     <Folder Include="POUs\Controller\Lvl0\" />
     <Folder Include="POUs\Controller\Lvl0\BCC %28Barcode controller%29\" />
     <Folder Include="POUs\Controller\Lvl0\CYL %28Cylinder%29" />
+    <Folder Include="POUs\Controller\Lvl0\DRV %28Drive%29\" />
     <Folder Include="POUs\Controller\Lvl0\VPC [Vacuum Pump Controller]" />
     <Folder Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]" />
     <Folder Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29" />

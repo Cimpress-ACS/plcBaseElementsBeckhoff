@@ -10,6 +10,7 @@
 	UMC_1 := 4,	
 	PRS_1 := 5,	
 	BCC_1 := 6,
+	DRV_1 := 7,
 	E_CtrlIdMax
 );
 END_TYPE

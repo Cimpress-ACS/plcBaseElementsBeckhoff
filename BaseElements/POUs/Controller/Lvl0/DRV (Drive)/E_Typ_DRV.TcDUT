@@ -1,0 +1,18 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="E_Typ_DRV" Id="{d2ce3fb0-5cb9-4b9a-a8da-a43f08b83d4b}">
+    <Declaration><![CDATA[TYPE E_Typ_DRV :
+(
+	None := 0,
+	TLP,
+	TLK,
+	TLKV,
+	TLPsort,
+	TLS,
+	TLC,
+	Max_E_Typ_JUN
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

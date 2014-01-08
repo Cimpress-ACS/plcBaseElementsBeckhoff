@@ -13,6 +13,7 @@ VAR
 	fbPRS_1: FB_PRS;
 	fbUMC_1: FB_UMC;
 	fbVPC_1: FB_VPC;
+	fbDRV_1: FB_DRV;
 	pTmpSIf_RFW: POINTER TO Base_Elements.T_Ctrl_SIf_RFW;
 	pTmpSIf_BCC: POINTER TO T_Ctrl_SIf_BCC;
 END_VAR
@@ -36,6 +37,7 @@ Version		Date			Author		Comment
 0.00.1		25.09.2013		AVME/KVO	Start history
 0.00.2		12.11.2013		VP/RE		Local AlarmManager
 0.00.3		07.01.2014		AVME/DSC 	Insert barcode reader example
+0.00.4		08.01.2014		AVME/MRU	Insert DRV example
 
 ___________________________________________________________________________________________________*)
 
@@ -72,6 +74,7 @@ IF (NOT bolPlcStartupDone) THEN
 	fbPRS_1.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.PRS_1); // init and entry fb_instance in global fb pointer array
 	fbUMC_1.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.UMC_1); // init and entry fb_instance in global fb pointer array
 	fbVPC_1.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.VPC_1); // init and entry fb_instance in global fb pointer array
+	fbDRV_1.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.DRV_1); // init and entry fb_instance in global fb pointer array
 		
     // set all initialized controller FB the property of the alarm manager adress 
 	Base_PLC.setAllCtrlAlarmFB(pCtrlInst := ADR(g_a_pCtrlInst[0]), pAlarmCtrl := ADR(fbAlm_Man), uinCtrlInstLength := INT_TO_UINT(E_CtrlId.E_CtrlIdMax));
@@ -115,6 +118,7 @@ IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone) THEN
 	fbPRS_1();
 	fbUMC_1();
 	fbVPC_1();
+	fbDRV_1();
 END_IF
 // -----------------------------------------------------------------------------------------------]]></ST>
     </Implementation>
