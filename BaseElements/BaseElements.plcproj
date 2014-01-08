@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.0.15</ProjectVersion>
+    <ProjectVersion>0.0.0.16</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.0.15 - Basic versions of Barcode driver and controller added
+    <Description>0.0.0.16 - Newest Base_PLC added 0.3.3.7
+0.0.0.15 - Basic versions of Barcode driver and controller added
 0.0.0.11 - Newest Base_PLC added
 0.0.0.10 - Newest Base_PLC added
 0.0.0.9 - Add cylinder Level0, Update to Base PLC 0.3.3.2
@@ -355,6 +356,7 @@
   <ItemGroup>
     <Folder Include="POUs\" />
     <Folder Include="POUs\Controller\" />
+    <Folder Include="POUs\Controller\Driver\BCD %28Bar code driver%29\" />
     <Folder Include="POUs\Controller\Driver\PRS [Present Sensor]" />
     <Folder Include="POUs\Controller\Driver\RFD %28RFID Driver%29\" />
     <Folder Include="POUs\Controller\Lvl0\" />
@@ -389,7 +391,7 @@
     </PlaceholderReference>
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_PLC,0.3.3.5,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.3.7,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_EtherCAT,3.3.0.0,Beckhoff Automation GmbH">
