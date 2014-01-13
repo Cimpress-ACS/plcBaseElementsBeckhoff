@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.0.17</ProjectVersion>
+    <ProjectVersion>0.0.0.18</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.0.17 - DRV added
+    <Description>0.0.0.18 - RFW integrated from Promp
+0.0.0.17 - DRV added
 0.0.0.16 - Newest Base_PLC added 0.3.3.7
 0.0.0.15 - Basic versions of Barcode driver and controller added
 0.0.0.11 - Newest Base_PLC added

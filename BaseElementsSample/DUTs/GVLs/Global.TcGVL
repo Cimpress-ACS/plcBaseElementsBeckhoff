@@ -12,8 +12,14 @@
 	///Global accesss of driver init in faster cycles
 	g_pFB_RFR: POINTER TO FB_RFR;	
 	g_pFB_BCD: POINTER TO FB_BCD;
-	g_pFB_RFW: POINTER TO FB_RFD;
+	g_pFB_RFD: POINTER TO FB_RFD;
 	
+	g_uinStartProzess : UINT; // For StartUp order
+  	
+END_VAR
+
+VAR_GLOBAL CONSTANT
+	c_uinCntTaskClass : UINT := 3;	// Count of Task Classes
 END_VAR
 
 ]]></Declaration>

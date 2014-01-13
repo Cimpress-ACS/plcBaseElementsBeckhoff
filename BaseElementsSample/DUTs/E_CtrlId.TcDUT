@@ -11,6 +11,7 @@
 	PRS_1 := 5,	
 	BCC_1 := 6,
 	DRV_1 := 7,
+	RFW_12 := 8,
 	E_CtrlIdMax
 );
 END_TYPE

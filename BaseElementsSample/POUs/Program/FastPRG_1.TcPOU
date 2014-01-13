@@ -8,6 +8,7 @@ VAR
 
 	// RFID driver
 	fbRFR_11: FB_RFR;
+	fbRFD_12: FB_RFD;
 	// Barcode driver
 	fbBCD_1: FB_BCD;
 
@@ -32,7 +33,8 @@ Version		Date			Author		Comment
 ---------------------------------------------------------------------------------------------------
 0.00.1		25.09.2013		AVME/KVO	Start history
 0.00.2		07.01.2014		AVME/DSC 	Insert barcode driver example
-
+0.00.3		06.01.2014		AVME/PRE	Implement RFW for Promo RFID Reader-Writer
+0.00.4		13.01.2014		AVME/PRE	Implement Starup Cycle
 ___________________________________________________________________________________________________*)
 
 // -----------------------------------------------------------------------------------------------
@@ -43,7 +45,10 @@ IF (NOT bolPlcStartupDone) THEN
 	
 	// init	
 	g_pFB_RFR := ADR(fbRFR_11);
+	g_pFB_RFD := ADR(fbRFD_12);
+
 	g_pFB_BCD := ADR(fbBCD_1);
+	g_uinStartProzess:=1; // For StartUp order
 END_IF
 // -----------------------------------------------------------------------------------------------
 
@@ -52,8 +57,9 @@ END_IF
 // The host system is downloading all parameter at startup. 
 // bolPlcStartupDone will be set to true after the Host is done with the initialization
 // -----------------------------------------------------------------------------------------------
-IF (bolPlcStartupDone AND (NOT bolHostInitDone) AND NOT bolInitDone) THEN
+IF (bolPlcStartupDone AND (NOT bolHostInitDone) AND NOT bolInitDone AND (g_uinStartProzess>=c_uinCntTaskClass)) THEN
 	bolHostInitDone := TRUE;
+	g_uinStartProzess := 11; // For StartUp order
 END_IF
 // -----------------------------------------------------------------------------------------------
 
@@ -61,23 +67,24 @@ END_IF
 // -----------------------------------------------------------------------------------------------
 // Start PLC code initialization
 // -----------------------------------------------------------------------------------------------
-IF NOT bolInitDone AND bolPlcStartupDone AND bolHostInitDone THEN
+IF NOT bolInitDone AND bolPlcStartupDone AND bolHostInitDone AND (g_uinStartProzess>=(10+c_uinCntTaskClass)) THEN
 		
 	bolInitDone := TRUE;
+	g_uinStartProzess := 21; // For StartUp order
 END_IF
 // -----------------------------------------------------------------------------------------------
 
 // -----------------------------------------------------------------------------------------------
 // Normal Run mode after all the initialization is done
 // -----------------------------------------------------------------------------------------------
-IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone) THEN
+IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone AND (g_uinStartProzess>=(20+c_uinCntTaskClass))) THEN
 	
 	//****************************************************************************************************
 	// cyclic controller calls
 	//****************************************************************************************************
 	fbRFR_11();
+	fbRFD_12();
 	fbBCD_1();
-
 	
 END_IF
 // -----------------------------------------------------------------------------------------------]]></ST>

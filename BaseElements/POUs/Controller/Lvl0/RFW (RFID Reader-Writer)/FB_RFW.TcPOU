@@ -109,8 +109,9 @@ END_IF;
 IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 	pRFD_SIf^.stCur.pData := ADR(SIf.Cur.abytData[0]);
 	SIf.Cur.bolPresent := pRFD_SIf^.stStatus.bolPresent;
-	pRFD_SIf^.stErr.bolErrAck := CIf.Job.bolAlmReset;
-	
+	IF CIf.Job.bolAlmReset = TRUE THEN
+		pRFD_SIf^.stErr.bolErrAck := TRUE;
+	END_IF
 	fbDtChnToLine_NewRFID.pSIf := ADR(SIf);
 	fbDtChnToLine_NewRFID.bolResetError := CIf.Job.bolAlmReset;
 	fbDtChnToLine_NewRFID();
@@ -492,8 +493,9 @@ SIf.Cfg.bolDtChToLine_send := TRUE;]]></ST>
 		pRFD_SIf^.stCur.uinAdressTag := DWORD_TO_UINT(SIf.Cur.dwoJob);
 		pRFD_SIf^.stCur.usiCount := DWORD_TO_USINT(SHR(SIf.Cur.dwoJob,16));
 
-		pRFD_SIf^.intCmd := RFD_Cmd.cRFD_CMD_Write;
-
+		IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+			pRFD_SIf^.intCmd := RFD_Cmd.cRFD_CMD_Write;
+		END_IF
 		
 	END_IF
 
@@ -582,7 +584,7 @@ SIf.Cfg.bolDtChToLine_send := TRUE;]]></ST>
 		
 		// Function
 		// If the RF ID Reader does not send automatically the Tag ID, read it if a new Tag is ready
-		IF (SIf.Cfg.eTyp = E_Typ_RFW.RF310R) THEN
+		IF (SIf.Cfg.eTyp = E_Typ_RFW.RF310R) AND (CIf.SwCfg.bolSimulation = FALSE) THEN
 			IF ((SIf.Cur.bolPresent = TRUE) AND (bolRENewTag = FALSE)) THEN
 				bolNewTag := TRUE;
 				bolRENewTag := TRUE;
@@ -809,9 +811,12 @@ END_CASE;]]></ST>
 		pRFD_SIf^.stCur.uinAdressData := uinDataAdress;
 		pRFD_SIf^.stCur.uinAdressTag := DWORD_TO_UINT(dwoJobIntern);
 		pRFD_SIf^.stCur.usiCount := DWORD_TO_USINT(SHR(dwoJobIntern,16));
-
-		pRFD_SIf^.intCmd := RFD_Cmd.cRFD_CMD_Read;
+		
 		udiTimeDelayRead := 0;
+
+		IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+			pRFD_SIf^.intCmd := RFD_Cmd.cRFD_CMD_Read;
+		END_IF
 	END_IF
 
 
@@ -1235,7 +1240,9 @@ END_IF
 		fbSimulationTimer(); // set time/reset timer
 		fbSimulationTimer.IN := TRUE; // start timer
 		
-		pRFD_SIf^.intCmd := RFD_Cmd.cRFD_CMD_CTRL_ON; // parameter initialisation on driver
+		IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+			pRFD_SIf^.intCmd := RFD_Cmd.cRFD_CMD_CTRL_ON; // parameter initialisation on driver
+		END_IF
 	END_IF
 
 
@@ -1253,7 +1260,7 @@ END_IF
 		
 	
 		// State Change Condition
-		IF (pRFD_SIf^.stErr.bolErrorActive = TRUE) THEN // AND (me.StateMachine.udiTimeInState_ms>SIf.Par.udiWriteTime_ms) 
+		IF (pRFD_SIf^.stErr.bolErrorActive = TRUE) AND (CIf.SwCfg.bolSimulation = FALSE) THEN // AND (me.StateMachine.udiTimeInState_ms>SIf.Par.udiWriteTime_ms) 
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
 		ELSIF (pRFD_SIf^.intCmd = RFD_Cmd.cRFD_CMD_DONE) THEN
 			me.StateMachine.intStateNext := cSTA_PON;
@@ -1313,6 +1320,7 @@ END_IF]]></ST>
 
 		// Simulation
 		IF (CIf.SwCfg.bolSimulation) THEN
+			pRFD_SIf^.stStatus.bolOn := TRUE;
 			fbSimulationTimer(); // simulation time
 			IF (fbSimulationTimer.Q) THEN
 				;
