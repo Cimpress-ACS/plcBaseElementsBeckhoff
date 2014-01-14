@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0">
-	<Project ProjectGUID="{1927D6AA-E64E-4710-9987-139DA1D786B0}" ModifiedGUID="{1681BD88-E76B-45A6-9C4C-BEB22A280CEA}">
+	<Project ProjectGUID="{1927D6AA-E64E-4710-9987-139DA1D786B0}" ModifiedGUID="{415BB30B-EEB1-4645-B679-1CBA1E412E7F}" Target64Bit="true">
 		<System>
 			<Tasks>
 				<Task Id="1" Priority="3" CycleTime="20000" AmsPort="350">
@@ -15,7 +15,7 @@
 			</Tasks>
 		</System>
 		<Plc>
-			<Project Disabled="true" GUID="{62BBD5FB-17F2-4E98-9143-D240A873429A}" Name="BaseElements" PrjFilePath="BaseElements\BaseElements.plcProj" TmcFilePath="BaseElements\BaseElements.tmc" ReloadTmc="true" AmsPort="852" FileArchiveSettings="#x000e">
+			<Project GUID="{62BBD5FB-17F2-4E98-9143-D240A873429A}" Name="BaseElements" PrjFilePath="BaseElements\BaseElements.plcProj" TmcFilePath="BaseElements\BaseElements.tmc" ReloadTmc="true" AmsPort="852" FileArchiveSettings="#x000e">
 				<Instance Id="#x01010010" TcSmClass="TComPlcObjDef">
 					<Name>BaseElements Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
