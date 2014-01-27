@@ -1,5 +1,5 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <POU Name="FB_BCC" Id="{08e5e93d-fa3e-489b-84d4-b24be1d4d02e}">
+  <POU Name="FB_BCC" Id="{9a785481-c24f-43f4-aea7-99e766aefdc2}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_BCC EXTENDS FB_CtrlBase
 VAR_INPUT
 	pBCD_SIf_In: POINTER TO T_BCD;
@@ -33,7 +33,9 @@ History:
 Version		Date			Author		Comment
 ---------------------------------------------------------------------------------------------------
 0.00.1		06.01.2014		AVME/DSC	Start history
-0.00.2		07.01.2014		AVME/DSC	Basic functionalities implemented and tested. 		
+0.00.2		07.01.2014		AVME/DSC	Basic functionalities implemented and tested. 	
+0.00.3		27.01.2014		AVME/DSC	- Added info "bolNoRead" in cur interface
+					 					- Revision in error recovery
 ___________________________________________________________________________________________________*)
 
 
@@ -54,7 +56,7 @@ IF (me.bolActivate) AND (pBCD_SIf_In<>0) THEN // cyclic call enabled
 END_IF;
 ]]></ST>
     </Implementation>
-    <Method Name="sta_READBusy" Id="{6761fe74-05df-41e4-a719-2966a7df8d60}">
+    <Method Name="sta_READBusy" Id="{9b8a2d68-7f4c-4547-82a1-97d4d854cbd6}">
       <Declaration><![CDATA[METHOD PROTECTED sta_READBusy : BOOL
 ]]></Declaration>
       <Implementation>
@@ -72,6 +74,7 @@ END_IF;
 		
 		// Init
 		SIf.Cur.bolNewCodeReaded:= FALSE;
+		SIf.Cur.bolNoRead:= FALSE;
 		SIf.Cur.stData.uliBarCode:= 0;
 		SIf.Cur.stData.strBarCode:= '';
 		
@@ -115,6 +118,8 @@ END_IF;
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
 		ELSIF (pBCD_SIf^.intCmd = cBCD_CMD_DONE) THEN
 			IF (SIf.Cur.stData.uliBarCode=0) THEN
+				SIf.Cur.bolNoRead:= TRUE;
+				uliBarCodeOld:= 0;
 				// SIf.Alm[3].strText := 'Barcode could not be read. Answer *NoRead* from device';
 				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,3,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);	
 			END_IF		
@@ -130,7 +135,7 @@ END_IF;
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="FB_init" Id="{ce7a7331-b946-4b25-83e4-d1375dd041c4}">
+    <Method Name="FB_init" Id="{78ed82a0-8e9d-4e17-9fd7-87dff41a9519}">
       <Declaration><![CDATA[METHOD FB_init : BOOL
 VAR_INPUT
 	///if TRUE, the retain variables are initialized (warm start / cold start)
@@ -162,13 +167,15 @@ CIf.Info.strType := 'FB_BCC';
 
 // set alarm class
 SIf.Alm[1].eAlmClass := E_AlmClass.INFO;
-SIf.Alm[1].strText := 'Communication error between PLC and barcode reader'; 
+SIf.Alm[1].strText := 'Barcode reader driver error'; 
 SIf.Alm[2].eAlmClass := E_AlmClass.OFF;
 SIf.Alm[2].strText := 'Initialisation error from barcode reader. No answer from device.';
 SIf.Alm[3].eAlmClass := E_AlmClass.INFO;
 SIf.Alm[3].strText := 'Barcode could not be read. Answer *NoRead* from device';
 SIf.Alm[4].eAlmClass := E_AlmClass.INFO;
 SIf.Alm[4].strText := 'Timeout wait on data';
+SIf.Alm[5].eAlmClass := E_AlmClass.INFO;
+SIf.Alm[5].strText := 'Error response from sensor';
 
 //*******************************************************************************
 // initial values
@@ -190,7 +197,7 @@ SIf.Cfg.udiSensorPort := 2111;
 uliSimBarCode:= 1250000000000;]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_ERROR" Id="{39850b29-ffe4-4981-bc7d-a0da68b789ed}">
+    <Method Name="sta_ERROR" Id="{3ea9fec1-3519-4095-88ef-7a1d36128bde}">
       <Declaration><![CDATA[METHOD PROTECTED sta_ERROR : BOOL
 ]]></Declaration>
       <Implementation>
@@ -201,17 +208,26 @@ uliSimBarCode:= 1250000000000;]]></ST>
 		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 		
+		// Driver error activ
+		IF (pBCD_SIf^.stErr.bolErrorActive = TRUE) THEN
+			// SIf.Alm[1].strText := 'Barcode reader driver error'; 
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,1,UDINT_TO_DINT(pBCD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			// Error response from sensor
+			IF (pBCD_SIf^.stErr.bolSensorError = TRUE) THEN
+				// SIf.Alm[5].strText := 'Error response from sensor with sopas error number';
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,5,UDINT_TO_DINT(pBCD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);		
+			END_IF
+		ELSE
+			// Close TCP socket		
+			pBCD_SIf^.intCmd := cBCD_CMD_CLOSE_SOCKET;  	
+		END_IF
+		
 	END_IF
 
 //--------------------------------------------------------------------------------------
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		IF (pBCD_SIf^.stErr.bolErrorActive = TRUE) THEN
-			// SIf.Alm[1].strText := 'Communication Error between PLC and barcode reader'; 
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,1,UDINT_TO_DINT(pBCD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-		END_IF
-		
+	
 		// State Change Condition
 		IF (CIf.Job.bolAlmReset = TRUE) THEN
 			// Error ack driver 
@@ -227,7 +243,7 @@ uliSimBarCode:= 1250000000000;]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_READ" Id="{03ee625b-1ae6-4c02-9f30-b9031183680c}">
+    <Method Name="sta_READ" Id="{fca4e253-4356-45fe-bac9-ae020ffe09e2}">
       <Declaration><![CDATA[METHOD PROTECTED sta_READ : BOOL
 ]]></Declaration>
       <Implementation>
@@ -261,7 +277,7 @@ uliSimBarCode:= 1250000000000;]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_PON" Id="{154962bb-6c8b-46b2-80c6-aa84cbbb9c65}">
+    <Method Name="sta_PON" Id="{71c738c9-fe8d-43c1-9d38-5a38a6739049}">
       <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
 ]]></Declaration>
       <Implementation>
@@ -293,7 +309,7 @@ uliSimBarCode:= 1250000000000;]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="Always" Id="{6cc86f7d-90cb-47d0-b275-150d008a12fb}">
+    <Method Name="Always" Id="{d9986861-d197-4743-9642-1bd26876a3d5}">
       <Declaration><![CDATA[METHOD PROTECTED Always : BOOL
 ]]></Declaration>
       <Implementation>
@@ -342,7 +358,7 @@ IF (((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.Alarm.eActivAlmClass=E_Alm
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="getCmdState" Id="{8029146b-575b-4e2a-98d2-3dab5404529e}">
+    <Method Name="getCmdState" Id="{53e2614d-3b22-4398-b66a-416548259045}">
       <Declaration><![CDATA[METHOD PROTECTED getCmdState : STRING
 VAR_INPUT
 	intCmdState: INT;
@@ -372,7 +388,7 @@ IF (getCmdState='') THEN // global not defined get local
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_OFF" Id="{bafd1b2f-583f-4eed-9357-ab44ac8b5706}">
+    <Method Name="sta_OFF" Id="{25849c05-56b3-407e-a501-86068778152b}">
       <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
 ]]></Declaration>
       <Implementation>
@@ -405,7 +421,7 @@ END_IF]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="StateMachine" Id="{ce684bb0-354b-4935-a87c-2f9384148be6}">
+    <Method Name="StateMachine" Id="{81a292b0-4b36-4bad-8649-77623cba82d5}">
       <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL
 ]]></Declaration>
       <Implementation>
@@ -420,7 +436,7 @@ CASE me.StateMachine.intState OF
 END_CASE;]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_PONBusy" Id="{4455dd8c-ccf2-4835-bdd0-f176d4104d27}">
+    <Method Name="sta_PONBusy" Id="{a559a22b-0ade-402e-aa23-881177c5a125}">
       <Declaration><![CDATA[METHOD PROTECTED sta_PONBusy : BOOL
 ]]></Declaration>
       <Implementation>
@@ -439,8 +455,6 @@ END_CASE;]]></ST>
 		// Reset driver status
 		pBCD_SIf^.stStatus.bolSocketConnected := FALSE;
 		pBCD_SIf^.stStatus.bolComChecked := FALSE;
-		// Try to open the TCP socket		
-		pBCD_SIf^.intCmd := cBCD_CMD_CONNECT_SOCKET; 
 	END_IF
 
 //--------------------------------------------------------------------------------------
@@ -456,7 +470,10 @@ END_CASE;]]></ST>
 				pBCD_SIf^.stStatus.bolComChecked := TRUE;		
 			END_IF
 		END_IF
-		
+			
+		// Try to open the TCP socket		
+		pBCD_SIf^.intCmd := cBCD_CMD_CONNECT_SOCKET;  
+					
 		// Check if socket connected
 		IF (pBCD_SIf^.stStatus.bolSocketConnected = TRUE) THEN
 			pBCD_SIf^.intCmd :=	cBCD_CMD_COM_TEST; // Execute a communication test to see if the device answer		
@@ -479,7 +496,7 @@ END_CASE;]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="IoOutBridge" Id="{028e9b84-b0f5-4a90-a8ef-466a45c51157}">
+    <Method Name="IoOutBridge" Id="{dc715a54-bcb6-4b94-b5de-60c9a121aa4b}">
       <Declaration><![CDATA[METHOD PROTECTED IoOutBridge : BOOL
 ]]></Declaration>
       <Implementation>
@@ -493,7 +510,7 @@ IF (CIf.SwCfg.bolSimulation = FALSE) THEN
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="IoInBridge" Id="{24c8da04-207a-4daf-9aa5-e51b73283a59}">
+    <Method Name="IoInBridge" Id="{e9bb6720-570a-4681-bfcf-3a0d99f688d0}">
       <Declaration><![CDATA[METHOD PROTECTED IoInBridge : BOOL
 ]]></Declaration>
       <Implementation>
@@ -507,14 +524,14 @@ END_IF
 ]]></ST>
       </Implementation>
     </Method>
-    <Method Name="getCtrlSIf" Id="{d93c856a-8f5e-42d8-ba7b-86711137d421}">
+    <Method Name="getCtrlSIf" Id="{58225594-f64c-4e77-aa78-5af2418fa793}">
       <Declaration><![CDATA[METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_BCC
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_OFFBusy" Id="{d663b89d-1e11-4650-8111-d274452c34af}">
+    <Method Name="sta_OFFBusy" Id="{2ed0df5f-e667-4db0-bd33-101e9cb61cd1}">
       <Declaration><![CDATA[METHOD PROTECTED sta_OFFBusy : BOOL
 ]]></Declaration>
       <Implementation>

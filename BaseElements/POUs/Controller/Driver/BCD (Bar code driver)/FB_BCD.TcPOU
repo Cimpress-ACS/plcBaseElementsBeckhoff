@@ -1,5 +1,5 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <POU Name="FB_BCD" Id="{f3acc397-0efd-41fe-96b5-ff06c3870248}">
+  <POU Name="FB_BCD" Id="{ba5ed30e-df9b-47d7-aff9-1f8418e56695}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_BCD
 VAR
 	bolInitDone: BOOL;
@@ -69,7 +69,8 @@ Version		Date			Author		Comment
 										CMD_CLOSE_SOCKET 	1004 		// Close TCP socket
 										CMD_COM_TEST 		1006 		// Communication test 
 										CMD_READ_BARCODE 	1014 		// Command enable the sensor gate for X-TIME ("duration" setting of sensor object trigger)
-																		// Sensor try to detect a barcode.																					 							
+																		// Sensor try to detect a barcode.
+0.00.3		27.01.2014		AVME/DSC    Added new method "CheckSensorError" to set "bolSensorError" in case if sensor answer with SOPAS error																					 							
 		
 ___________________________________________________________________________________________________*)
 
@@ -89,7 +90,7 @@ IF (bolActivate) THEN // cyclic call enabled
 	
 END_IF;]]></ST>
     </Implementation>
-    <Method Name="CtrlInit" Id="{21616382-407d-47b2-8fff-736f48d273dd}">
+    <Method Name="CtrlInit" Id="{288ae67f-5e57-4225-93a9-71f5508d9d42}">
       <Declaration><![CDATA[METHOD PROTECTED CtrlInit : BOOL
 ]]></Declaration>
       <Implementation>
@@ -98,7 +99,7 @@ END_IF;]]></ST>
 stStateMachine.intStateNext := cBCD_STA_SocketClosed;]]></ST>
       </Implementation>
     </Method>
-    <Method Name="StateMachine" Id="{5a5063a8-5316-4fe4-af63-164e61a40246}">
+    <Method Name="StateMachine" Id="{e857cd3f-7873-4f20-bc02-0852c6aff90d}">
       <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL
 ]]></Declaration>
       <Implementation>
@@ -122,7 +123,7 @@ CASE stStateMachine.intState OF
 END_CASE;]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_Error" Id="{9c73cf3b-8cd6-4cc2-ad1c-2be88ddac496}">
+    <Method Name="sta_Error" Id="{70cd2a43-d9eb-493e-ac55-03de742918d5}">
       <Declaration><![CDATA[METHOD PROTECTED sta_Error : BOOL
 ]]></Declaration>
       <Implementation>
@@ -136,7 +137,6 @@ END_CASE;]]></ST>
 		// Reset pending commands			
 		bolExecuteSend:= FALSE;
 		bolExecuteRead:= FALSE;
-		
 		// Reset Rx/Tx states
 		intRxState:= cRxIdle;
 		intTxState:= cTxIdle;
@@ -169,7 +169,7 @@ END_CASE;]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_ConnectSocketBusy" Id="{7fb8021a-ee97-48f0-ae1d-460fd2d25634}">
+    <Method Name="sta_ConnectSocketBusy" Id="{bdfc348b-fb99-4f76-a14a-fd5d5d767c29}">
       <Declaration><![CDATA[METHOD PROTECTED sta_ConnectSocketBusy : BOOL
 ]]></Declaration>
       <Implementation>
@@ -218,7 +218,7 @@ END_CASE;]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_CloseSocketBusy" Id="{4a4f00a8-4ad6-48be-bfa5-046b0328d799}">
+    <Method Name="sta_CloseSocketBusy" Id="{9e0ac093-9d1a-46e2-a0a1-abc5605242a4}">
       <Declaration><![CDATA[METHOD PROTECTED sta_CloseSocketBusy : BOOL
 ]]></Declaration>
       <Implementation>
@@ -229,6 +229,12 @@ END_CASE;]]></ST>
 		stStateMachine.intStateHistory := stStateMachine.intStateLastCycle;
 		stStateMachine.intStateLastCycle := stStateMachine.intState;
 		
+		// Reset pending commands			
+		bolExecuteSend:= FALSE;
+		bolExecuteRead:= FALSE;
+		// Reset Rx/Tx states
+		intRxState:= cRxIdle;
+		intTxState:= cTxIdle;
 		// Close socket
 		fbClientConnection.bEnable:= FALSE;
 
@@ -265,7 +271,7 @@ END_CASE;]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_SocketClosed" Id="{fb8ffbef-b30f-410f-b97f-b36196101767}">
+    <Method Name="sta_SocketClosed" Id="{d2097e0b-b52f-4f2c-823f-5df4c81f42d4}">
       <Declaration><![CDATA[METHOD PROTECTED sta_SocketClosed : BOOL
 ]]></Declaration>
       <Implementation>
@@ -295,14 +301,14 @@ END_CASE;]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="getSIf" Id="{7fb3ed53-7f15-4226-8ee0-34cc2a5ea6ca}">
+    <Method Name="getSIf" Id="{798edd76-25dd-47e8-a2f0-75ee0d0d3c11}">
       <Declaration><![CDATA[METHOD getSIf : POINTER TO T_BCD
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[getSIf := ADR(SIf);]]></ST>
       </Implementation>
     </Method>
-    <Method Name="getCmdState" Id="{f34f86a2-ef48-4127-850e-b41aa377cf21}">
+    <Method Name="getCmdState" Id="{00932789-3d9f-4677-8886-93e56908b950}">
       <Declaration><![CDATA[METHOD PROTECTED getCmdState : STRING
 VAR_INPUT
 	intCmdState: INT;
@@ -351,7 +357,7 @@ END_IF
 ]]></ST>
       </Implementation>
     </Method>
-    <Method Name="CycleEndDuty" Id="{a4b6435f-913d-4b04-9597-740f2fbd4604}">
+    <Method Name="CycleEndDuty" Id="{806baf22-5f74-4c99-9be3-1fc3fca20f19}">
       <Declaration><![CDATA[METHOD PROTECTED CycleEndDuty : BOOL
 ]]></Declaration>
       <Implementation>
@@ -369,7 +375,7 @@ END_IF
 THIS^.HandleTxData();]]></ST>
       </Implementation>
     </Method>
-    <Method Name="CycleStartDuty" Id="{69ddd546-64f1-401f-88b1-3698bf8f6e59}">
+    <Method Name="CycleStartDuty" Id="{95616e63-c7dd-4e24-b57c-8374a7ed0860}">
       <Declaration><![CDATA[METHOD PROTECTED CycleStartDuty : BOOL
 ]]></Declaration>
       <Implementation>
@@ -396,10 +402,16 @@ ELSE
 	SIf.stStatus.bolComChecked:= FALSE;
 END_IF
 
+// Command close socket can be executed all the time.
+// Used for error recovery in case if parent controller has an error.
+IF (SIf.intCmd=cBCD_CMD_CLOSE_SOCKET) THEN	
+	stStateMachine.intStateNext := cBCD_STA_CloseSocketBusy;
+END_IF
+			
 SIf.strCmd := THIS^.getCmdState(intCmdState:=SIf.intCmd,bolState:=FALSE);]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_WaitForJob" Id="{6c241500-b37d-4e30-808a-f7b2447e167e}">
+    <Method Name="sta_WaitForJob" Id="{666a5d41-4719-4635-9b4f-aec8e344c286}">
       <Declaration><![CDATA[METHOD PROTECTED sta_WaitForJob : BOOL
 ]]></Declaration>
       <Implementation>
@@ -436,7 +448,7 @@ SIf.strCmd := THIS^.getCmdState(intCmdState:=SIf.intCmd,bolState:=FALSE);]]></ST
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="FB_init" Id="{304032db-0e4d-481d-9117-9c6dc5e70fb9}">
+    <Method Name="FB_init" Id="{d3d9bd0c-1722-48b1-bc44-defc2278baa6}">
       <Declaration><![CDATA[METHOD FB_init : BOOL
 VAR_INPUT
 	///if TRUE, the retain variables are initialized (warm start / cold start)
@@ -456,7 +468,7 @@ SIf.stPar.tTOReceive := T#5S;
 SIf.stPar.tTOSend := T#5S;]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_ComTestBusy" Id="{173d1586-2b76-4525-873b-926defcc0928}">
+    <Method Name="sta_ComTestBusy" Id="{4d2640ed-d743-4901-8dfe-5b3fb190b7bd}">
       <Declaration><![CDATA[METHOD PROTECTED sta_ComTestBusy : BOOL
 ]]></Declaration>
       <Implementation>
@@ -534,7 +546,7 @@ SIf.stPar.tTOSend := T#5S;]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="PrepareSendMsg" Id="{8704fb91-cdb8-4a3c-9b4e-35959b301e59}">
+    <Method Name="PrepareSendMsg" Id="{8a7515e7-3b7e-47d3-95b4-ce88878dce42}">
       <Declaration><![CDATA[METHOD PRIVATE PrepareSendMsg
 VAR_INPUT
 	strMsg: STRING;
@@ -565,7 +577,7 @@ END_FOR
 aTxData[intI]:= cETX;]]></ST>
       </Implementation>
     </Method>
-    <Method Name="HandleTxData" Id="{c8dc6641-c363-4d59-be75-a424842ffbdf}">
+    <Method Name="HandleTxData" Id="{c5768eb3-62dc-4129-a0cc-e63e53ebb11e}">
       <Declaration><![CDATA[METHOD PRIVATE HandleTxData
 ]]></Declaration>
       <Implementation>
@@ -610,7 +622,7 @@ CASE intTxState OF
 END_CASE]]></ST>
       </Implementation>
     </Method>
-    <Method Name="HandleRxData" Id="{42c300b5-5700-4e5f-9132-9b31f8803b95}">
+    <Method Name="HandleRxData" Id="{037414a0-fd35-4870-86e4-3d89b6be36e9}">
       <Declaration><![CDATA[METHOD PRIVATE HandleRxData
 VAR
 	uinI: UINT;
@@ -669,6 +681,7 @@ CASE intRxState OF
 	// convert received message to string
 	cRxConv: 
 		THIS^.PrepareReadMsg();
+		THIS^.CheckSensorError(); // Error response: [STX]sFA <x>[ETX]    	
 		bolExecuteRead:= FALSE; // Read done and data converted to string format
 		intRxState := cRxIdle;
 		
@@ -676,7 +689,7 @@ END_CASE
 ]]></ST>
       </Implementation>
     </Method>
-    <Method Name="PrepareReadMsg" Id="{76f1d62e-8254-4fc9-a229-61ffcf5e7cf3}">
+    <Method Name="PrepareReadMsg" Id="{688d6e87-4dd7-440c-81a1-4862c9eec9c2}">
       <Declaration><![CDATA[METHOD PRIVATE PrepareReadMsg
 VAR
 	uinI: UINT;
@@ -703,7 +716,7 @@ FOR uinI:= 0 TO SIZEOF(aRxData)-1 DO
 END_FOR]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_ReadCodeBusy" Id="{30c67254-be4e-43f8-8979-24e64c0ac693}">
+    <Method Name="sta_ReadCodeBusy" Id="{efeb6a1c-2efa-4d18-bfd6-68a2cd7c93b7}">
       <Declaration><![CDATA[METHOD PROTECTED sta_ReadCodeBusy : BOOL
 ]]></Declaration>
       <Implementation>
@@ -734,7 +747,7 @@ END_FOR]]></ST>
 			cBCD_SUB_Send:
 				// Check Tx state idle
 				IF (intTxState = cTxIdle) THEN
-					THIS^.PrepareSendMsg('sMN mTCgateon'); // Call SOPAS method "sMN mTCgateon"
+					THIS^.PrepareSendMsg('sMN mTCgateon'); // Call SOPAS method "sMN mTCgateon"		
 					bolExecuteSend:= TRUE;
 					stSubStateMachine.intState := cBCD_SUB_Wait;
 				END_IF
@@ -802,7 +815,7 @@ END_FOR]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="PrepareBarCodeData" Id="{1fe7019f-4514-48da-a451-ed874f320318}">
+    <Method Name="PrepareBarCodeData" Id="{4b469cbe-9527-4e71-9423-5fc6c97b1ccb}">
       <Declaration><![CDATA[METHOD PRIVATE PrepareBarCodeData
 VAR
 	intI: INT;
@@ -851,6 +864,75 @@ FOR intI:=intStartIndex TO LEN(strReceivedMessage)-intStartIndex DO
 	END_IF
 	
 END_FOR]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CheckSensorError" Id="{0be986bd-3dcb-4d58-944a-be1af587b5eb}">
+      <Declaration><![CDATA[METHOD PRIVATE CheckSensorError
+VAR
+	strErrorID: STRING(3);
+	bytErrorID: BYTE;
+	cbData  : UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[(*--------------------------------------------------------------------------
+IF an error occurs the Sopas command is answered with:
+[STX]sFA <x>[ETX] as an error response
+
+	Error list: <x> can have following values:
+	1:	Access denied
+	2:	Unknown Index
+	3:	Unknown Index
+	4:	Wrong Condition
+	5:	Invalid Data
+	6:	Unknown Error
+	7:	Too Many Parameter
+	8:	Parameter Missing
+	9: 	Wrong Parameter
+	A:	No Write Access
+	B:	Unknown Command
+	C:	Unknown Command
+	D:	Server Busy
+	E:	Textstring Too Long
+	F:	Unknown Event
+	10:	Too many Parameter
+	11: Invalid Character
+	12.	No Message
+	13:	No Answer
+	14:	Internal Error
+	15:	HubAddress: wrong
+	16:	HubAddress: error
+	17:	HubAddress: error
+
+---------------------------------------------------------------------------*)
+
+// If received message is an error response from sensor: [STX]sFA <x>[ETX]    				
+IF (TC2_STANDARD.FIND(strReceivedMessage,'sFA') <> 0) THEN
+	
+	// Get error number
+	strErrorID := Mid(strReceivedMessage,LEN(strReceivedMessage)-1,5);
+	cbData := HEXSTR_TO_DATA( strErrorID, ADR(bytErrorID), SIZEOF(bytErrorID));
+
+	// No interpretation of the error number, only set SensorError with error number info 
+	(*
+	CASE bytErrorID OF
+		16#1: 
+		16#2:
+		16#3:	
+		16#A:			
+		16#B,16#C:
+	END_CASE
+	*)
+	
+	IF (SIf.stErr.bolErrorActive = FALSE) THEN
+		SIf.stErr.bolErrorActive:= TRUE;	
+		SIf.stErr.bolSensorError:= TRUE; 
+		SIf.stErr.udiErrorID := bytErrorID;	
+		// Try to close the socket. Needs reconnect for socket after an error!	
+		stStateMachine.intStateNext := cBCD_STA_CloseSocketBusy;	
+	END_IF	
+
+END_IF
+	]]></ST>
       </Implementation>
     </Method>
     <ObjectProperties>﻿<XmlArchive>

@@ -1,5 +1,5 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_BCD" Id="{e9c59ab3-53ff-480f-ad9e-ae238e565edd}">
+  <DUT Name="T_BCD" Id="{2dce6373-9bf6-42af-8ec5-5fd5781f19a6}">
     <Declaration><![CDATA[TYPE T_BCD :
 STRUCT
 	strState: STRING;

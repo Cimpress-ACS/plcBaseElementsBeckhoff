@@ -1,14 +1,16 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_BCC_Cur" Id="{938ee115-c5b0-4116-8666-7f27aac4fbe8}">
+  <DUT Name="T_Ctrl_SIf_BCC_Cur" Id="{7bd4a188-f6f4-438c-9a7f-742f67fdfea0}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_BCC_Cur :
 STRUCT
-	/// Sensor connected
+	// Sensor connected
 	bolConnected: BOOL;
-	/// Communication checked during PON
+	// Communication checked during PON
 	bolComChecked: BOOL;
-	/// 1 = new bar code readed, 0 = *No Read* 
+	// 1 = new bar code readed 
 	bolNewCodeReaded: BOOL;
-	/// Sensor data
+	// 1 = no code readed, answer *No Read* 
+	bolNoRead: BOOL;
+	// Sensor data
 	stData: T_BCC_Data;
 END_STRUCT
 END_TYPE

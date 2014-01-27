@@ -1,5 +1,5 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_BCD_Cfg" Id="{28c0e928-f1d0-422d-b076-20c83bf416b1}">
+  <DUT Name="T_BCD_Cfg" Id="{9268985c-684f-45d4-b633-891ef512732c}">
     <Declaration><![CDATA[TYPE T_BCD_Cfg :
 STRUCT
 	bolSimulation: BOOL;

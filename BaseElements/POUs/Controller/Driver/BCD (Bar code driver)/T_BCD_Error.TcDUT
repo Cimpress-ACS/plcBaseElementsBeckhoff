@@ -1,5 +1,5 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_BCD_Error" Id="{65b8962c-b37e-4a90-add1-8144aebacebf}">
+  <DUT Name="T_BCD_Error" Id="{7030219c-aefe-4888-83d3-a26123dd516d}">
     <Declaration><![CDATA[TYPE T_BCD_Error :
 STRUCT
 	/// Reset failure

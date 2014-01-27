@@ -1,5 +1,5 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <POU Name="FC_StrComp" Id="{748ff53c-7693-4e74-9eca-02a4c9519a4a}">
+  <POU Name="FC_StrComp" Id="{d2bf6d98-cbb0-47cd-8fea-cba433851996}">
     <Declaration><![CDATA[FUNCTION FC_StrComp : DINT
 VAR_INPUT
 	strArg1: STRING(255);

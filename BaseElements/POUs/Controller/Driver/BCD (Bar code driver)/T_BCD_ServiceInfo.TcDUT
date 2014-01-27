@@ -1,5 +1,5 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_BCD_ServiceInfo" Id="{14277e6a-26dc-46bc-a8f5-fc4f4a4f9c27}">
+  <DUT Name="T_BCD_ServiceInfo" Id="{c7c91e86-715d-4d6c-b681-85929638f872}">
     <Declaration><![CDATA[TYPE T_BCD_ServiceInfo :
 STRUCT
 	strLastUsername: STRING(25);

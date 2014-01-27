@@ -1,5 +1,5 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_BCC_Data" Id="{474fd0e0-ff67-4187-9a4b-0d2eed9ceabb}">
+  <DUT Name="T_BCC_Data" Id="{dd25ec05-a62c-4113-9fb0-f6f8e3d416b4}">
     <Declaration><![CDATA[TYPE T_BCC_Data :
 STRUCT
 	uliBarCode: ULINT;

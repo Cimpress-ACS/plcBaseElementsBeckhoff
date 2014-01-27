@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0">
-	<Project ProjectGUID="{1927D6AA-E64E-4710-9987-139DA1D786B0}" ModifiedGUID="{415BB30B-EEB1-4645-B679-1CBA1E412E7F}" Target64Bit="true">
+	<Project ProjectGUID="{1927D6AA-E64E-4710-9987-139DA1D786B0}" ModifiedGUID="{AAA07704-9555-4D07-A002-720E67124B0C}" TargetNetId="192.168.70.27.1.1">
 		<System>
+			<Licenses>
+				<Target>
+					<ManualSelect>{3EBB9639-5FF3-42B6-8847-35C70DC013C8}</ManualSelect>
+				</Target>
+			</Licenses>
 			<Tasks>
 				<Task Id="1" Priority="3" CycleTime="20000" AmsPort="350">
 					<Name>Task_Fast</Name>

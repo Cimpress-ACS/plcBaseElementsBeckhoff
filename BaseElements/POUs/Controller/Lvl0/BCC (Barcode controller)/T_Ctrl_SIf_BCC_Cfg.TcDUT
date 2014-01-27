@@ -1,5 +1,5 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_BCC_Cfg" Id="{487a51f1-01b0-4f3d-8e7d-b7bb0ef228d2}">
+  <DUT Name="T_Ctrl_SIf_BCC_Cfg" Id="{6248ce50-3d7a-43dc-9fdb-3ed449b30cea}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_BCC_Cfg :
 STRUCT
 	/// IP Adress of the sensor (PLC = Client, Sensor = Server)

@@ -1,5 +1,5 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <GVL Name="BCD_CmdState" Id="{751d0634-e0a5-4225-99d9-1b999eecfebb}">
+  <GVL Name="BCD_CmdState" Id="{5bfafbe8-0f85-4f92-8deb-c3b8920a8a38}">
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
 	/// ctrl commands definitions
 	cBCD_CMD_DONE: INT := -1;

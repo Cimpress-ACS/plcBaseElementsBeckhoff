@@ -15,9 +15,9 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.0.19</ProjectVersion>
+    <ProjectVersion>0.0.0.20</ProjectVersion>
     <Released>True</Released>
-    <Description>
+    <Description>0.0.0.20 - New version of BCD and BCC
 0.0.0.19 - Back to BasePLC Lib. V3.3.5 beacuase of PageFaults
 0.0.0.18 - RFW integrated from Promp
 0.0.0.17 - DRV added
@@ -30,6 +30,7 @@
 0.0.0.7 - Updated to newest tc2_utilities
 0.0.0.6 - Added the PRS controller
 0.0.0.5 - Added the UMC and VPC controller</Description>
+    <Author>DSC</Author>
     <!--    <OutputType>Exe</OutputType>
     <RootNamespace>MyApplication</RootNamespace>
     <AssemblyName>MyApplication</AssemblyName>-->
@@ -387,7 +388,6 @@
   <ItemGroup>
     <Folder Include="POUs\" />
     <Folder Include="POUs\Controller\" />
-    <Folder Include="POUs\Controller\Driver\BCD %28Bar code driver%29\" />
     <Folder Include="POUs\Controller\Driver\PRS [Present Sensor]" />
     <Folder Include="POUs\Controller\Driver\RFD %28RFID Driver%29\" />
     <Folder Include="POUs\Controller\Lvl0\" />
@@ -454,6 +454,7 @@
     <SubObject Include="FB_BCC.sta_PONBusy" />
     <SubObject Include="FB_BCC.sta_READ" />
     <SubObject Include="FB_BCC.sta_READBusy" />
+    <SubObject Include="FB_BCD.CheckSensorError" />
     <SubObject Include="FB_BCD.CtrlInit" />
     <SubObject Include="FB_BCD.CycleEndDuty" />
     <SubObject Include="FB_BCD.CycleStartDuty" />

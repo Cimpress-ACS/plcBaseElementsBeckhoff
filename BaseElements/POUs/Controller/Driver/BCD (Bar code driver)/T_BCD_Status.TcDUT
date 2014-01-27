@@ -1,5 +1,5 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_BCD_Status" Id="{51ed93e0-f667-473c-8649-2682192e2bcf}">
+  <DUT Name="T_BCD_Status" Id="{74d39223-4df3-4f13-8102-d7001e95f71a}">
     <Declaration><![CDATA[TYPE T_BCD_Status :
 STRUCT
 	/// Socket connected
