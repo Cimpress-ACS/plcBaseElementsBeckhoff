@@ -3,11 +3,13 @@
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_UMC_In :
 STRUCT
 	/// Status Word of Lenze
-	intStatus				: Base_PLC.T_Ctrl_IoUint;
+	uinStatus				: Base_PLC.T_Ctrl_IoUint;
 	/// Motor actual speed
-	intMotorActualSpeed		: Base_PLC.T_Ctrl_IoUint;
+	intMotorActualSpeed		: Base_PLC.T_Ctrl_IoInt;
 	/// Motor actual speed setpoint 
-	intMotorSetSpeed		: Base_PLC.T_Ctrl_IoUint;
+	uinMotorSetSpeed		: Base_PLC.T_Ctrl_IoUint;
+	/// Is the EMO Ok...
+	bolEmoOk				: Base_PLC.T_Ctrl_IoBool;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

@@ -5,7 +5,7 @@
     <FileVersion>1.0.0.0</FileVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{62bbd5fb-17f2-4e98-9143-d240a873429a}</ProjectGuid>
-    <Name>BaseElements</Name>
+    <Name>Base_Elements</Name>
     <ProgramVersion>3.1.0.5</ProgramVersion>
     <Application>{84ae8d91-d8f9-4b8b-8d1b-864ed6cb383d}</Application>
     <TypeSystem>{84b8bf35-c3e3-432c-b94a-9f4aaa4025f6}</TypeSystem>
@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.0.20</ProjectVersion>
+    <ProjectVersion>0.0.0.21</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.0.20 - New version of BCD and BCC
+    <Description>0.0.0.21 - UMC - Add EMO State, Refactoring
+0.0.0.20 - New version of BCD and BCC
 0.0.0.19 - Back to BasePLC Lib. V3.3.5 beacuase of PageFaults
 0.0.0.18 - RFW integrated from Promp
 0.0.0.17 - DRV added
@@ -388,6 +389,7 @@
   <ItemGroup>
     <Folder Include="POUs\" />
     <Folder Include="POUs\Controller\" />
+    <Folder Include="POUs\Controller\Driver\BCD %28Bar code driver%29\" />
     <Folder Include="POUs\Controller\Driver\PRS [Present Sensor]" />
     <Folder Include="POUs\Controller\Driver\RFD %28RFID Driver%29\" />
     <Folder Include="POUs\Controller\Lvl0\" />
@@ -423,19 +425,19 @@
     </PlaceholderReference>
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_PLC,0.3.3.5,Vistaprint">
+    <LibraryReference Include="Base_PLC,newest,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Tc2_EtherCAT,3.3.0.0,Beckhoff Automation GmbH">
+    <LibraryReference Include="Tc2_EtherCAT,newest,Beckhoff Automation GmbH">
       <Namespace>Tc2_EtherCAT</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Tc2_SerialCom,3.3.0.0,Beckhoff Automation GmbH">
+    <LibraryReference Include="Tc2_SerialCom,newest,Beckhoff Automation GmbH">
       <Namespace>Tc2_SerialCom</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Tc2_TcpIp,3.3.1.0,Beckhoff Automation GmbH">
+    <LibraryReference Include="Tc2_TcpIp,newest,Beckhoff Automation GmbH">
       <Namespace>Tc2_TcpIp</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Tc2_Utilities,3.3.5.0,Beckhoff Automation GmbH">
+    <LibraryReference Include="Tc2_Utilities,newest,Beckhoff Automation GmbH">
       <Namespace>Tc2_Utilities</Namespace>
     </LibraryReference>
   </ItemGroup>
@@ -549,7 +551,7 @@
     <SubObject Include="FB_PTL.sta_PONBusy" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="BaseElements.tmc">
+    <Content Include="Base_Elements.tmc">
       <SubType>Content</SubType>
     </Content>
   </ItemGroup>
