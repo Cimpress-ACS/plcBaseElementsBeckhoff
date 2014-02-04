@@ -78,7 +78,7 @@
     </PlaceholderReference>
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_Elements,0.0.0.20,Vistaprint">
+    <LibraryReference Include="Base_Elements,0.0.0.22,Vistaprint">
       <Namespace>Base_Elements</Namespace>
     </LibraryReference>
     <LibraryReference Include="Base_PLC,0.3.3.5,Vistaprint">

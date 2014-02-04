@@ -47,6 +47,9 @@ History:
 Version		Date			Author		Comment
 ---------------------------------------------------------------------------------------------------
 0.00.1		09.07.2013		PC			Start history
+0.00.2		04.02.2014		AVM/MRU		Simulation mode
+										cCMD_LEFT / cCMD_RIGHT added in FB_init / getCmdState
+
 ___________________________________________________________________________________________________*)
 
 
@@ -96,6 +99,14 @@ IF (iIdx < iLength) THEN
 	iIdx := iIdx + 1;
 	CIf.Job.aCmdList[iIdx].intCmd := cCMD_RUN;
 	CIf.Job.aCmdList[iIdx].strName := 'Run'; 
+	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
+	iIdx := iIdx + 1;
+	CIf.Job.aCmdList[iIdx].intCmd := cCMD_LEFT;
+	CIf.Job.aCmdList[iIdx].strName := 'Left'; 
+	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
+	iIdx := iIdx + 1;
+	CIf.Job.aCmdList[iIdx].intCmd := cCMD_RIGHT;
+	CIf.Job.aCmdList[iIdx].strName := 'Right'; 
 	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
 	iIdx := iIdx + 1;
 ELSE
@@ -196,7 +207,13 @@ END_VAR]]></Declaration>
 IF (getCmdState='') THEN // global not defined get local
 	// get string cmd/state string information in runtime
 	IF (bolState=FALSE) THEN
-		;// Comands's
+		// Comands's
+		CASE intCmdState OF
+			cCMD_LEFT: 
+				getCmdState := 'cCMD_Left';
+			cCMD_RIGHT: 
+				getCmdState := 'cCMD_Right';
+		END_CASE;
 	ELSE
 		// States's
 		CASE intCmdState OF
@@ -327,6 +344,8 @@ END_IF]]></ST>
 		IF (CIf.Job.bolAlmReset = FALSE) THEN
 			IF (me.StateMachine.intStateHistory<=cSTA_PON) THEN
 				me.StateMachine.intStateNext := cSTA_PON;
+			ELSIF (CIf.SwCfg.bolSimulation = TRUE) THEN	// Do not set operation mode in simulation
+				me.StateMachine.intStateNext := BASE_PLC.cSTA_OFF;
 			ELSE
 				me.StateMachine.intStateNext := UMC_CmdState.cSTA_SETOPERATIONMODE;
 			END_IF
@@ -402,6 +421,8 @@ END_VAR
 		  AND In_unStatus.Data.ActSpeedIsZero
 		  AND (eMotorStatus = E_UMC_MOTOR_STATUS.ReadyToSwitchON) THEN
 			me.StateMachine.intStateNext := Base_PLC.cSTA_OFF;
+		ELSIF (CIf.SwCfg.bolSimulation = TRUE) THEN	// Do not set operation mode in simulation
+			me.StateMachine.intStateNext := BASE_PLC.cSTA_OFF;
 		ELSE
 			IF me.StateMachine.udiTimeInState_ms > SIf.Par.uinMotorResetPulseTime_ms THEN
 				IF SIf.Cur.uinMotorResetCnt > SIf.Par.uinMotorResetCnt THEN
