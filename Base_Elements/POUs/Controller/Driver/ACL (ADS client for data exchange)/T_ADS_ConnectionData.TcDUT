@@ -1,0 +1,26 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_ADS_ConnectionData" Id="{0d7a442c-7906-49c9-90e8-65a4520e3f84}">
+    <Declaration><![CDATA[TYPE T_ADS_ConnectionData :
+STRUCT
+	// Connection ID. Automatically assigned by calling method for adding new connection
+	udiConID: UDINT;
+	// Handle ID for data exchange. Determined automatically during state PONbusy.
+	udiHandle: UDINT;
+	// Route of the PRG or FUB instance on server side. Example: 'SlowPRG_1.fbData.SIf.cur.st_ADSData'
+	strRoute: STRING;
+	// ADS target port
+	uinTargetPort: UINT;
+	/// NetID
+	strNetID: STRING(30);
+	// Access type
+	eAccessType: E_ADS_AccessType;
+	// Length of the data structure
+	udiDataLen: UDINT;
+	// Pointer to data structure. Note: Defined structure must be the same on client and server side.
+	pData: PVOID;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

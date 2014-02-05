@@ -18,6 +18,18 @@ VAR
 	fbDRV_1: FB_DRV;
 	pTmpSIf_RFW: POINTER TO Base_Elements.T_Ctrl_SIf_RFW;
 	pTmpSIf_BCC: POINTER TO T_Ctrl_SIf_BCC;
+	
+	// ADS Client Example
+	fbACL_1: FB_ACL;
+	sCon01_ShirtStream: T_ADS_ConnectionData; 			// Example: Read connection to shirt stream PLC (Port 851) drive FUB interface .cur
+	DrvCurData: T_Ctrl_SIf_DRV_Cur;	
+	sCon02_ShirtStream: T_ADS_ConnectionData; 			// Example: Write connection to shirt stream PLC (Port 851) drive FUB interface .par
+	DrvParData: T_Ctrl_SIf_DRV_Par;	
+	sCon03_ShirtStream: T_ADS_ConnectionData; 			// Example: Write connection to shirt stream PLC (Port 852) drive FUB interface .cfg
+	DrvCfgData: T_Ctrl_SIf_DRV_Cfg;	
+	// ADS Client Example
+		
+	
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -42,7 +54,7 @@ Version		Date			Author		Comment
 0.00.4		08.01.2014		AVME/MRU	Insert DRV example
 0.00.5		06.01.2014		AVME/PRE	Implement RFW for Promo Read and Write RFID Reader
 0.00.6		13.01.2014		AVME/PRE	Implement Starting Up Process
-
+0.00.7		05.02.2014		AVME/DSC	Insert ADS client example
 ___________________________________________________________________________________________________*)
 
 // -----------------------------------------------------------------------------------------------
@@ -73,7 +85,10 @@ IF (NOT bolPlcStartupDone) AND (g_uinStartProzess>=(uinTaskNbr-1)) THEN
 	pTmpSIf_RFW^.Cfg.uinSlaveAddr := 1024; //Io card Ethercat adress 
 	pTmpSIf_RFW^.Cfg.bolGetTrayIDAuto := TRUE;
 	
-	
+	// *********************************************************
+	// Barcode reader example
+	// *********************************************************
+	(* 
 	// Barcode reader, element Controller in this Task, Driver in fastest Task class
 	fbBCC_1.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.BCC_1); // init and entry fb_instance in global fb pointer array
 	fbBCC_1.pBCD_SIf_In := g_pFB_BCD^.getSIf();
@@ -81,7 +96,52 @@ IF (NOT bolPlcStartupDone) AND (g_uinStartProzess>=(uinTaskNbr-1)) THEN
 	// configuration	
 	pTmpSIf_BCC^.Cfg.strSensorIPAdr := '192.168.70.28';
 	pTmpSIf_BCC^.Cfg.udiSensorPort := 2111;
+	*)
 
+	// *********************************************************
+	// ADS client example
+	// *********************************************************
+	
+	// ADS client connection
+	fbACL_1.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.ACL_1); // init and entry fb_instance in global fb pointer array
+
+	// Add a read connection
+	sCon01_ShirtStream.eAccessType := E_ADS_AccessType.READ;
+	sCon01_ShirtStream.uinTargetPort:= 851;
+	sCon01_ShirtStream.strNetID := '192.168.70.27.1.1';
+	sCon01_ShirtStream.strRoute := 'SlowPRG_1.fbDRV_1.SIf.Cur';
+	sCon01_ShirtStream.udiDataLen:= SIZEOF(DrvCurData);
+	sCon01_ShirtStream.pData:= ADR(DrvCurData);	
+	// Add defined connection to client
+	fbACL_1.AddConnection(sCon01_ShirtStream);
+
+	// Add a write connection
+	sCon02_ShirtStream.eAccessType := E_ADS_AccessType.WRITE;
+	sCon02_ShirtStream.uinTargetPort:= 851;
+	sCon02_ShirtStream.strNetID := '192.168.70.27.1.1';
+	sCon02_ShirtStream.strRoute := 'SlowPRG_1.fbDRV_1.SIf.Par';
+	sCon02_ShirtStream.udiDataLen:= SIZEOF(DrvParData);
+	sCon02_ShirtStream.pData:= ADR(DrvParData);	
+	// Add defined connection to client
+	fbACL_1.AddConnection(sCon02_ShirtStream);
+	
+	// Add a write connection
+	sCon03_ShirtStream.eAccessType := E_ADS_AccessType.WRITE;
+	sCon03_ShirtStream.uinTargetPort:= 852;
+	sCon03_ShirtStream.strNetID := '192.168.70.27.1.1';
+	sCon03_ShirtStream.strRoute := 'SlowPRG_1.fbDRV_1.SIf.Cfg';
+	sCon03_ShirtStream.udiDataLen:= SIZEOF(DrvCfgData);
+	sCon03_ShirtStream.pData:= ADR(DrvCfgData);	
+	// Add defined connection to client
+	fbACL_1.AddConnection(sCon03_ShirtStream);
+	
+	// More connections can be insert here ... !
+	
+	
+	
+	// *********************************************************
+	// Different controller
+	// *********************************************************
 	
 	// cylinder example
 	fbCYL_1.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.CYL_1); // init and entry fb_instance in global fb pointer array
@@ -131,12 +191,14 @@ IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone AND (g_uinStartProzess
 	//****************************************************************************************************
 	fbRFW_11();
 	fbRFW_12();
-	fbBCC_1();
 	fbCYL_1();
 	fbPRS_1();
 	fbUMC_1();
 	fbVPC_1();
 	fbDRV_1();
+	
+	// fbBCC_1();   // Barcode reader example
+	fbACL_1();		// ADS client example
 END_IF
 // -----------------------------------------------------------------------------------------------]]></ST>
     </Implementation>

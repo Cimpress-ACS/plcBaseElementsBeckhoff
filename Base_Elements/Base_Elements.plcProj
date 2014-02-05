@@ -15,9 +15,11 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.0.22</ProjectVersion>
+    <ProjectVersion>0.0.0.23</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.0.22 - UMC simulation added, Refactoring
+    <Description>0.0.0.23 - New ADS Client FUB (ACL) added
+	Sample added in MiddleTask
+0.0.0.22 - UMC simulation added, Refactoring
 0.0.0.21 - UMC - Add EMO State, Refactoring
 0.0.0.20 - New version of BCD and BCC
 0.0.0.19 - Back to BasePLC Lib. V3.3.5 beacuase of PageFaults
@@ -38,6 +40,30 @@
     <AssemblyName>MyApplication</AssemblyName>-->
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="POUs\Controller\Driver\ACL %28ADS client for data exchange%29\ACL_Const.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\ACL %28ADS client for data exchange%29\ADS_IndexGroup.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\ACL %28ADS client for data exchange%29\E_ADS_AccessType.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\ACL %28ADS client for data exchange%29\FB_ACL.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\ACL %28ADS client for data exchange%29\T_ADS_ConnectionData.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\ACL %28ADS client for data exchange%29\T_Ctrl_SIf_ACL.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\ACL %28ADS client for data exchange%29\T_Ctrl_SIf_ACL_Cur.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\ACL %28ADS client for data exchange%29\T_Ctrl_SIf_ACL_Par.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\Controller\Driver\BCD %28Bar code driver%29\BCD_CmdState.TcGVL">
       <SubType>Code</SubType>
     </Compile>
@@ -390,6 +416,7 @@
   <ItemGroup>
     <Folder Include="POUs\" />
     <Folder Include="POUs\Controller\" />
+    <Folder Include="POUs\Controller\Driver\ACL %28ADS client for data exchange%29\" />
     <Folder Include="POUs\Controller\Driver\BCD %28Bar code driver%29\" />
     <Folder Include="POUs\Controller\Driver\PRS [Present Sensor]" />
     <Folder Include="POUs\Controller\Driver\RFD %28RFID Driver%29\" />
@@ -443,6 +470,19 @@
     </LibraryReference>
   </ItemGroup>
   <ItemGroup>
+    <SubObject Include="FB_ACL.AddConnection" />
+    <SubObject Include="FB_ACL.Always" />
+    <SubObject Include="FB_ACL.FB_init" />
+    <SubObject Include="FB_ACL.getCmdState" />
+    <SubObject Include="FB_ACL.getCtrlSIf" />
+    <SubObject Include="FB_ACL.GetNextAccessType" />
+    <SubObject Include="FB_ACL.StateMachine" />
+    <SubObject Include="FB_ACL.sta_ERROR" />
+    <SubObject Include="FB_ACL.sta_OFF" />
+    <SubObject Include="FB_ACL.sta_PON" />
+    <SubObject Include="FB_ACL.sta_PONBusy" />
+    <SubObject Include="FB_ACL.sta_RUN" />
+    <SubObject Include="FB_ACL.sta_RUNBusy" />
     <SubObject Include="FB_BCC.Always" />
     <SubObject Include="FB_BCC.FB_init" />
     <SubObject Include="FB_BCC.getCmdState" />

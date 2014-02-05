@@ -12,6 +12,7 @@
 	BCC_1 := 6,
 	DRV_1 := 7,
 	RFW_12 := 8,
+	ACL_1 := 9,
 	E_CtrlIdMax
 );
 END_TYPE

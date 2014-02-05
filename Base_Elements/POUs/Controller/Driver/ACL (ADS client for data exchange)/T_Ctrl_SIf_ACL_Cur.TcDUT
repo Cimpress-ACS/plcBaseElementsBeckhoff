@@ -1,0 +1,12 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_ACL_Cur" Id="{51ce4fdc-617c-4ae7-bdcb-b52f55a075a6}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_ACL_Cur :
+STRUCT
+	// Shows the number of ADS (server) connections
+	uinNumOfAdsConnections: UINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

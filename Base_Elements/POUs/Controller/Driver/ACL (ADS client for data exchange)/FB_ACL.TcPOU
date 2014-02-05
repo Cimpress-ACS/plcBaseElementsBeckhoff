@@ -1,0 +1,648 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <POU Name="FB_ACL" Id="{d66b8048-b181-45b7-819a-504957e84bd8}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ACL EXTENDS FB_CtrlBase
+VAR
+	// Specific interface struct for public access
+	SIf: T_Ctrl_SIf_ACL;
+	// Used ADS blocks for communication
+	fbWrite: ADSWRITE;
+	fbRead: ADSREAD;
+	fbReadWrite: ADSRDWRT;
+	// List of all ADS connections handled by this block
+	aListOfConnections: ARRAY[0..cuinMaxConnections] OF T_ADS_ConnectionData;
+	// Number of ADS (server) connections
+	uinNumOfAdsConnections: UINT;
+	// Loop variable for request of the handle ID
+	uinLoopReqHandle: UINT;
+	// Connection index
+	uinConIndex: UINT;	
+END_VAR
+VAR CONSTANT
+	// Sub states
+	cSTA_SUB_INITIALIZE: INT := 500;
+	cSTA_SUB_READ: INT := 501;
+	cSTA_SUB_READBusy: INT := 502;
+	cSTA_SUB_WRITE: INT := 503;
+	cSTA_SUB_WRITEBusy: INT := 504;
+	cSTA_SUB_RW: INT := 505;
+	cSTA_SUB_RWBusy: INT := 506;
+	cSTA_SUB_ERROR: INT := 507;
+	cSTA_SUB_DONE: INT := 508;
+	cSTA_SUB_WAIT_NEXT_POLL: INT := 509;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+ADS client for data exchange.
+Controls the data exchange between various ADS devices. Devices can be added as server connections to that FUB. 
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		05.02.2014		AVME/DSC	Start history
+
+___________________________________________________________________________________________________*)
+
+IF (me.bolActivate) THEN // cyclic call enabled
+	IF (CIf.Info.bolInitDone=FALSE) THEN // first cycle -> init
+		CtrlInit();
+		CIf.Info.bolInitDone := TRUE;
+	ELSE
+		CycleStartDuty();
+	
+		Always();
+		
+		StateMachine();
+		
+		CycleEndDuty();
+	
+	END_IF
+END_IF;
+]]></ST>
+    </Implementation>
+    <Method Name="sta_RUNBusy" Id="{90f1383e-4132-4c9b-92b1-b6d296da930e}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_RUNBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		;
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		IF (TRUE) THEN
+			me.StateMachine.intStateNext := BASE_PLC.cSTA_RUN;
+		END_IF
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="FB_init" Id="{92cd82e7-380b-436e-a09b-8ca665be5cf6}">
+      <Declaration><![CDATA[METHOD FB_init : BOOL
+VAR_INPUT
+	///if TRUE, the retain variables are initialized (warm start / cold start)
+	bInitRetains: BOOL;
+	///if TRUE, the instance afterwards gets moved into the copy code (online change)
+	bInCopyCode: BOOL;
+END_VAR
+VAR
+	udiTaskCnt: UDINT;
+	ii: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
+// to manually change in new FUB implementation!!!
+// define valid commands for this controller
+FOR ii:= 0 TO (SIZEOF(CIf.Job.aCmdList)/SIZEOF(CIf.Job.aCmdList[0])-1) BY 1 DO
+	IF (CIf.Job.aCmdList[ii].intCmd=cCMD_INITIALIZED) THEN
+		// found first empty array element
+		EXIT;
+	END_IF
+END_FOR
+CIf.Job.aCmdList[ii].intCmd := cCMD_RUN;
+CIf.Job.aCmdList[ii].strName := 'Run'; 
+CIf.Job.aCmdList[ii].bolAvailable := TRUE;
+ii := ii +1;
+
+// set name of class/typ
+CIf.Info.strType := 'FB_ACL'; 
+
+// set alarm class
+SIf.Alm[1].eAlmClass := E_AlmClass.OFF;
+SIf.Alm[1].strText := 'Initialization error. Minimum one ADS connection must be configured'; 
+SIf.Alm[2].eAlmClass := E_AlmClass.OFF;
+SIf.Alm[2].strText := 'Timeout initialize ADS connection(s)';
+SIf.Alm[3].eAlmClass := E_AlmClass.OFF;
+SIf.Alm[3].strText := 'Init of ADS connection failed. Note add. info for affected connection ID';
+SIf.Alm[4].eAlmClass := E_AlmClass.OFF;
+SIf.Alm[4].strText := 'ADS read data failed. Note add. info to get ADS error ID';
+SIf.Alm[5].eAlmClass := E_AlmClass.OFF;
+SIf.Alm[5].strText := 'ADS write data failed. Note add. info to get ADS error ID';
+SIf.Alm[6].eAlmClass := E_AlmClass.OFF;
+SIf.Alm[6].strText := 'ADS connection fault. Note add. info for affected connection ID';
+
+
+//*******************************************************************************
+// initial values
+//*******************************************************************************
+
+// software configuration
+CIf.SwCfg.bolExist := TRUE;
+CIf.SwCfg.bolSimulation := FALSE;
+
+// parameter
+SIf.Par.udiTOPowerOn_ms:= 3000;
+SIf.Par.udiTOReadData_ms:= 1500;
+SIf.Par.udiTOWriteData_ms:= 1500;
+SIf.Par.udiTORWData_ms:= 1500;
+SIf.Par.udiPollingInterval_ms:= 100;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_ERROR" Id="{be8f9086-a7bc-48d1-acfe-c2ec0065f50a}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_ERROR : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		// Initialize sub state machine
+		me.SubStateMachine.intState:= cSTA_SUB_INITIALIZE; 
+		me.SubStateMachine.intStateNext := cSTA_SUB_INITIALIZE;
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		// State Change Condition
+		IF (CIf.Job.bolAlmReset = TRUE) THEN
+			me.StateMachine.intStateNext := cSTA_ERRORQuit;
+		END_IF
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_RUN" Id="{ba240946-02a8-4da8-a02e-eb61ed9bcc5e}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_RUN : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+					
+		uinConIndex:=0;
+		// Initialize sub state machine
+		me.SubStateMachine.intState:= cSTA_SUB_INITIALIZE; 
+		me.SubStateMachine.intStateNext := cSTA_SUB_INITIALIZE;
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Sub statemachine to handle all connections in list dependent access type (read, write, rw)
+		CASE me.SubStateMachine.intState OF	
+	
+			//************************************************************************
+			// Initialize
+			//************************************************************************
+			cSTA_SUB_INITIALIZE:
+				// Get access type
+				me.SubStateMachine.intStateNext:= THIS^.GetNextAccessType(uinConIndex);
+							
+			//************************************************************************					
+			// Call fbRead
+			//************************************************************************
+			cSTA_SUB_READ:
+		
+				fbRead(READ:= FALSE);
+				fbRead(NETID       := aListOfConnections[uinConIndex].strNetID,
+						PORT       := aListOfConnections[uinConIndex].uinTargetPort,
+						IDXGRP     := cREAD_WRITE_SYMVAL_BYHANDLE,
+						IDXOFFS    := aListOfConnections[uinConIndex].udiHandle,
+						LEN        := aListOfConnections[uinConIndex].udiDataLen,
+						DESTADDR   := aListOfConnections[uinConIndex].pData,
+						READ       := TRUE,
+						TMOUT      := UDINT_TO_TIME(SIf.Par.udiTOReadData_ms),
+						BUSY       => ,
+						ERR        => ,
+						ERRID      => );
+														
+				me.SubStateMachine.intStateNext := cSTA_SUB_READBusy;			
+							
+			//************************************************************************
+			// Read busy
+			//************************************************************************
+			cSTA_SUB_READBusy:
+				fbRead(READ:= FALSE);
+				// Read done
+				IF NOT (fbRead.BUSY) THEN
+					IF NOT (fbRead.ERR) THEN	
+						// More connections?
+						IF (uinConIndex < (uinNumOfAdsConnections-1)) THEN
+							uinConIndex:= uinConIndex+1;
+							// Get next access type
+							me.SubStateMachine.intStateNext:= THIS^.GetNextAccessType(uinConIndex);
+						// Done - all connection handles are determined 
+						ELSE
+							me.SubStateMachine.intStateNext := cSTA_SUB_WAIT_NEXT_POLL;	
+						END_IF						
+					// Error
+					ELSE
+						// SIf.Alm[4].strText := 'ADS read data failed. Note add. info to get ADS error ID';
+						pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,4,UDINT_TO_DINT(fbRead.ERRID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+						me.SubStateMachine.intStateNext := cSTA_SUB_ERROR;		
+					END_IF
+				END_IF	
+				
+			//************************************************************************					
+			// Call fbWrite
+			//************************************************************************
+			cSTA_SUB_WRITE:
+		
+				fbWrite(WRITE:= FALSE);
+				fbWrite(NETID      := aListOfConnections[uinConIndex].strNetID,
+						PORT       := aListOfConnections[uinConIndex].uinTargetPort,
+						IDXGRP     := cREAD_WRITE_SYMVAL_BYHANDLE,
+						IDXOFFS    := aListOfConnections[uinConIndex].udiHandle,
+						LEN        := aListOfConnections[uinConIndex].udiDataLen,
+						SRCADDR    := aListOfConnections[uinConIndex].pData,
+						WRITE      := TRUE,
+						TMOUT      := UDINT_TO_TIME(SIf.Par.udiTOWriteData_ms),
+						BUSY       => ,
+						ERR        => ,
+						ERRID      => );
+														
+				me.SubStateMachine.intStateNext := cSTA_SUB_WRITEBusy;		
+				
+			//************************************************************************
+			// Write busy
+			//************************************************************************
+			cSTA_SUB_WRITEBusy:
+				fbWrite(WRITE:= FALSE);
+				// Write done
+				IF NOT (fbWrite.BUSY) THEN
+					IF NOT (fbWrite.ERR) THEN
+						// More connections?
+						IF (uinConIndex < (uinNumOfAdsConnections-1)) THEN
+							uinConIndex:= uinConIndex+1;
+							// Get next access type
+							me.SubStateMachine.intStateNext:= THIS^.GetNextAccessType(uinConIndex);
+						// Done - all connection handles are determined 
+						ELSE
+							me.SubStateMachine.intStateNext := cSTA_SUB_WAIT_NEXT_POLL;	
+						END_IF
+					// Error
+					ELSE
+						// SIf.Alm[5].strText := 'ADS write data failed. Note add. info to get ADS error ID';
+						pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,5,UDINT_TO_DINT(fbWrite.ERRID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+						me.SubStateMachine.intStateNext := cSTA_SUB_ERROR;		
+					END_IF
+				END_IF			
+		
+			//************************************************************************
+			// Wait for next polling - Connection list completely processed 
+			//************************************************************************	
+			cSTA_SUB_WAIT_NEXT_POLL:
+			
+				// Wait polling time expired 	
+				IF (me.SubStateMachine.udiTimeInState_ms >= SIf.Par.udiPollingInterval_ms) THEN				
+					//Start again at first connection in list
+					uinConIndex:=0;
+					me.SubStateMachine.intStateNext := cSTA_SUB_INITIALIZE;
+				END_IF
+				
+			//************************************************************************
+			// ERROR			
+			//************************************************************************	
+			cSTA_SUB_ERROR:
+				// SIf.Alm[6].strText := 'ADS connection fault. Note add. info for affected connection ID';
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,6,UDINT_TO_DINT(aListOfConnections[uinConIndex].udiConID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+				me.StateMachine.intStateNext := BASE_PLC.cSTA_ERROR;	
+			
+		END_CASE			
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_PON" Id="{27cf4e8e-688f-40da-ada9-7f4ca7724781}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;	
+		// State Change Condition
+		IF (me.intCmd<>cCMD_PON) AND (me.intCmd<>cCMD_DONE) THEN
+			me.StateMachine.intStateNext := BASE_PLC.cSTA_OFFBusy;
+		END_IF
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getCmdState" Id="{cc4fd2fe-a684-48f5-9e76-fedb94b02333}">
+      <Declaration><![CDATA[METHOD PROTECTED getCmdState : STRING
+VAR_INPUT
+	intCmdState: INT;
+	bolState: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
+IF (getCmdState='') THEN // global not defined get local
+	// get string cmd/state string information in runtime
+	IF (bolState=FALSE) THEN
+		(*
+		// cmd's
+		CASE intCmdState OF
+			;
+		END_CASE
+		*)
+	ELSE
+		// states
+		CASE intCmdState OF
+			// SUB States
+			cSTA_SUB_INITIALIZE:
+				getCmdState := 'cSTA_SUB_INITIALIZE';
+			cSTA_SUB_READ:
+				getCmdState := 'cSTA_SUB_READ';
+			cSTA_SUB_READBusy:
+				getCmdState := 'cSTA_SUB_READBusy';
+			cSTA_SUB_WRITE:
+				getCmdState := 'cSTA_SUB_WRITE';
+			cSTA_SUB_WRITEBusy:
+				getCmdState := 'cSTA_SUB_WRITEBusy';			
+			cSTA_SUB_RW:
+				getCmdState := 'cSTA_SUB_RW';
+			cSTA_SUB_RWBusy:
+				getCmdState := 'cSTA_SUB_RWBusy';				
+			cSTA_SUB_ERROR:
+				getCmdState := 'cSTA_SUB_ERROR';
+			cSTA_SUB_DONE:
+				getCmdState := 'cSTA_SUB_DONE';
+			cSTA_SUB_WAIT_NEXT_POLL:
+				getCmdState := 'cSTA_SUB_WAIT_NEXT_POLL';
+		END_CASE
+	END_IF
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_OFF" Id="{8f63a0e3-989d-4b57-9749-73c42f67bb40}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		// Initialize sub state machine
+		me.SubStateMachine.intState:= cSTA_SUB_INITIALIZE; 
+		me.SubStateMachine.intStateNext := cSTA_SUB_INITIALIZE;
+	END_IF
+	
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN	
+		// State Change Condition
+		IF (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.Alarm.eActivAlmClass<>E_AlmClass.OFF) THEN	
+			IF(me.intCmd=BASE_PLC.cCMD_RUN) THEN
+				me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
+			END_IF
+		END_IF
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_PONBusy" Id="{fa58a8b5-4a99-415a-8538-26189d9ad90e}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_PONBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		uinConIndex:=0;
+		// Initialize sub state machine
+		me.SubStateMachine.intState:= cSTA_SUB_RW; 
+		me.SubStateMachine.intStateNext := cSTA_SUB_RW;
+		
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+			// Sub statemachine to determine the handle ID of all connections in list	
+			CASE me.SubStateMachine.intState OF	
+			
+				// Call fbReadWrite to determine the handle ID
+				cSTA_SUB_RW:
+			
+					fbReadWrite(WRTRD:= FALSE);
+    				fbReadWrite(NETID		:= aListOfConnections[uinConIndex].strNetID,
+                				PORT		:= aListOfConnections[uinConIndex].uinTargetPort,
+                   				IDXGRP		:= cGET_SYMHANDLE_BYNAME,  
+                   				IDXOFFS     := 16#0000,
+                   				WRITELEN    := INT_TO_UDINT(LEN(aListOfConnections[uinConIndex].strRoute)+1),
+								READLEN     := SIZEOF(aListOfConnections[uinConIndex].udiHandle),
+								SRCADDR     := ADR(aListOfConnections[uinConIndex].strRoute),
+								DESTADDR    := ADR(aListOfConnections[uinConIndex].udiHandle),
+								WRTRD       := TRUE,
+								TMOUT       := UDINT_TO_TIME(SIf.Par.udiTORWData_ms),
+								BUSY        => ,
+								ERR         => ,
+								ERRID       => );
+								
+					me.SubStateMachine.intStateNext := cSTA_SUB_RWBusy;		
+				
+				// Read/Write busy
+				cSTA_SUB_RWBusy:
+					fbReadWrite(WRTRD:= FALSE);
+					// Read/Write done
+					IF NOT (fbReadWrite.BUSY) THEN
+						IF NOT (fbReadWrite.ERR) THEN
+							// More connections?
+							IF (uinConIndex < (uinNumOfAdsConnections-1)) THEN
+								uinConIndex:= uinConIndex+1;
+								me.SubStateMachine.intStateNext := cSTA_SUB_RW;
+							// Done - all connection handles are determined 
+							ELSE
+								me.SubStateMachine.intStateNext := cSTA_SUB_DONE;	
+							END_IF
+						// Error
+						ELSE
+							// SIf.Alm[3].strText := 'Init of ADS connection failed. Check add. info for affected connection ID';
+							pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,3,UDINT_TO_DINT(aListOfConnections[uinConIndex].udiConID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+							me.SubStateMachine.intStateNext := cSTA_SUB_ERROR;		
+						END_IF
+					END_IF
+				
+				// All connection handles are determined 
+				cSTA_SUB_DONE:
+					
+				// Error
+				cSTA_SUB_ERROR:
+				
+			END_CASE	
+			
+		
+		// State Change Condition
+		IF ((me.SubStateMachine.intState=cSTA_SUB_ERROR) OR (me.StateMachine.udiTimeInState_ms >= SIf.Par.udiTOPowerOn_ms)) THEN
+			// In case if TO
+			IF (me.StateMachine.udiTimeInState_ms >= SIf.Par.udiTOPowerOn_ms) THEN
+				// SIf.Alm[2].strText := 'Timeout initialize ADS connection(s)';
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,2,UDINT_TO_DINT(me.StateMachine.udiTimeInState_ms),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			END_IF
+			me.StateMachine.intStateNext := cSTA_ERROR;				
+		ELSIF (me.SubStateMachine.intState=cSTA_SUB_DONE) THEN
+			me.StateMachine.intStateNext := cSTA_PON;
+		END_IF
+			
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getCtrlSIf" Id="{5e2eb406-f073-410a-9ddf-406c097c89ab}">
+      <Declaration><![CDATA[METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_ACL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Always" Id="{2f6dc397-f7fb-4104-9f21-3f346e19a3c7}">
+      <Declaration><![CDATA[METHOD PROTECTED Always : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.Always();
+
+// ----------------------------------------------------------------------------------
+// cyclic actions outside of statemachine
+IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
+	SIf.Cur.uinNumOfAdsConnections:= uinNumOfAdsConnections;	
+END_IF
+
+// If no connection added, set alarm and change to state error
+IF (uinNumOfAdsConnections = 0) THEN
+	// Set Alarm: SIf.Alm[1].strText := 'Initialization error. Minimum one ADS connection must be configured'; 
+	pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,1,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);	
+	me.StateMachine.intStateNext := BASE_PLC.cSTA_ERROR;
+END_IF
+
+// ----------------------------------------------------------------------------------
+// Always change actions in Base Library
+// ----------------------------------------------------------------------------------
+// overrule error always from base -> no EOFF State!! in EOFF go to OFF
+IF (me.StateMachine.intStateNext = cSTA_EOFFBusy) THEN
+	IF (me.StateMachine.intState=cSTA_OFF) THEN
+		me.StateMachine.intStateNext := cSTA_OFF;
+	ELSE // stay in OFF
+		me.StateMachine.intStateNext := cSTA_OFFBusy;
+	END_IF
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="AddConnection" Id="{19497616-78e1-4dfa-ae8b-08a7936991b4}">
+      <Declaration><![CDATA[METHOD AddConnection
+VAR_INPUT
+	stConnection: T_ADS_ConnectionData;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Method adds a connection to the internal list of all ADS connections handled by this block
+IF (uinNumOfAdsConnections <= (cuinMaxConnections-1)) THEN
+	// Add connection to list
+	aListOfConnections[uinNumOfAdsConnections] := stConnection;
+	// Assigned connection ID
+	aListOfConnections[uinNumOfAdsConnections].udiConID := uinNumOfAdsConnections+1;
+	// Inc. number of connections
+	uinNumOfAdsConnections:= uinNumOfAdsConnections+1;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="GetNextAccessType" Id="{8200f912-df4b-4361-b537-1f7b9a816b60}">
+      <Declaration><![CDATA[METHOD PROTECTED GetNextAccessType : INT
+VAR_INPUT
+	uinNextConnection:   UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE aListOfConnections[uinNextConnection].eAccessType OF	
+	E_ADS_AccessType.READ:
+		GetNextAccessType:= cSTA_SUB_READ;	
+	E_ADS_AccessType.WRITE:
+		GetNextAccessType:= cSTA_SUB_WRITE;	
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="StateMachine" Id="{39ff18ec-78df-47d0-81d5-cc5cb04b3bb4}">
+      <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.StateMachine();
+
+// main statemachine of base controller
+CASE me.StateMachine.intState OF
+	cSTA_RUNBusy: 
+        THIS^.sta_RUNBusy();
+    cSTA_RUN: 
+        THIS^.sta_RUN();				
+END_CASE;]]></ST>
+      </Implementation>
+    </Method>
+    <ObjectProperties>﻿<XmlArchive>
+  <Data>
+    <o xml:space="preserve" t="POUImageProperty">
+      <n n="ImageData" />
+      <v n="TransparencyColor">"White"</v>
+      <v n="MakeTransparent">false</v>
+    </o>
+  </Data>
+  <TypeList>
+    <Type n="Boolean">System.Boolean</Type>
+    <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
+    <Type n="String">System.String</Type>
+  </TypeList>
+</XmlArchive></ObjectProperties>
+  </POU>
+</TcPlcObject>
