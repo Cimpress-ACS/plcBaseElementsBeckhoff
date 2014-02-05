@@ -1,0 +1,16 @@
+C:\tmp\TCPClinetTest\bin\Debug\TCPClinetTest.exe.config
+C:\tmp\TCPClinetTest\bin\Debug\TCPClinetTest.exe
+C:\tmp\TCPClinetTest\bin\Debug\TCPClinetTest.pdb
+C:\tmp\TCPClinetTest\obj\Debug\TCPClinetTest.csprojResolveAssemblyReference.cache
+C:\tmp\TCPClinetTest\obj\Debug\TCPClinetTest.Properties.Resources.resources
+C:\tmp\TCPClinetTest\obj\Debug\TCPClinetTest.csproj.GenerateResource.Cache
+C:\tmp\TCPClinetTest\obj\Debug\TCPClinetTest.exe
+C:\tmp\TCPClinetTest\obj\Debug\TCPClinetTest.pdb
+E:\Beispielprojekte\TCPClinetTest\bin\Debug\TCPClinetTest.exe.config
+E:\Beispielprojekte\TCPClinetTest\obj\Debug\TCPClinetTest.exe
+E:\Beispielprojekte\TCPClinetTest\obj\Debug\TCPClinetTest.pdb
+E:\Beispielprojekte\TCPClinetTest\bin\Debug\TCPClinetTest.exe
+E:\Beispielprojekte\TCPClinetTest\bin\Debug\TCPClinetTest.pdb
+E:\Beispielprojekte\TCPClinetTest\obj\Debug\TCPClinetTest.csprojResolveAssemblyReference.cache
+E:\Beispielprojekte\TCPClinetTest\obj\Debug\TCPClinetTest.Properties.Resources.resources
+E:\Beispielprojekte\TCPClinetTest\obj\Debug\TCPClinetTest.csproj.GenerateResource.Cache
