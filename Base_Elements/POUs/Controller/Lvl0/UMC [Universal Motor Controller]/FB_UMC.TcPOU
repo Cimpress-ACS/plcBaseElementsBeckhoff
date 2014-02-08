@@ -1002,7 +1002,7 @@ END_VAR
 // Entry action
 IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-	;	
+	cmd_MotorOff();
 END_IF
 
 //--------------------------------------------------------------------------------------
