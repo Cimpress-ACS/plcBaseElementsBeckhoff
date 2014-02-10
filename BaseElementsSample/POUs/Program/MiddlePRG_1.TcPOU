@@ -28,7 +28,8 @@ VAR
 	sCon03_ShirtStream: T_ADS_ConnectionData; 			// Example: Write connection to shirt stream PLC (Port 852) drive FUB interface .cfg
 	DrvCfgData: T_Ctrl_SIf_DRV_Cfg;	
 	// ADS Client Example
-		
+	
+	fbDLL_1: BASE_ELEMENTS.FB_DLL(In_bDoDataWipe:=FALSE);
 	
 END_VAR
 ]]></Declaration>
