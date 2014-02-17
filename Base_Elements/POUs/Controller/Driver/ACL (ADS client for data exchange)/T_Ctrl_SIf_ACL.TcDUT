@@ -1,5 +1,5 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_ACL" Id="{da094ed4-ba47-40aa-bd1a-11d150bbbfa3}">
+  <DUT Name="T_Ctrl_SIf_ACL" Id="{33cf6f00-8fa4-4a27-b1e4-f1d66d832525}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_ACL :
 STRUCT
 	// parameter
@@ -7,7 +7,7 @@ STRUCT
 	// current values
 	Cur: T_Ctrl_SIf_ACL_Cur;
 	// alarm number used in this controller
-	Alm: ARRAY[1..6] OF T_Ctrl_Alm;
+	Alm: ARRAY[1..7] OF T_Ctrl_Alm;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

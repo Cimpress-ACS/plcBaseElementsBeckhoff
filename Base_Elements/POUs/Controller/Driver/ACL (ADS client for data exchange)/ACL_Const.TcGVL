@@ -1,5 +1,5 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <GVL Name="ACL_Const" Id="{e1eec0f6-7a23-4e19-917a-fd2453668fdd}">
+  <GVL Name="ACL_Const" Id="{c8d6b96f-e5c4-4b10-b8bc-2f87add6d659}">
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
 	cuinMaxConnections: UINT := 50;
 END_VAR]]></Declaration>

@@ -15,9 +15,11 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.0.25</ProjectVersion>
+    <ProjectVersion>0.0.0.26</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.0.24 - EOFFbusy Fix in FB_UMC
+    <Description>0.0.0.26 - FB_ACL Enter ADS route string automatically during state PONBusy.
+0.0.0.25 - DLL FUB added
+0.0.0.24 - EOFFbusy Fix in FB_UMC
 0.0.0.23 - New ADS Client FUB (ACL) added
 	Sample added in MiddleTask
 0.0.0.22 - UMC simulation added, Refactoring
@@ -487,6 +489,7 @@
     <SubObject Include="FB_ACL.getCmdState" />
     <SubObject Include="FB_ACL.getCtrlSIf" />
     <SubObject Include="FB_ACL.GetNextAccessType" />
+    <SubObject Include="FB_ACL.NetIDtoAddress" />
     <SubObject Include="FB_ACL.StateMachine" />
     <SubObject Include="FB_ACL.sta_ERROR" />
     <SubObject Include="FB_ACL.sta_OFF" />

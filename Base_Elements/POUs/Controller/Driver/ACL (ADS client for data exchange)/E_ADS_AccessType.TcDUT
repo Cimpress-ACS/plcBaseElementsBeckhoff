@@ -1,5 +1,5 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="E_ADS_AccessType" Id="{8c1986ad-c69b-45d5-971b-0070393748e4}">
+  <DUT Name="E_ADS_AccessType" Id="{29ec6f3b-7d64-4135-9c48-375d1d344678}">
     <Declaration><![CDATA[TYPE E_ADS_AccessType :
 (
 	READ := 0,

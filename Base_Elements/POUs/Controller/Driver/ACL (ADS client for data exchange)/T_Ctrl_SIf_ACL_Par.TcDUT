@@ -1,9 +1,11 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_ACL_Par" Id="{06f78058-ea13-453e-81d2-e8212098a16a}">
+  <DUT Name="T_Ctrl_SIf_ACL_Par" Id="{1b468377-b892-489f-aca5-37fa42bf7e98}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_ACL_Par :
 STRUCT
 	// [ms] Timeout power on. Timeout for initialize all ADS connections.
 	udiTOPowerOn_ms: UDINT;
+	// [ms] Timeout add route
+	udiTOAddRoute_ms: UDINT;
 	// [ms] Timeout read data
 	udiTOReadData_ms: UDINT;
 	// [ms] Timeout write data

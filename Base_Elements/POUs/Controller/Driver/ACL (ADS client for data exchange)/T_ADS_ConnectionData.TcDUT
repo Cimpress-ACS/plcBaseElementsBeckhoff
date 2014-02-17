@@ -1,5 +1,5 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_ADS_ConnectionData" Id="{0d7a442c-7906-49c9-90e8-65a4520e3f84}">
+  <DUT Name="T_ADS_ConnectionData" Id="{93417077-ba05-4cd3-85d5-97ee470a754f}">
     <Declaration><![CDATA[TYPE T_ADS_ConnectionData :
 STRUCT
 	// Connection ID. Automatically assigned by calling method for adding new connection

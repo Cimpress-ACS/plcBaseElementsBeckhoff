@@ -1,5 +1,5 @@
 ﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <GVL Name="ADS_IndexGroup" Id="{0bd41315-2e3d-4828-93ba-156c7efe43b2}">
+  <GVL Name="ADS_IndexGroup" Id="{06e1f24a-87bb-47a4-8d8e-fc0192b1e43e}">
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
 	/// "Index-Group/Offset", GET_SYMHANDLE_BYNAME
 	cGET_SYMHANDLE_BYNAME: UDINT := 16#F003;
