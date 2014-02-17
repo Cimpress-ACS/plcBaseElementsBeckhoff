@@ -151,10 +151,6 @@ IF (NOT bolPlcStartupDone) AND (g_uinStartProzess>=(uinTaskNbr-1)) THEN
 	fbVPC_1.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.VPC_1); // init and entry fb_instance in global fb pointer array
 	fbDRV_1.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.DRV_1); // init and entry fb_instance in global fb pointer array
 		
-    // set all initialized controller FB the property of the alarm manager adress 
-	Base_PLC.setAllCtrlAlarmFB(pCtrlInst := ADR(g_a_pCtrlInst[0]), pAlarmCtrl := ADR(fbAlm_Man), uinCtrlInstLength := INT_TO_UINT(E_CtrlId.E_CtrlIdMax));
-	g_p_fbAlm_Man := ADR(fbAlm_Man);
-	
 	bolPlcStartupDone := TRUE;	
 	g_uinStartProzess := g_uinStartProzess + 1; // For StartUp order
 END_IF

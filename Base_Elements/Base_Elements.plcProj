@@ -15,9 +15,11 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.0.26</ProjectVersion>
+    <ProjectVersion>0.0.1.0</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.0.26 - FB_ACL Enter ADS route string automatically during state PONBusy.
+    <Description>0.0.1.0 - Newest Base_PLC added 0.3.4.0
+- FB_RFW Bug fix write single data
+0.0.0.26 - FB_ACL Enter ADS route string automatically during state PONBusy.
 0.0.0.25 - DLL FUB added
 0.0.0.24 - EOFFbusy Fix in FB_UMC
 0.0.0.23 - New ADS Client FUB (ACL) added
@@ -37,7 +39,7 @@
 0.0.0.7 - Updated to newest tc2_utilities
 0.0.0.6 - Added the PRS controller
 0.0.0.5 - Added the UMC and VPC controller</Description>
-    <Author>DSC</Author>
+    <Author>DSC - KVO</Author>
     <!--    <OutputType>Exe</OutputType>
     <RootNamespace>MyApplication</RootNamespace>
     <AssemblyName>MyApplication</AssemblyName>-->
@@ -463,7 +465,7 @@
     </PlaceholderReference>
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_PLC,0.3.3.5,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.4.0,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_EtherCAT,newest,Beckhoff Automation GmbH">

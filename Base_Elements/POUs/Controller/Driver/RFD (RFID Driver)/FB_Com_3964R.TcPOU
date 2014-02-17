@@ -611,10 +611,10 @@ CASE intState OF
 		cRFD_3964_Error:
 			// Send correct information
 			IF bolErrSerialLineControl = TRUE THEN
-				Out_udiErrorCode := stErrSerialLineControl;
+				Out_udiErrorCode := INT_TO_UDINT(stErrSerialLineControl);
 				Out_bolComError := TRUE;
 			ELSIF bolErrSend = TRUE THEN
-				Out_udiErrorCode := stErrSend;				
+				Out_udiErrorCode := INT_TO_UDINT(stErrSend);				
 				Out_bolComError := TRUE;
 			ELSIF bolTimeout = TRUE THEN
 				Out_bolProtocolErr := TRUE;

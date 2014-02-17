@@ -79,6 +79,7 @@ Version		Date			Author		Comment
 0.00.3		24.09.2013		AVME/KVO	Parameter init from element controller to driver
 0.00.4		01.10.2013		AVME/PRE	Insert DataChanel to Line
 0.00.5		14.11.2013		AVME/PRE	First Checks on the promo machine
+0.00.6		17.02.2014		AVME/KVO	Bug fix write single data
 ___________________________________________________________________________________________________*)
 
 
@@ -112,6 +113,8 @@ IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 	IF CIf.Job.bolAlmReset = TRUE THEN
 		pRFD_SIf^.stErr.bolErrAck := TRUE;
 	END_IF
+	
+	// Data channel to UI/Line
 	fbDtChnToLine_NewRFID.pSIf := ADR(SIf);
 	fbDtChnToLine_NewRFID.bolResetError := CIf.Job.bolAlmReset;
 	fbDtChnToLine_NewRFID();
@@ -119,33 +122,27 @@ IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 		// Set Alarm: SIf.Alm[6].strText := 'Data Channel Error Send Data';
 		//pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,6,fbDtChnToLine_NewRFID.intError,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);	
 	END_IF
-END_IF
-
-// config driver
-pRFD_SIf^.stCfg.bolSimulation := CIf.SwCfg.bolSimulation;
-pRFD_SIf^.stCfg.eTyp := SIf.Cfg.eTyp;
-pRFD_SIf^.stCfg.stNetId := SIf.Cfg.stNetId; //PLC NetId
-pRFD_SIf^.stCfg.uinSlaveAddr := SIf.Cfg.uinSlaveAddr; //Io card Ethercat adress 
-
-// ----------------------------------------------------------------------------------
-// Always change actions in Base Library
-// ----------------------------------------------------------------------------------
-// overrule error always from base -> no EOFF State!! in EOFF go to OFF
-IF (me.StateMachine.intStateNext = cSTA_EOFFBusy) THEN
-	IF (me.StateMachine.intState=cSTA_OFF) THEN
-		me.StateMachine.intStateNext := cSTA_OFF;
-	ELSE // stay in OFF
-		me.StateMachine.intStateNext := cSTA_OFFBusy;
+	
+	// config driver
+	pRFD_SIf^.stCfg.bolSimulation := CIf.SwCfg.bolSimulation;
+	pRFD_SIf^.stCfg.eTyp := SIf.Cfg.eTyp;
+	pRFD_SIf^.stCfg.stNetId := SIf.Cfg.stNetId; //PLC NetId
+	pRFD_SIf^.stCfg.uinSlaveAddr := SIf.Cfg.uinSlaveAddr; //Io card Ethercat adress 
+	
+	// ----------------------------------------------------------------------------------
+	// Always change actions in Base Library
+	// ----------------------------------------------------------------------------------
+	// overrule error always from base -> no EOFF State!! in EOFF go to OFF
+	IF (me.StateMachine.intStateNext = cSTA_EOFFBusy) THEN
+		IF (me.StateMachine.intState=cSTA_OFF) THEN
+			me.StateMachine.intStateNext := cSTA_OFF;
+		ELSE // stay in OFF
+			me.StateMachine.intStateNext := cSTA_OFFBusy;
+		END_IF
 	END_IF
 END_IF
 
-// Conditions Always
-IF (((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.Alarm.eActivAlmClass=E_AlmClass.OFF) OR (me.intCmd=cCMD_OFF))
-		 AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) AND
-		(me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_OFFBusy)) THEN
-	// alarm evt EOFF, OFF or cmd off
-	me.StateMachine.intStateNext := cSTA_OFFBusy;
-END_IF]]></ST>
+]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_ERROR" Id="{07139a26-171c-4d73-ae47-1772f434179e}">
@@ -477,7 +474,7 @@ SIf.Cfg.bolDtChToLine_send := TRUE;]]></ST>
 			SIf.Cur.abytData[uinDataAdress].7 := SIf.Cur.stData.bolSpecialTray;
 		END_IF
 		
-		// Tray ID
+		// Tray ID - not overwritten with all data - fixed name/ID the others are changeable process data
 		IF (SIf.Cur.dwoJob = RFID_Data.cRFID_TrayID) THEN	
 			uinDataAdress := DWORD_TO_UINT(RFID_Data.cRFID_TrayID);
 			uinDataAdress := uinDataAdress MOD 16#100;							// Maximum 255 data
@@ -487,8 +484,6 @@ SIf.Cfg.bolDtChToLine_send := TRUE;]]></ST>
 		END_IF
 		
 		// Write commando
-		uinDataAdress := DWORD_TO_UINT(RFID_Data.cRFID_TrayID);
-		uinDataAdress := uinDataAdress MOD 16#100;							// Maximum 255 data
 		pRFD_SIf^.stCur.uinAdressData := uinDataAdress;
 		pRFD_SIf^.stCur.uinAdressTag := DWORD_TO_UINT(SIf.Cur.dwoJob);
 		pRFD_SIf^.stCur.usiCount := DWORD_TO_USINT(SHR(SIf.Cur.dwoJob,16));

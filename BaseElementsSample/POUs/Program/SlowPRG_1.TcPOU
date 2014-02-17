@@ -3,11 +3,13 @@
     <Declaration><![CDATA[PROGRAM SlowPRG_1
 VAR
 	bolPlcStartupDone: BOOL := FALSE;
-	bolHostInitDone: BOOL := FALSE;
-	bolInitDone: BOOL := FALSE;
+	bolHostInitDone : BOOL := FALSE;
+	bolInitDone : BOOL := FALSE;
 	uinTaskNbr : UINT := 3; // SlowTask is Task Nr 3
 	jj:INT;
 	bolCtrlRst: BOOL;
+	
+	fbAlm_Man: FB_Alm_Man; // alarm manager
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -26,18 +28,23 @@ call of all controller (FUB) for the slow task class.
 History:
 Version		Date			Author		Comment
 ---------------------------------------------------------------------------------------------------
-0.00.1		06.09.2013		AVME/KVO	Start history
-0.00.2		13.01.2014		AVME/PRE	Implement Starting Up Process
+0.00.1		24.05.2013		AVME/KVO	Start history
+0.00.2		07.11.2013		AVME/KVO	Add local variabel fbAlm_Man, Add set all initialized controller FB the property of the alarm manager adress 
+0.00.3		08.11.2013		AVME/KVO	global g_p_fbAlm_Man adress assigned
+0.00.4		17.02.2014		AVME/KVO	startup check init FB_Alarm IsInitDone
 ___________________________________________________________________________________________________*)
+
 
 // -----------------------------------------------------------------------------------------------
 // Initialize the PLC Parameter and check the PLC health
 // -----------------------------------------------------------------------------------------------
-IF (NOT bolPlcStartupDone) AND (g_uinStartProzess>=(uinTaskNbr-1)) THEN
+IF ((NOT bolPlcStartupDone) AND (g_uinStartProzess>=(uinTaskNbr-1))) THEN
+
+	// set all initialized controller FB the property of the alarm manager adress 
+	Base_PLC.setAllCtrlAlarmFB(pCtrlInst := ADR(g_a_pCtrlInst[0]), pAlarmCtrl := ADR(fbAlm_Man), uinCtrlInstLength := INT_TO_UINT(E_CtrlId.E_CtrlIdMax));
+	g_p_fbAlm_Man := ADR(fbAlm_Man);
 	bolPlcStartupDone := TRUE;	
 	g_uinStartProzess := g_uinStartProzess + 1; // For StartUp order
-	
-	// init	
 END_IF
 // -----------------------------------------------------------------------------------------------
 
@@ -57,9 +64,14 @@ END_IF
 // Start PLC code initialization
 // -----------------------------------------------------------------------------------------------
 IF NOT bolInitDone AND bolPlcStartupDone AND bolHostInitDone AND (g_uinStartProzess>=(uinTaskNbr-1)+20) THEN
-		
-	bolInitDone := TRUE;
-	g_uinStartProzess := g_uinStartProzess + 1; // For StartUp order
+	// init call alarm FB until init is done
+	fbAlm_Man(bolCtrlRst:= bolCtrlRst);
+	
+	// init	
+	IF (fbAlm_Man.IsInitDone = TRUE) THEN
+		bolInitDone := TRUE;
+		g_uinStartProzess := g_uinStartProzess + 1; // For StartUp order
+	END_IF
 END_IF
 // -----------------------------------------------------------------------------------------------
 
@@ -72,7 +84,7 @@ IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone AND (g_uinStartProzess
 	// cyclic controller calls
 	//****************************************************************************************************
 	// call alarm message handler
-	g_p_fbAlm_Man^(bolCtrlRst:= bolCtrlRst);
+	fbAlm_Man(bolCtrlRst:= bolCtrlRst);
 	IF (bolCtrlRst) THEN
 		FOR jj:=0 TO E_CtrlId.E_CtrlIdMax BY 1 DO
 			IF (g_a_pCtrlCIf[jj]<>0) THEN // check if entry exist
