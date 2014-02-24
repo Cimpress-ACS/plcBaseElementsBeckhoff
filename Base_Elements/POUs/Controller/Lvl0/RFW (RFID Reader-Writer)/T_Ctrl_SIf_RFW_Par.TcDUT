@@ -8,6 +8,8 @@ STRUCT
 	udiWriteTime_ms: UDINT;
 	///[ms] minimum wait time between two read command
 	udiMinCmdTime: UDINT;
+	///[ms] locktime prevents sending same ID's to LineControl multiple times
+	udiLockTime: UDINT;
 END_STRUCT
 END_TYPE
 ]]></Declaration>
