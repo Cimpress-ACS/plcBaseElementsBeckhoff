@@ -971,16 +971,14 @@ END_VAR
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN		
 		// As long as the EMO is not reseted!
-		IF NOT (SIf.In.bolEmoOk.intern) THEN
-			// Clear pending and new commands cyclic to prevent automatic recovery!	
-			CIf.Job.intACmd := BASE_PLC.cCMD_DONE;
-			CIf.Job.intMCmd := BASE_PLC.cCMD_DONE;		
-		END_IF
-	
-		// State Change Condition
-		// EMO must be reseted to change into OFF
-		IF (SIf.In.bolEmoOk.intern) AND (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.intCmd<>BASE_PLC.cCMD_EOFF) AND (me.intCmd<>BASE_PLC.cCMD_DONE) THEN		
+		IF SIf.In.bolEmoOk.intern THEN
 			me.StateMachine.intStateNext := BASE_PLC.cSTA_OFFBusy;			
+		ELSE
+			IF me.intCmd <> BASE_PLC.cCMD_OFF THEN
+				// Clear pending and new commands cyclic to prevent automatic recovery!	
+				CIf.Job.intACmd := BASE_PLC.cCMD_DONE;
+				CIf.Job.intMCmd := BASE_PLC.cCMD_DONE;		
+			END_IF
 		END_IF
 	END_IF
 
