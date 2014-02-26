@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.1.1</ProjectVersion>
+    <ProjectVersion>0.0.1.2</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.1.1 - Newest Base_PLC added 0.3.4.2
+    <Description>0.0.1.2 - Simulation UMC; FB_CtrlModule added
+0.0.1.1 - Newest Base_PLC added 0.3.4.2
 0.0.1.0 - Newest Base_PLC added 0.3.4.0
 - FB_RFW Bug fix write single data
 0.0.0.26 - FB_ACL Enter ADS route string automatically during state PONBusy.
@@ -421,6 +422,33 @@
     <Compile Include="POUs\Controller\Lvl0\VPC [Vacuum Pump Controller]\VPC_CmdState.TcGVL">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\Controller\Lvl3\BaseCtrlModule\FB_CtrlModule.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl3\BaseCtrlModule\FB_IBuffer.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl3\BaseCtrlModule\IBuffer.TcIO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl3\BaseCtrlModule\T_Ctrl_SIf_MOD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl3\BaseCtrlModule\T_Ctrl_SIf_MOD_Cfg.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl3\BaseCtrlModule\T_Ctrl_SIf_MOD_Cur.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl3\BaseCtrlModule\T_Ctrl_SIf_MOD_In.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl3\BaseCtrlModule\T_Ctrl_SIf_MOD_Par.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl3\BaseCtrlModule\T_Sequence.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Version\Global_Version.TcGVL">
       <SubType>Code</SubType>
     </Compile>
@@ -444,6 +472,7 @@
     <Folder Include="POUs\Controller\Driver" />
     <Folder Include="POUs\Controller\Lvl3" />
     <Folder Include="POUs\Controller\Lvl1" />
+    <Folder Include="POUs\Controller\Lvl3\BaseCtrlModule\" />
     <Folder Include="POUs\Utility Functions\" />
     <Folder Include="Version\" />
   </ItemGroup>

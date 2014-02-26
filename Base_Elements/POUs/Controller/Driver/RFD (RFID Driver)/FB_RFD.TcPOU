@@ -1040,11 +1040,11 @@ END_CASE;]]></ST>
 			SIf.stStatus.bolStartupOk := FALSE;
 			SIf.stStatus.bolPresent := FALSE;
 		
-			IF stStateMachine.intStateHistory < cRFD_STA_WaitForJob THEN
+//			IF stStateMachine.intStateHistory < cRFD_STA_WaitForJob THEN
 				stStateMachine.intStateNext := cRFD_STA_Off;
 			//ELSE
 			//	stStateMachine.intStateNext := cRFD_STA_WaitForJob;		
-			END_IF
+//			END_IF
 		END_IF
 	END_IF
 

@@ -1,0 +1,18 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_MOD_Par" Id="{af6c9077-6cc4-4b17-8c1d-7a4257341a94}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_MOD_Par :
+STRUCT
+	/// [ms] Communication timeout to line control
+	udiComTimeOutLineCtrl_ms: UDINT;
+	/// [ms] Array with wait time for run groups
+	aListOfRunGrpWaitTime_ms: ARRAY[0..Base_Const.cMaxNrOfChilds] OF UDINT;
+	/// [ms] Array with wait time for stop groups
+	aListOfStopGrpWaitTime_ms: ARRAY[0..Base_Const.cMaxNrOfChilds] OF UDINT;
+	/// [ms] timeout for stopping
+	udiTimeoutStopping_ms: UDINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

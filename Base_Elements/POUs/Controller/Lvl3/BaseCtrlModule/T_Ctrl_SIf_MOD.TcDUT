@@ -1,0 +1,20 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_MOD" Id="{5f13d4a1-2520-48bb-ad85-26e06ea52c4f}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_MOD :
+STRUCT
+	/// configuration
+	Cfg: POINTER TO T_Ctrl_SIf_MOD_Cfg;
+	/// parameter
+	Par: POINTER TO T_Ctrl_SIf_MOD_Par;
+	/// current values
+	Cur: POINTER TO T_Ctrl_SIf_MOD_Cur;
+	/// io input
+	In: POINTER TO T_Ctrl_SIf_MOD_In;
+	/// alarm number used in this controller
+	Alm: ARRAY[1..6] OF T_Ctrl_Alm;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

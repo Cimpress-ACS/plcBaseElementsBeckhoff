@@ -1,0 +1,29 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Sequence" Id="{b2c675fc-2993-46a0-911f-c35f3b7aa58e}">
+    <Declaration><![CDATA[TYPE T_Sequence :
+STRUCT
+	pChild: POINTER TO fb_CtrlBase;
+	/// Access to CIF of child
+	pCIF: POINTER TO T_Ctrl_CIf;
+	/// Associated run sequence group
+	uinGroupRun: UINT;
+	/// Associated stop sequence group
+	uinGroupStop: UINT;
+	/// Command to be executed for run sequence
+	intCmdSeqRun: INT;
+	/// Expected status for run sequence
+	intStatusSeqRun: INT;
+	/// Alternativ status for run sequence
+	intStatusSeqRun2: INT;
+	/// Command to be executed for run sequence
+	intCmdSeqStop: INT;
+	/// Expected status for run sequence
+	intStatusSeqStop: INT;
+	/// Used internal for run and stop sequence to detect if the sequence has been processed
+	bolChecked: BOOL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

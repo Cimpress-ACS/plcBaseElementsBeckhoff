@@ -1,0 +1,15 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_MOD_In" Id="{310febbc-0c4d-4259-8c32-cba0e4a2b496}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_MOD_In :
+STRUCT
+	/// Inputs from global module for general supervision 
+	/// Emergency circuit ok
+	bolEmergencyOffOk: T_Ctrl_IoBool;
+	/// No general error active, will be set to FALSE if there is an global error like e.g. over temperature in cabinet. 
+	bolNoGeneralError: T_Ctrl_IoBool;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

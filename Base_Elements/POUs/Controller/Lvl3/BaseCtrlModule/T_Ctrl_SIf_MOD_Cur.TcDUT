@@ -1,0 +1,21 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_MOD_Cur" Id="{30796f16-fa3d-47dc-b224-e58799f07d37}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_MOD_Cur :
+STRUCT
+	/// Max module capacity calculated from all childs which implement interface IBuffer
+	dinMaxCapacity: DINT;
+	/// Actual number of hangers calculated from all childs which implement interface IBuffer
+	dinNumOfHangers: DINT;
+	/// Togglebit to Line Control
+	bolKeepAliveHost: BOOL;
+	bolKeepAlivePlc: BOOL;
+	/// LineControl-Signal: Input Buffer is Full
+	a_bBufferIsFull: ARRAY[0..10] OF BOOL;
+	/// LineControl-Signal: If true Module is not allowed to release hangers (but can be still in RUN state). 
+	bolStopReleaseHangers: BOOL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

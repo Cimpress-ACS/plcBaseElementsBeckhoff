@@ -166,6 +166,13 @@ SIf.Par.udiSimMotorOnTime_ms := SIf.Par.udiMotorOnTime_ms / 10;]]></ST>
         <ST><![CDATA[SUPER^.Always();
 
 // ----------------------------------------------------------------------------------
+// Simulation
+IF (CIf.SwCfg.bolSimulation) THEN
+	// Simulate inputs (no physical inputs)
+	SIf.In.bolEmoOk.intern := TRUE;
+END_IF
+
+// ----------------------------------------------------------------------------------
 // Conditions Always
 IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 	IF (((me.Alarm.eActivAlmClass=E_AlmClass.OFF) OR (me.intCmd=cCMD_OFF))

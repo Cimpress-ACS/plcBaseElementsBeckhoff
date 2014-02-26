@@ -1,0 +1,47 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <POU Name="FB_IBuffer" Id="{9ec31dad-c8d1-4e2e-aa3f-873965b25876}">
+    <Declaration><![CDATA[///FUNCTION_BLOCK PUBLIC FB_IBuffer IMPLEMENTS IBuffer
+FUNCTION_BLOCK FB_IBuffer EXTENDS FB_CtrlBase IMPLEMENTS IBuffer
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// This is a Dummy-FB, used for the interface (IBuffer) to the buffer-modules]]></ST>
+    </Implementation>
+    <Property Name="MaxCapacity" Id="{6f5294a5-4d7a-45f2-ba05-7365505de59d}">
+      <Declaration><![CDATA[PROPERTY MaxCapacity : DINT
+]]></Declaration>
+      <Get Name="Get" Id="{2904cd00-dbd7-486c-9aff-892edc4b3d39}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+        <ObjectProperties />
+      </Get>
+      <ObjectProperties />
+    </Property>
+    <Property Name="NumOfHangers" Id="{170dcb0c-806c-4828-ae7a-dece73dc219a}">
+      <Declaration><![CDATA[PROPERTY NumOfHangers : DINT
+]]></Declaration>
+      <Get Name="Get" Id="{3ae746a5-785b-47a4-a9b1-413913b098b1}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+        <ObjectProperties />
+      </Get>
+      <ObjectProperties />
+    </Property>
+    <Property Name="BufferFull" Id="{c94962f6-ad99-4e03-9cec-f625d834a541}">
+      <Declaration><![CDATA[PROPERTY BufferFull : BOOL
+]]></Declaration>
+      <Get Name="Get" Id="{f30b4df9-48e5-4924-9493-5c3ce8a98b07}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+        <ObjectProperties />
+      </Get>
+      <ObjectProperties />
+    </Property>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>
