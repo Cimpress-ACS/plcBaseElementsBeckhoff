@@ -148,47 +148,6 @@ CASE me.StateMachine.intState OF
 END_CASE;]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_PON" Id="{da3c6626-fa61-48f8-9b14-a534c006d1ca}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		;
-		
-		// State Change Condition
-		IF(me.intCmd=cCMD_STOP) THEN
-			me.StateMachine.intStateNext := cSTA_STOPBusy;
-		ELSIF(me.intCmd=cCMD_RETRACT) THEN
-			me.StateMachine.intStateNext := cSTA_RETRACTBusy;
-		ELSIF (me.intCmd=cCMD_EXTEND) THEN
-			me.StateMachine.intStateNext := cSTA_EXTENDBusy;
-		ELSIF(me.intCmd=cCMD_OFF) THEN
-			me.StateMachine.intStateNext := cSTA_OFFBusy;
-		END_IF
-	END_IF
-
-
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
     <Method Name="sta_ERROR" Id="{ba8a711f-df56-4e52-b8cb-58a04a32635e}">
       <Declaration><![CDATA[METHOD PROTECTED sta_ERROR : BOOL
 ]]></Declaration>

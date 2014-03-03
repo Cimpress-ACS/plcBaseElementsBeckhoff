@@ -29,8 +29,6 @@ VAR
 	DrvCfgData: T_Ctrl_SIf_DRV_Cfg;	
 	// ADS Client Example
 	
-	fbDLL_1: BASE_ELEMENTS.FB_DLL(In_bDoDataWipe:=FALSE);
-	
 END_VAR
 ]]></Declaration>
     <Implementation>
