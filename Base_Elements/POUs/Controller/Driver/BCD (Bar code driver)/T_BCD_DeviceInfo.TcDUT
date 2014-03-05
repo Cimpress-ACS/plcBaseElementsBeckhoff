@@ -1,5 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_BCD_DeviceInfo" Id="{afad1e9b-4652-4524-9f6c-7b74ed641a5a}">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_BCD_DeviceInfo" Id="{20fd3a2a-3ad9-4da4-b005-2440bb248769}">
     <Declaration><![CDATA[TYPE T_BCD_DeviceInfo :
 STRUCT
 	strComTestResult: STRING(40);

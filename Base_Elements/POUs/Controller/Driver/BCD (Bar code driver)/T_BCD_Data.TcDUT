@@ -1,5 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_BCD_Data" Id="{702cdb5e-6723-4757-bac2-e275f988dc0f}">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_BCD_Data" Id="{84fae292-3975-48a5-a063-0ffc0cba2a22}">
     <Declaration><![CDATA[TYPE T_BCD_Data :
 STRUCT
 	bolCodeReaded: BOOL;

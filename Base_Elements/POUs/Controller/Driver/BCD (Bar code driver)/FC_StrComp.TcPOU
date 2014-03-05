@@ -1,5 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <POU Name="FC_StrComp" Id="{d2bf6d98-cbb0-47cd-8fea-cba433851996}">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <POU Name="FC_StrComp" Id="{97878cbd-8f26-4062-94aa-f7a3cf3a0e84}">
     <Declaration><![CDATA[FUNCTION FC_StrComp : DINT
 VAR_INPUT
 	strArg1: STRING(255);
@@ -27,19 +27,6 @@ stArg2.eType:= ARGTYPE_STRING;
 // call F_ARGCMP
 FC_StrComp:= TC2_UTILITIES.F_ARGCMP(TRUE,stArg1,stArg2);]]></ST>
     </Implementation>
-    <ObjectProperties>﻿<XmlArchive>
-  <Data>
-    <o xml:space="preserve" t="POUImageProperty">
-      <n n="ImageData" />
-      <v n="TransparencyColor">"White"</v>
-      <v n="MakeTransparent">false</v>
-    </o>
-  </Data>
-  <TypeList>
-    <Type n="Boolean">System.Boolean</Type>
-    <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
-    <Type n="String">System.String</Type>
-  </TypeList>
-</XmlArchive></ObjectProperties>
+    <ObjectProperties />
   </POU>
 </TcPlcObject>

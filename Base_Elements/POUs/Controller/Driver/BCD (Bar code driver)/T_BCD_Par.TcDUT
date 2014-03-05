@@ -1,5 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_BCD_Par" Id="{200a4c4c-7eaa-4da3-aa5d-451455056057}">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_BCD_Par" Id="{be989c36-7a09-4af4-8c6c-58896060fc20}">
     <Declaration><![CDATA[TYPE T_BCD_Par :
 STRUCT
 	tTOConnection: TIME;

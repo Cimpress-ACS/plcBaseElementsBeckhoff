@@ -1,5 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_BCC_Out" Id="{26bec251-a379-496c-8912-16bc1106a856}">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_Ctrl_SIf_BCC_Out" Id="{30e83374-df4e-41ec-a774-b13e589d6728}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_BCC_Out :
 STRUCT
 END_STRUCT

@@ -1,5 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_BCD_OperatingData" Id="{613ea20c-e10b-47c6-9edf-1be3f60e0be0}">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_BCD_OperatingData" Id="{be03a7bf-0375-4906-bf2d-cbaff3793a05}">
     <Declaration><![CDATA[TYPE T_BCD_OperatingData :
 STRUCT
 	strPowerOnCounter: STRING(25);
