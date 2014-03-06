@@ -1,0 +1,11 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_Ctrl_SIf_VLV_Cfg" Id="{9fae5b7b-ef7a-4045-96df-fb9d599d8c18}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_VLV_Cfg :
+STRUCT
+	eTyp: E_Typ_VLV;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

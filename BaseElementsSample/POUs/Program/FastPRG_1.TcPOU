@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
   <POU Name="FastPRG_1" Id="{b624d175-54f8-4f4a-ae3e-53272a249758}">
     <Declaration><![CDATA[PROGRAM FastPRG_1
 VAR
@@ -82,8 +82,8 @@ IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone AND (g_uinStartProzess
 	//****************************************************************************************************
 	// cyclic controller calls
 	//****************************************************************************************************
-	fbRFR_11();
-	fbRFD_12();
+	//fbRFR_11();
+	//fbRFD_12();
 	fbBCD_1();
 	
 END_IF

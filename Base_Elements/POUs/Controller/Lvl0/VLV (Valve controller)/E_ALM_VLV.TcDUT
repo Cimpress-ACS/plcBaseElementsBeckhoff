@@ -1,0 +1,18 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="E_ALM_VLV" Id="{f2556bf9-99c8-45d7-b1bc-32e66fc35080}">
+    <Declaration><![CDATA[{attribute 'qualified_only' := ''}
+TYPE E_ALM_VLV :
+(
+	SensorOpenAlwaysOn := 1,
+	SensorCloseNotReached := 2,
+	SensorCloseAlwaysOn := 3,
+	SensorOpenNotReached := 4,
+	InterlockOpen := 5,
+	InterlockClose := 6,
+	MAX_E_ALM
+) UINT;
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

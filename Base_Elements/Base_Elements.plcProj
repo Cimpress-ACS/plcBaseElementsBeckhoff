@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.1.4</ProjectVersion>
+    <ProjectVersion>0.0.1.5</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.1.4 - Fix for the BCD, BCC controller to support also messages without diagnostics
+    <Description>0.0.1.5 - Added new controller FB_VLV
+0.0.1.4 - Fix for the BCD, BCC controller to support also messages without diagnostics
 0.0.1.2 - Simulation UMC; FB_CtrlModule added
 0.0.1.1 - Newest Base_PLC added 0.3.4.2
 0.0.1.0 - Newest Base_PLC added 0.3.4.0
@@ -384,6 +385,39 @@
     <Compile Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]\U_UMC_Lenze_Status.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\Controller\Lvl0\VLV %28Valve controller%29\E_ALM_VLV.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\VLV %28Valve controller%29\E_Typ_VLV.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\VLV %28Valve controller%29\FB_VLV.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\VLV %28Valve controller%29\T_Ctrl_SIf_VLV.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\VLV %28Valve controller%29\T_Ctrl_SIf_VLV_Cfg.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\VLV %28Valve controller%29\T_Ctrl_SIf_VLV_Cur.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\VLV %28Valve controller%29\T_Ctrl_SIf_VLV_Ilk.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\VLV %28Valve controller%29\T_Ctrl_SIf_VLV_In.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\VLV %28Valve controller%29\T_Ctrl_SIf_VLV_Out.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\VLV %28Valve controller%29\T_Ctrl_SIf_VLV_Par.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\VLV %28Valve controller%29\VLV_CmdState.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\Controller\Lvl0\VPC [Vacuum Pump Controller]\E_ALM_VPC.TcDUT">
       <SubType>Code</SubType>
     </Compile>
@@ -459,6 +493,7 @@
     <Folder Include="POUs\Controller\Lvl0\BCC %28Barcode controller%29\" />
     <Folder Include="POUs\Controller\Lvl0\CYL %28Cylinder%29" />
     <Folder Include="POUs\Controller\Lvl0\DRV %28Drive%29\" />
+    <Folder Include="POUs\Controller\Lvl0\VLV %28Valve controller%29\" />
     <Folder Include="POUs\Controller\Lvl0\VPC [Vacuum Pump Controller]" />
     <Folder Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]" />
     <Folder Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29" />

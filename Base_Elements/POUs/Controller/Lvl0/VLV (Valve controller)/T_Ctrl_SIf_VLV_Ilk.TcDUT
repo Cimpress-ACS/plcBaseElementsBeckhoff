@@ -1,0 +1,14 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_Ctrl_SIf_VLV_Ilk" Id="{ca04c944-bceb-4a8f-a239-f2adcca0c7f0}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_VLV_Ilk :
+STRUCT
+	///interlock open valve
+	bolOpen: BOOL;
+	///interlock close valve
+	bolClose: BOOL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

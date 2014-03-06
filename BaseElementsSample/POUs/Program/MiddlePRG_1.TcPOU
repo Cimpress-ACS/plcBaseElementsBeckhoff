@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
   <POU Name="MiddlePRG_1" Id="{d0b780f9-d9b7-47f3-8805-851f8ce5d376}">
     <Declaration><![CDATA[PROGRAM MiddlePRG_1
 VAR
@@ -18,6 +18,7 @@ VAR
 	fbDRV_1: FB_DRV;
 	pTmpSIf_RFW: POINTER TO Base_Elements.T_Ctrl_SIf_RFW;
 	pTmpSIf_BCC: POINTER TO T_Ctrl_SIf_BCC;
+	fbVLV_1: FB_VLV;
 	
 	// ADS Client Example
 	fbACL_1: FB_ACL;
@@ -54,6 +55,7 @@ Version		Date			Author		Comment
 0.00.5		06.01.2014		AVME/PRE	Implement RFW for Promo Read and Write RFID Reader
 0.00.6		13.01.2014		AVME/PRE	Implement Starting Up Process
 0.00.7		05.02.2014		AVME/DSC	Insert ADS client example
+0.00.8		06.03.2014		AVME/DSC	Insert FB_VLV example
 ___________________________________________________________________________________________________*)
 
 // -----------------------------------------------------------------------------------------------
@@ -148,7 +150,9 @@ IF (NOT bolPlcStartupDone) AND (g_uinStartProzess>=(uinTaskNbr-1)) THEN
 	fbUMC_1.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.UMC_1); // init and entry fb_instance in global fb pointer array
 	fbVPC_1.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.VPC_1); // init and entry fb_instance in global fb pointer array
 	fbDRV_1.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.DRV_1); // init and entry fb_instance in global fb pointer array
-		
+	fbVLV_1.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.VLV_1); // init and entry fb_instance in global fb pointer array	
+	
+	
 	bolPlcStartupDone := TRUE;	
 	g_uinStartProzess := g_uinStartProzess + 1; // For StartUp order
 END_IF
@@ -191,6 +195,7 @@ IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone AND (g_uinStartProzess
 	fbUMC_1();
 	fbVPC_1();
 	fbDRV_1();
+	fbVLV_1();
 	
 	// fbBCC_1();   // Barcode reader example
 	fbACL_1();		// ADS client example

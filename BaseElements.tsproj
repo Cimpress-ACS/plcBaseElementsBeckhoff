@@ -1,20 +1,23 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0">
-	<Project ProjectGUID="{1927D6AA-E64E-4710-9987-139DA1D786B0}" ModifiedGUID="{2F5B25B9-DD29-4B89-8051-FBBD2F1A41CC}">
+	<Project ProjectGUID="{1927D6AA-E64E-4710-9987-139DA1D786B0}" ModifiedGUID="{7C028C3B-0406-4489-A02D-E98817986269}">
 		<System>
+			<Settings>
+				<Cpu RtLimit="50"/>
+			</Settings>
 			<Licenses>
 				<Target>
 					<ManualSelect>{3EBB9639-5FF3-42B6-8847-35C70DC013C8}</ManualSelect>
 				</Target>
 			</Licenses>
 			<Tasks>
-				<Task Id="1" Priority="3" CycleTime="20000" AmsPort="350">
+				<Task Id="1" Priority="4" CycleTime="20000" AmsPort="350" ExceedWarning="2">
 					<Name>Task_Fast</Name>
 				</Task>
-				<Task Id="2" Priority="20" CycleTime="500000" AmsPort="351">
+				<Task Id="2" Priority="8" CycleTime="500000" AmsPort="351" ExceedWarning="2">
 					<Name>Task_Slow</Name>
 				</Task>
-				<Task Id="4" Priority="10" CycleTime="100000" AmsPort="352">
+				<Task Id="4" Priority="6" CycleTime="100000" AmsPort="352" ExceedWarning="2">
 					<Name>Task_Middle</Name>
 				</Task>
 			</Tasks>

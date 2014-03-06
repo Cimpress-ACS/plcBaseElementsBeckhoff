@@ -1,0 +1,661 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <POU Name="FB_VLV" Id="{e7c452ef-6069-4824-b6af-02d0e02ac29f}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_VLV EXTENDS FB_CtrlBase
+VAR_INPUT
+	In_bolOpened: BOOL;
+	In_bolClosed: BOOL;
+END_VAR
+VAR_OUTPUT
+	Out_bolOpen: BOOL;
+	Out_bolClose: BOOL;
+END_VAR
+VAR
+	/// Specific interface struct for public access
+	SIf: T_Ctrl_SIf_VLV;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+Basic valve controller
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		06.03.2014		AVME/DSC	Start history. Based on CYL controller
+
+___________________________________________________________________________________________________*)
+
+
+IF (me.bolActivate) THEN // cyclic call enabled
+	IF (CIf.Info.bolInitDone=FALSE) THEN // first cycle -> init
+		CtrlInit();
+		CIf.Info.bolInitDone := TRUE;
+	ELSE
+		CycleStartDuty();
+	
+		Always();
+		
+		StateMachine();
+		
+		CycleEndDuty();
+	END_IF
+END_IF;
+]]></ST>
+    </Implementation>
+    <Method Name="sta_OFFBusy" Id="{06d4fff6-826b-4df9-8700-c5db877dc584}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_OFFBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		// switch off?
+		IF (SIf.Cfg.eTyp = E_Typ_VLV.Valve1_Sensor0) OR (SIf.Cfg.eTyp = E_Typ_VLV.Valve1_Sensor2) 
+			OR (SIf.Cfg.eTyp = E_Typ_VLV.Valve1_SensorOpened) OR (SIf.Cfg.eTyp = E_Typ_VLV.Valve1_SensorClosed) THEN
+			// monostabil valve -> do nothing
+			;
+		ELSE
+			// bistable valve -> switch both off
+			SIf.Out.bolOpen.intern := FALSE;
+			SIf.Out.bolClose.intern := FALSE;
+		END_IF
+		
+		
+		
+		// State Change Condition
+		IF (TRUE) THEN
+			me.StateMachine.intStateNext := cSTA_OFF;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_CLOSE" Id="{15f1ec19-b0d0-4924-8e58-148827c9b4b3}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_CLOSE : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			;
+		END_IF
+		
+		// State Change Condition
+		IF (SIf.In.bolOpen.intern) THEN
+			// sensor open always on
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_VLV.SensorOpenAlwaysOn,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext :=  cSTA_ERROR;
+		ELSIF ((SIf.In.bolClose.intern = FALSE) AND ((SIf.Cfg.eTyp = E_Typ_VLV.Valve1_SensorClosed) OR (SIf.Cfg.eTyp = E_Typ_VLV.Valve2_SensorClosed))) THEN // wait time until error?
+			me.StateMachine.intStateNext := VLV_CmdState.cSTA_CLOSEBusy;
+		ELSIF(me.intCmd=VLV_CmdState.cCMD_OPEN) THEN
+			me.StateMachine.intStateNext := VLV_CmdState.cSTA_OPENBusy;
+		END_IF
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_ERROR" Id="{1f851396-69ba-4596-80bd-99073f07f906}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_ERROR : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;	
+		// State Change Condition
+		IF (CIf.Job.bolAlmReset = TRUE) THEN
+			me.StateMachine.intStateNext := cSTA_ERRORQuit;
+		END_IF
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="IoInBridge" Id="{5f8d86d4-d3c3-4f1b-819e-cae2994a5d48}">
+      <Declaration><![CDATA[METHOD PROTECTED IoInBridge : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
+SIf.In.bolOpen.map := THIS^.In_bolOpened;
+SIf.In.bolClose.map := THIS^.In_bolClosed;
+
+IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolOpen));
+	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolClose));
+ELSE
+	//simulation of global IO
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_OPENBusy" Id="{6cc4e05e-d369-4b50-a636-56b617337fbe}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_OPENBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+		SIf.Out.bolOpen.intern := TRUE;
+		SIf.Out.bolClose.intern := FALSE;
+		
+		fbSimulationTimer.IN := FALSE;
+		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiSimOpenTime_ms);
+		fbSimulationTimer(); // set time/reset timer
+		fbSimulationTimer.IN := TRUE; // start timer
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			fbSimulationTimer(); // simulation time
+			IF (fbSimulationTimer.Q) THEN
+				SIf.In.bolOpen.intern := TRUE;
+				SIf.In.bolClose.intern := FALSE;
+			END_IF
+		END_IF
+		
+		// State Change Condition
+		IF (me.StateMachine.udiTimeInState_ms > SIf.Par.udiOpenTime_ms) THEN
+			IF (SIf.In.bolClose.intern) THEN
+				// sensor close always on
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_VLV.SensorCloseAlwaysOn,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			ELSE
+				// timeout open valve
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_VLV.SensorOpenNotReached,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			END_IF
+			me.StateMachine.intStateNext :=  cSTA_ERROR;
+		ELSIF (SIf.In.bolOpen.intern) AND (SIf.In.bolClose.intern=FALSE) THEN
+			me.StateMachine.intStateNext := VLV_CmdState.cSTA_OPEN;
+		ELSIF ((SIf.Cfg.eTyp = E_Typ_VLV.Valve1_SensorClosed) OR (SIf.Cfg.eTyp = E_Typ_VLV.Valve2_SensorClosed))
+				 AND (SIf.In.bolClose.intern=FALSE) AND (me.StateMachine.udiTimeInState_ms>SIf.Par.udiSimOpenTime_ms) THEN
+			me.StateMachine.intStateNext := VLV_CmdState.cSTA_OPEN;
+		ELSIF ((SIf.Cfg.eTyp = E_Typ_VLV.Valve1_Sensor0) OR (SIf.Cfg.eTyp = E_Typ_VLV.Valve2_Sensor0))
+				AND (me.StateMachine.udiTimeInState_ms>SIf.Par.udiSimOpenTime_ms) THEN
+			me.StateMachine.intStateNext := VLV_CmdState.cSTA_OPEN;		
+		ELSIF(me.intCmd=VLV_CmdState.cCMD_CLOSE) THEN
+			me.StateMachine.intStateNext := VLV_CmdState.cSTA_CLOSEBusy;
+		END_IF
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		SIf.Cur.udiMoveTimeOpen := me.StateMachine.udiTimeInState_ms;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="IoOutBridge" Id="{792c89a2-c475-4489-ac4c-015f56b4e51b}">
+      <Declaration><![CDATA[METHOD PROTECTED IoOutBridge : BOOL
+VAR
+	bolSwitchValvesOff: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
+IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+	setOutBol(CIf.Job.bolIoForce ,ADR(SIf.Out.bolOpen));
+	setOutBol(CIf.Job.bolIoForce ,ADR(SIf.Out.bolClose));
+	
+	// check interlocks to prevent damages
+	IF (CIf.Job.bolIlkOverwrite=FALSE) THEN
+		bolSwitchValvesOff := FALSE;
+		
+		IF (SIf.Ilk.bolOpen=TRUE) THEN
+			// switch off?
+			IF (SIf.Cfg.eTyp = E_Typ_VLV.Valve1_Sensor0) OR (SIf.Cfg.eTyp = E_Typ_VLV.Valve1_Sensor2) 
+				OR (SIf.Cfg.eTyp = E_Typ_VLV.Valve1_SensorOpened) OR (SIf.Cfg.eTyp = E_Typ_VLV.Valve1_SensorClosed) THEN
+				// monostabil valve -> do nothing
+			ELSE
+				// bistable valve ->  switch both off
+				bolSwitchValvesOff := TRUE;
+				IF (SIf.Out.bolOpen.map=1) THEN
+					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_VLV.InterlockOpen,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+				END_IF
+			END_IF
+		END_IF
+		
+		IF (SIf.Ilk.bolClose=TRUE) THEN
+			// switch off?
+			IF (SIf.Cfg.eTyp = E_Typ_VLV.Valve1_Sensor0) OR (SIf.Cfg.eTyp = E_Typ_VLV.Valve1_Sensor2) 
+				OR (SIf.Cfg.eTyp = E_Typ_VLV.Valve1_SensorOpened) OR (SIf.Cfg.eTyp = E_Typ_VLV.Valve1_SensorClosed) THEN
+				// monostabil valve -> do nothing
+				;
+			ELSE
+				// bistable valve -> switch both off
+				bolSwitchValvesOff := TRUE;
+				IF (SIf.Out.bolClose.map=1) THEN
+					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_VLV.InterlockClose,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+				END_IF;
+			END_IF
+		END_IF
+		
+		// bistable valve -> switch both off
+		IF (bolSwitchValvesOff) THEN
+			SIf.Out.bolOpen.map := FALSE;
+			SIf.Out.bolClose.map := FALSE;
+		END_IF
+		
+	END_IF
+
+	THIS^.Out_bolOpen := SIf.Out.bolOpen.map;
+	THIS^.Out_bolClose := SIf.Out.bolClose.map;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_CLOSEBusy" Id="{83489284-5ffd-4b00-b98a-cd1342a58402}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_CLOSEBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		SIf.Out.bolOpen.intern := FALSE;
+		SIf.Out.bolClose.intern := TRUE;
+		
+		fbSimulationTimer.IN := FALSE;
+		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiSimCloseTime_ms);
+		fbSimulationTimer(); // set time/reset timer
+		fbSimulationTimer.IN := TRUE; // start timer
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			fbSimulationTimer(); // simulation time
+			IF (fbSimulationTimer.Q) THEN
+				SIf.In.bolClose.intern := TRUE;
+				SIf.In.bolOpen.intern := FALSE;
+			END_IF
+		END_IF
+		
+		// State Change Condition
+		IF (me.StateMachine.udiTimeInState_ms>SIf.Par.udiCloseTime_ms) THEN
+			IF (SIf.In.bolOpen.intern) THEN
+				// sensor open always on 
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_VLV.SensorOpenAlwaysOn,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			ELSE
+				// timeout close valve
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_VLV.SensorCloseNotReached,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			END_IF
+			me.StateMachine.intStateNext :=  cSTA_ERROR;
+		ELSIF (SIf.In.bolClose.intern) AND(SIf.In.bolOpen.intern=FALSE) THEN
+			me.StateMachine.intStateNext := VLV_CmdState.cSTA_CLOSE;
+		ELSIF ((SIf.Cfg.eTyp = E_Typ_VLV.Valve1_SensorOpened) OR (SIf.Cfg.eTyp = E_Typ_VLV.Valve2_SensorOpened))
+				 AND (SIf.In.bolOpen.intern=FALSE) AND (me.StateMachine.udiTimeInState_ms>SIf.Par.udiSimCloseTime_ms) THEN
+			me.StateMachine.intStateNext := VLV_CmdState.cSTA_CLOSE;
+		ELSIF ((SIf.Cfg.eTyp = E_Typ_VLV.Valve1_Sensor0) OR (SIf.Cfg.eTyp = E_Typ_VLV.Valve2_Sensor0))
+				AND (me.StateMachine.udiTimeInState_ms>SIf.Par.udiSimCloseTime_ms) THEN
+			me.StateMachine.intStateNext := VLV_CmdState.cSTA_CLOSE;		
+		ELSIF(me.intCmd=VLV_CmdState.cCMD_OPEN) THEN
+			me.StateMachine.intStateNext := VLV_CmdState.cSTA_OPENBusy;
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		SIf.Cur.udiMoveTimeClose := me.StateMachine.udiTimeInState_ms;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Always" Id="{92860e10-9957-42cd-ae35-6b5b1a06e6d1}">
+      <Declaration><![CDATA[METHOD PROTECTED Always : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF (me.bolChangeBackToAUTO=TRUE) THEN // switch mode to automatic switch off controller
+	//me.StateMachine.intStateNext := cSTA_OFFBusy;
+	me.bolChangeBackToAUTO := FALSE; // for valve no change to off when switch to automatic!!
+END_IF
+
+SUPER^.Always();
+
+// ----------------------------------------------------------------------------------
+// cyclic actions outside of statemachine
+IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
+	
+	; // always error supervision
+	// ----------------------------------------------------------------------------------
+	// overrule error always from base -> no EOFF State!! in EOFF go to OFF
+	IF (me.StateMachine.intStateNext = cSTA_EOFFBusy) THEN
+		IF (me.StateMachine.intState=cSTA_OFF) THEN
+			me.StateMachine.intStateNext := cSTA_OFF;
+		ELSE // stay in OFF
+			me.StateMachine.intStateNext := cSTA_OFFBusy;
+		END_IF
+	END_IF
+END_IF
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getCmdState" Id="{9c42a1d1-076f-4a21-8f9d-ebadf4911639}">
+      <Declaration><![CDATA[METHOD PROTECTED getCmdState : STRING
+VAR_INPUT
+	intCmdState: INT;
+	bolState: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
+IF (getCmdState='') THEN // global not defined get local
+	// get string cmd/state string information in runtime
+	IF (bolState=FALSE) THEN
+		// cmd's
+		CASE intCmdState OF
+			VLV_CmdState.cCMD_OPEN: 
+				getCmdState := 'cCMD_OPEN';
+			VLV_CmdState.cCMD_CLOSE: 
+				getCmdState := 'cCMD_CLOSE';
+		ELSE
+			getCmdState := 'Cmd not defined';
+		END_CASE;
+	ELSE
+	
+	// cmd's
+		CASE intCmdState OF
+			VLV_CmdState.cSTA_OPENBusy: 
+				getCmdState := 'cSTA_OPENBusy';
+			VLV_CmdState.cSTA_OPEN: 
+				getCmdState := 'cSTA_OPEN';
+			VLV_CmdState.cSTA_CLOSEBusy: 
+				getCmdState := 'cSTA_CLOSEBusy';
+			VLV_CmdState.cSTA_CLOSE: 
+				getCmdState := 'cSTA_CLOSE';
+		ELSE
+			getCmdState := 'State not defined';
+		END_CASE;
+	END_IF
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getCtrlSIf" Id="{cac029ef-196b-4624-b146-4fbe2ee727de}">
+      <Declaration><![CDATA[METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_VLV
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_ERRORQuit" Id="{ddcdaa7f-2db4-42cf-9c96-d1fd802dbbe9}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_ERRORQuit : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		// evtl. wait time if reset of device is necessary and then decide to go to states or ERROR state
+		IF (CIf.Job.bolAlmReset = TRUE) THEN
+			CIf.Job.eMe_ActivAlmClass := E_AlmClass.NONE; // reset feedback channel for parent
+			CIf.Job.bolAlmReset := FALSE;
+		END_IF
+		
+		// State Change Condition
+		IF (CIf.Job.bolAlmReset = FALSE) THEN
+			IF (me.StateMachine.intStateHistory<=cSTA_PON) THEN
+				me.StateMachine.intStateNext := cSTA_PONBusy;
+			ELSIF(me.intCmd=cCMD_OFF) THEN
+				me.StateMachine.intStateNext := cSTA_OFFBusy;
+			ELSIF(me.intCmd=VLV_CmdState.cCMD_OPEN) THEN
+				me.StateMachine.intStateNext := VLV_CmdState.cSTA_OPENBusy;
+			ELSIF(me.intCmd=VLV_CmdState.cCMD_CLOSE) THEN
+				me.StateMachine.intStateNext := VLV_CmdState.cSTA_CLOSEBusy;
+			END_IF
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="FB_init" Id="{e6c5f0f7-f14d-4d19-9372-986e38860334}">
+      <Declaration><![CDATA[METHOD FB_init : BOOL
+VAR_INPUT
+	///if TRUE, the retain variables are initialized (warm start / cold start)
+	bInitRetains: BOOL;
+	///if TRUE, the instance afterwards gets moved into the copy code (online change)
+	bInCopyCode: BOOL;
+END_VAR
+VAR
+	ii: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
+// to manually change in new FUB implementation!!!
+// define valid commands for this controller
+FOR ii:= 0 TO (SIZEOF(CIf.Job.aCmdList)/SIZEOF(CIf.Job.aCmdList[0])-1) BY 1 DO
+	IF (CIf.Job.aCmdList[ii].intCmd=cCMD_INITIALIZED) THEN
+		// found first empty array element
+		EXIT;
+	END_IF
+END_FOR
+
+CIf.Job.aCmdList[ii].intCmd := cCMD_OPEN;
+CIf.Job.aCmdList[ii].strName := 'Open';
+CIf.Job.aCmdList[ii].bolAvailable := TRUE;
+ii := ii +1;
+CIf.Job.aCmdList[ii].intCmd := cCMD_CLOSE; 
+CIf.Job.aCmdList[ii].strName := 'Close';
+CIf.Job.aCmdList[ii].bolAvailable := TRUE;
+
+// set name of class/typ
+CIf.Info.strType := 'FB_VLV'; 
+
+// set alarm class
+SIf.Alm[E_ALM_VLV.SensorOpenAlwaysOn].eAlmClass := E_AlmClass.TSTOP;
+SIf.Alm[E_ALM_VLV.SensorOpenAlwaysOn].strText := 'sensor open always on'; 
+SIf.Alm[E_ALM_VLV.SensorOpenNotReached].eAlmClass := E_AlmClass.TSTOP;
+SIf.Alm[E_ALM_VLV.SensorOpenNotReached].strText := 'timeout open - sensor open not reached';
+SIf.Alm[E_ALM_VLV.SensorCloseAlwaysOn].eAlmClass := E_AlmClass.TSTOP;
+SIf.Alm[E_ALM_VLV.SensorCloseAlwaysOn].strText := 'sensor close always on';
+SIf.Alm[E_ALM_VLV.SensorCloseNotReached].eAlmClass := E_AlmClass.TSTOP;
+SIf.Alm[E_ALM_VLV.SensorCloseNotReached].strText := 'timeout close - sensor close not reached';
+SIf.Alm[E_ALM_VLV.InterlockOpen].eAlmClass := E_AlmClass.OFF;
+SIf.Alm[E_ALM_VLV.InterlockOpen].strText := 'interlock open - movement stopped';
+SIf.Alm[E_ALM_VLV.InterlockClose].eAlmClass := E_AlmClass.OFF;
+SIf.Alm[E_ALM_VLV.InterlockClose].strText := 'interlock close - movement stopped';
+
+//*******************************************************************************
+// initial values
+//*******************************************************************************
+
+// Configuration defaults of class
+CIf.SwCfg.bolExist := TRUE;
+CIf.SwCfg.bolEnable := TRUE;
+CIf.SwCfg.bolSimulation := FALSE;
+
+// Parameter defaults of class
+SIf.Par.udiOpenTime_ms := 4000;
+SIf.Par.udiCloseTime_ms := 4000;
+SIf.Par.udiSimOpenTime_ms := SIf.Par.udiOpenTime_ms/2;	
+SIf.Par.udiSimCloseTime_ms := SIf.Par.udiCloseTime_ms/2;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_OPEN" Id="{ea4872a5-0031-4ffe-b38a-59a870c21bdd}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_OPEN : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			;
+		END_IF
+		
+		// State Change Condition
+		IF (SIf.In.bolClose.intern) THEN
+			// sensor close always on
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_VLV.SensorCloseAlwaysOn,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext :=  cSTA_ERROR;
+		ELSIF ((SIf.In.bolOpen.intern = FALSE) AND ((SIf.Cfg.eTyp = E_Typ_VLV.Valve1_SensorOpened) OR (SIf.Cfg.eTyp = E_Typ_VLV.Valve2_SensorOpened))) THEN // wait time until error?
+			me.StateMachine.intStateNext := VLV_CmdState.cSTA_OPENBusy;
+		ELSIF(me.intCmd=VLV_CmdState.cCMD_CLOSE) THEN
+			me.StateMachine.intStateNext := VLV_CmdState.cSTA_CLOSEBusy;
+		END_IF
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="StateMachine" Id="{f200a4ad-fdbb-4e4a-b949-20ad0e972d91}">
+      <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.StateMachine();
+
+// main statemachine of base controller
+CASE me.StateMachine.intState OF
+    VLV_CmdState.cSTA_OPENBusy: 
+        THIS^.sta_OPENBusy();
+    VLV_CmdState.cSTA_OPEN: 
+        THIS^.sta_OPEN();
+    VLV_CmdState.cSTA_CLOSEBusy: 
+        THIS^.sta_CLOSEBusy();
+    VLV_CmdState.cSTA_CLOSE: 
+        THIS^.sta_CLOSE();
+END_CASE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_OFF" Id="{f3efc9ab-b7b7-412d-b282-f24eef564791}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		
+		// State Change Condition
+		IF (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.Alarm.eActivAlmClass<>E_AlmClass.OFF) THEN
+			IF (me.intCmd=VLV_CmdState.cCMD_OPEN) THEN 
+				me.StateMachine.intStateNext := VLV_CmdState.cSTA_OPENBusy;
+			ELSIF(me.intCmd=VLV_CmdState.cCMD_CLOSE) THEN
+				me.StateMachine.intStateNext := VLV_CmdState.cSTA_CLOSEBusy;
+			END_IF
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

@@ -1,18 +1,19 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
   <DUT Name="E_CtrlId" Id="{fbb9f2d2-c911-4ba8-bff4-7e84f684cb30}">
     <Declaration><![CDATA[TYPE E_CtrlId :
 (
 	//not defined after startup...
 	NONE,
-	RFW_11 := 1,
-	CYL_1 := 2,
-	VPC_1 := 3,	
-	UMC_1 := 4,	
-	PRS_1 := 5,	
-	BCC_1 := 6,
-	DRV_1 := 7,
-	RFW_12 := 8,
-	ACL_1 := 9,
+	RFW_11,
+	CYL_1,
+	VPC_1,	
+	UMC_1,	
+	PRS_1,	
+	BCC_1,
+	DRV_1,
+	RFW_12,
+	ACL_1,
+	VLV_1,
 	E_CtrlIdMax
 );
 END_TYPE

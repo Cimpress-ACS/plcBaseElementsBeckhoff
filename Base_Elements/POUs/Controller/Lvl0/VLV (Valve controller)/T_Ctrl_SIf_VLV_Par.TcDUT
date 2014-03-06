@@ -1,0 +1,18 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_Ctrl_SIf_VLV_Par" Id="{12650060-3baa-459e-9db6-72472008acfb}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_VLV_Par :
+STRUCT
+	///[ms] until failure to long time for open	
+	udiOpenTime_ms: UDINT;
+	///[ms] until failure to long time for close	
+	udiCloseTime_ms: UDINT;
+	///[ms] simulation time for open or /2 of timeout time?
+	udiSimOpenTime_ms: UDINT;
+	///[ms] simulation time for close or /2 of timeout time?
+	udiSimCloseTime_ms: UDINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,16 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <GVL Name="VLV_CmdState" Id="{75b1de79-e96e-4f7d-a4d3-461fb22b206a}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	///ctrl commands definitions
+	///specific commands >200 - every command has to be a even number
+	cCMD_OPEN: INT := 202;
+	cCMD_CLOSE: INT := 204;
+	///ctrl specific states definitions
+	cSTA_OPENBusy: INT := 201;
+	cSTA_OPEN: INT := VLV_CmdState.cCMD_OPEN;
+	cSTA_CLOSEBusy: INT := 203;
+	cSTA_CLOSE: INT := VLV_CmdState.cCMD_CLOSE;
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

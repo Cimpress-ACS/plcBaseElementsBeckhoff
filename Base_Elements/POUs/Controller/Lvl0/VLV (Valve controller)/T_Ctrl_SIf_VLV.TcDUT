@@ -1,0 +1,24 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_Ctrl_SIf_VLV" Id="{a4d20334-f21a-406d-be9c-f9d52e65c3c9}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_VLV :
+STRUCT
+	///configuration
+	Cfg: T_Ctrl_SIf_VLV_Cfg;
+	///parameter
+	Par: T_Ctrl_SIf_VLV_Par;
+	///current values
+	Cur: T_Ctrl_SIf_VLV_Cur;
+	///io input
+	In: T_Ctrl_SIf_VLV_In;
+	///io output
+	Out: T_Ctrl_SIf_VLV_Out;
+	///alarm number used in this controller
+	Alm: ARRAY[1..(E_ALM_VLV.MAX_E_ALM - 1)] OF T_Ctrl_Alm;
+	///interlock of output/movements
+	Ilk: T_Ctrl_SIf_VLV_Ilk;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>
