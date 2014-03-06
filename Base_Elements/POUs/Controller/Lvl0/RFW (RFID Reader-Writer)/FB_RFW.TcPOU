@@ -110,7 +110,7 @@ END_IF;
 IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 	pRFD_SIf^.stCur.pData := ADR(SIf.Cur.abytData[0]);
 	SIf.Cur.bolPresent := pRFD_SIf^.stStatus.bolPresent;
-	IF CIf.Job.bolAlmReset = TRUE THEN
+	IF (CIf.Job.bolAlmReset = TRUE) AND (pRFD_SIf^.stErr.bolErrorActive = TRUE) THEN
 		pRFD_SIf^.stErr.bolErrAck := TRUE;
 	END_IF
 	
@@ -685,9 +685,9 @@ SIf.Cfg.bolDtChToLine_send := TRUE;]]></ST>
 		ELSIF ((me.intCmd=RFW_CmdState.cCMD_READ) OR (me.intCmd=RFW_CmdState.cCMD_WRITE)) AND (SIf.Cfg.eTyp = E_Typ_RFW.RF382R) THEN
 			// SIf.Alm[5].strText := 'Command for this type of RFID not possible';
 			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,5,UDINT_TO_DINT(pRFD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);			
-		ELSIF (me.intCmd=RFW_CmdState.cCMD_READ) THEN
+		ELSIF (me.intCmd=RFW_CmdState.cCMD_READ) AND (me.SubStateMachine.intState = cRFW_SUB_WaitTag) THEN
 			me.StateMachine.intStateNext := RFW_CmdState.cSTA_READBusy;
-		ELSIF(me.intCmd=RFW_CmdState.cCMD_WRITE) THEN
+		ELSIF(me.intCmd=RFW_CmdState.cCMD_WRITE) AND (me.SubStateMachine.intState = cRFW_SUB_WaitTag) THEN
 			me.StateMachine.intStateNext := RFW_CmdState.cSTA_WRITEBusy;
 		ELSIF(me.intCmd=RFW_CmdState.cCMD_ON) THEN
 			me.StateMachine.intStateNext := RFW_CmdState.cSTA_ONBusy;			
@@ -761,8 +761,8 @@ END_CASE;]]></ST>
 			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,5,UDINT_TO_DINT(pRFD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);			
 		ELSIF(me.intCmd=RFW_CmdState.cCMD_WRITE) THEN
 			me.StateMachine.intStateNext := RFW_CmdState.cSTA_WRITEBusy;
-		ELSIF(me.intCmd=RFW_CmdState.cCMD_READ) THEN
-			me.StateMachine.intStateNext := RFW_CmdState.cSTA_READBusy;
+		//ELSIF(me.intCmd=RFW_CmdState.cCMD_READ) THEN
+		//	me.StateMachine.intStateNext := RFW_CmdState.cSTA_READBusy;
 		ELSIF(me.intCmd=RFW_CmdState.cCMD_ON) THEN
 			me.StateMachine.intStateNext := RFW_CmdState.cSTA_ONBusy;			
 		END_IF
