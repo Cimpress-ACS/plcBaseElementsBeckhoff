@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.1.6</ProjectVersion>
+    <ProjectVersion>0.0.1.7</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.1.5 - Added new controller FB_VLV
+    <Description>0.0.1.7 - More RFW Error information
+0.0.1.5 - Added new controller FB_VLV
 0.0.1.4 - Fix for the BCD, BCC controller to support also messages without diagnostics
 0.0.1.2 - Simulation UMC; FB_CtrlModule added
 0.0.1.1 - Newest Base_PLC added 0.3.4.2

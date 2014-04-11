@@ -1,10 +1,11 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
   <POU Name="FB_RFD" Id="{b594bd4c-d2d6-4c09-8c7a-e195807dfb70}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_RFD
 VAR
 	bolActivate: BOOL := TRUE;
 	bolInitDone: BOOL;
 	bolInitComDone: BOOL;
+	bolFB_ComError: BOOL;	// communication FB has a error
 	///Communication sending is busy to the serial Card
 	bolComSend: BOOL;
 	/// Size of Sendingdata
@@ -560,10 +561,14 @@ fbCom_3964R(
 	InOut_bolSend:= bolComSend, 
 	InOut_bolRec:= bolComDataReceived, 
 	Out_udiRxCount=> udiComSizeReceiveData, 
-	Out_bolComError=> SIf.stErr.bolComError, 
+	Out_bolComError=> bolFB_ComError, 
 	Out_bolProtocolErr=> SIf.stErr.bolProtcolError, 
 	Out_udiErrorCode=> udi3964R_Error_Nbr);
 
+	IF bolFB_ComError = TRUE THEN
+		SIf.stErr.bolComError := TRUE;
+		SIf.stErr.udiErrorID := udi3964R_Error_Nbr;
+	END_IF
 (* program code at the beginning of each PLC cycle *)
 IF bolInitComDone=TRUE THEN
 	// Received Data checking and interpreting
@@ -735,7 +740,9 @@ END_IF
 IF (stStateMachine.intState<cRFD_STA_PowerOnBusy) AND (stStateMachine.intState<>cRFD_STA_Error) THEN
 	stStateMachine.intStateNext := cRFD_STA_PowerOnBusy;
 ELS*)
-IF (SIf.stErr.bolErrorActive) AND 
+IF SIf.stCfg.bolSimulation = TRUE THEN
+	SIf.intCmd := cSTA_DONE;
+ELSIF (SIf.stErr.bolErrorActive) AND 
 	(stStateMachine.intState<>cRFD_STA_Error)  THEN
 	stStateMachine.intStateNext := cRFD_STA_Error;
 // always go to PowerOff 
@@ -902,6 +909,17 @@ SIf.strCmd := THIS^.getCmdState(intCmdState:=SIf.intCmd,bolState:=FALSE);
 		
 		stSubStateMachine.intStateLastCycle := stSubStateMachine.intState;
 		fbTimeoutState();
+		// Check Timeout of communication
+		IF fbTimeoutState.Q = TRUE THEN
+			SIf.stErr.bolComError := TRUE;
+			SIf.stErr.udiErrorID := TIME_TO_UDINT(fbTimeoutState.ET);
+		END_IF
+		
+		IF udiResetCount >= SIf.stCfg.udiRetry THEN
+			SIf.stErr.bolComError := TRUE;
+			SIf.stErr.udiErrorID := udiResetCount;
+		END_IF
+
 		IF (stSubStateMachine.intState<>stSubStateMachine.intStateNext) THEN
 			stSubStateMachine.intState := stSubStateMachine.intStateNext;  // set next state for next cycle
 			//stSubStateMachine.udiTimeInState_ms := 0; // reset timer
@@ -913,7 +931,7 @@ SIf.strCmd := THIS^.getCmdState(intCmdState:=SIf.intCmd,bolState:=FALSE);
 		
 
 		// State Change Condition
-		IF (SIf.stErr.bolComError = TRUE) OR (SIf.stErr.bolSDOError = TRUE) OR (udiResetCount >= SIf.stCfg.udiRetry) OR (fbTimeoutState.Q = TRUE) THEN
+		IF (SIf.stErr.bolComError = TRUE) OR (SIf.stErr.bolSDOError = TRUE) THEN
 			stStateMachine.intStateNext := cRFD_STA_Error;
 		ELSIF (stSubStateMachine.intStateNext = cRFD_SUB_SubStatesEnd) THEN
 			stStateMachine.intStateNext := cRFD_STA_WaitForJob;
@@ -1006,7 +1024,7 @@ END_CASE;]]></ST>
 		
 		SIf.stErr.bolErrorActive := TRUE;
 		IF (SIf.stErr.bolComError = TRUE) OR (SIf.stErr.bolProtcolError = TRUE) THEN
-			SIf.stErr.udiErrorID := udi3964R_Error_Nbr;
+			; //Written in different settings
 		ELSIF SIf.stErr.bolSDOError = TRUE THEN
 			SIf.stErr.udiErrorID := udiSdoErrorNbr;
 		ELSIF SIf.stErr.bolRFIDError = TRUE THEN	

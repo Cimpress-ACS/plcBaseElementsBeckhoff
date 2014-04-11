@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
   <POU Name="FB_RFW" Id="{6f3444f8-fe94-4d15-ac48-af337cfd9399}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_RFW EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -193,6 +193,62 @@ END_IF
 	END_IF]]></ST>
       </Implementation>
     </Method>
+    <Method Name="sta_ONbusy" Id="{1bb97763-b40d-4722-a8c0-8c52f085370b}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_ONbusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		bolNewTag := FALSE;
+		me.SubStateMachine.intState := cRFW_SUB_WaitTag;
+		
+		fbSimulationTimer.IN := FALSE;
+		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiReadTime_ms / 2);
+		fbSimulationTimer(); // set time/reset timer
+		fbSimulationTimer.IN := TRUE; // start timer
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			pRFD_SIf^.stStatus.bolOn := TRUE;
+			fbSimulationTimer(); // simulation time
+			IF (fbSimulationTimer.Q) THEN
+				;
+			END_IF
+		END_IF
+		
+		// Function
+		IF(pRFD_SIf^.stStatus.bolOn = FALSE) THEN
+			pRFD_SIf^.intCmd := RFD_Cmd.cRFD_CMD_CTRL_ON;
+		END_IF
+		
+		// State Change Condition
+		IF (pRFD_SIf^.stErr.bolErrorActive = TRUE) THEN  
+			me.StateMachine.intStateNext :=  cSTA_ERROR;
+		ELSIF(pRFD_SIf^.stStatus.bolOn = TRUE) THEN
+			me.StateMachine.intStateNext := RFW_CmdState.cSTA_ON;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;		
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="sta_OFF" Id="{264788df-90a6-4149-9ea0-e4a45dc80f4c}">
       <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
 ]]></Declaration>
@@ -315,6 +371,59 @@ SIf.Cfg.stNetId := '192.168.2.123.1.1'; //PLC NetId
 SIf.Cfg.uinSlaveAddr := 1039; //Io card Ethercat adress 
 SIf.Cfg.bolGetTrayIDAuto := FALSE;
 SIf.Cfg.bolDtChToLine_send := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_ON" Id="{3f89f901-ef7a-426a-bbc6-9160e2223188}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_ON : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		bolNewTag := FALSE;
+		me.SubStateMachine.intState := cRFW_SUB_WaitTag-1; // init first state - string
+		me.SubStateMachine.intStateNext := cRFW_SUB_WaitTag;
+		fbSimulationTimer.IN := FALSE;
+		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiReadTime_ms / 2);
+		fbSimulationTimer(); // set time/reset timer
+		fbSimulationTimer.IN := TRUE; // start timer
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		
+		// Function
+				
+		// State Change Condition
+		IF (pRFD_SIf^.stErr.bolErrorActive = TRUE) THEN  
+			me.StateMachine.intStateNext :=  cSTA_ERROR;
+		ELSIF ((me.intCmd=cCMD_READ) OR (me.intCmd=cCMD_WRITE)) AND (SIf.Cfg.eTyp = E_Typ_RFW.RF382R) THEN
+			// SIf.Alm[5].strText := 'Command for this type of RFID not possible';
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,5,UDINT_TO_DINT(pRFD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);			
+		ELSIF (me.intCmd=cCMD_READ) THEN
+			me.StateMachine.intStateNext := cSTA_READBusy;
+		ELSIF(me.intCmd=cCMD_WRITE) THEN
+			me.StateMachine.intStateNext := cSTA_WRITEBusy;
+		ELSIF(me.intCmd=cCMD_RUN) THEN
+			me.StateMachine.intStateNext := cSTA_RUNBusy;			
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;		
+	END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="getCtrlSIf" Id="{58e9c3b4-9dfb-4d05-be68-46bb21d02e6b}">
@@ -484,6 +593,8 @@ SIf.Cfg.bolDtChToLine_send := TRUE;]]></ST>
 		END_IF
 		
 		// Write commando
+		uinDataAdress := DWORD_TO_UINT(SIf.Cur.dwoJob);
+		uinDataAdress := uinDataAdress MOD 16#100;							// Maximum 255 data
 		pRFD_SIf^.stCur.uinAdressData := uinDataAdress;
 		pRFD_SIf^.stCur.uinAdressTag := DWORD_TO_UINT(SIf.Cur.dwoJob);
 		pRFD_SIf^.stCur.usiCount := DWORD_TO_USINT(SHR(SIf.Cur.dwoJob,16));
@@ -1286,116 +1397,6 @@ IF (CIf.SwCfg.bolSimulation = FALSE) THEN
 		;
 	END_IF
 END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_ONbusy" Id="{1bb97763-b40d-4722-a8c0-8c52f085370b}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_ONbusy : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		bolNewTag := FALSE;
-		me.SubStateMachine.intState := cRFW_SUB_WaitTag;
-		SIf.Cur.dwoJob := RFID_Data.cRFID_TrayID;
-		
-		fbSimulationTimer.IN := FALSE;
-		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiReadTime_ms / 2);
-		fbSimulationTimer(); // set time/reset timer
-		fbSimulationTimer.IN := TRUE; // start timer
-		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-
-		// Simulation
-		IF (CIf.SwCfg.bolSimulation) THEN
-			pRFD_SIf^.stStatus.bolOn := TRUE;
-			fbSimulationTimer(); // simulation time
-			IF (fbSimulationTimer.Q) THEN
-				;
-			END_IF
-		END_IF
-		
-		// Function
-		IF(pRFD_SIf^.stStatus.bolOn = FALSE) THEN
-			pRFD_SIf^.intCmd := RFD_Cmd.cRFD_CMD_CTRL_ON;
-		END_IF
-		
-		// State Change Condition
-		IF (pRFD_SIf^.stErr.bolErrorActive = TRUE) THEN  
-			me.StateMachine.intStateNext :=  cSTA_ERROR;
-		ELSIF(pRFD_SIf^.stStatus.bolOn = TRUE) THEN
-			me.StateMachine.intStateNext := RFW_CmdState.cSTA_ON;
-		END_IF
-	END_IF
-
-
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;		
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_ON" Id="{3f89f901-ef7a-426a-bbc6-9160e2223188}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_ON : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		bolNewTag := FALSE;
-		me.SubStateMachine.intState := cRFW_SUB_WaitTag-1; // init first state - string
-		me.SubStateMachine.intStateNext := cRFW_SUB_WaitTag;
-		fbSimulationTimer.IN := FALSE;
-		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiReadTime_ms / 2);
-		fbSimulationTimer(); // set time/reset timer
-		fbSimulationTimer.IN := TRUE; // start timer
-		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-
-		// Simulation
-		
-		// Function
-				
-		// State Change Condition
-		IF (pRFD_SIf^.stErr.bolErrorActive = TRUE) THEN  
-			me.StateMachine.intStateNext :=  cSTA_ERROR;
-		ELSIF ((me.intCmd=cCMD_READ) OR (me.intCmd=cCMD_WRITE)) AND (SIf.Cfg.eTyp = E_Typ_RFW.RF382R) THEN
-			// SIf.Alm[5].strText := 'Command for this type of RFID not possible';
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,5,UDINT_TO_DINT(pRFD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);			
-		ELSIF (me.intCmd=cCMD_READ) THEN
-			me.StateMachine.intStateNext := cSTA_READBusy;
-		ELSIF(me.intCmd=cCMD_WRITE) THEN
-			me.StateMachine.intStateNext := cSTA_WRITEBusy;
-		ELSIF(me.intCmd=cCMD_RUN) THEN
-			me.StateMachine.intStateNext := cSTA_RUNBusy;			
-		END_IF
-	END_IF
-
-
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;		
-	END_IF]]></ST>
       </Implementation>
     </Method>
     <ObjectProperties />
