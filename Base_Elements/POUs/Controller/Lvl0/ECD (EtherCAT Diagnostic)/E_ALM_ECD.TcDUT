@@ -23,7 +23,7 @@
 	/// To many abnormal State Changes
 	StateChanges := 10,
 	MAX_E_ALM
-);
+) UINT;
 END_TYPE
 ]]></Declaration>
     <ObjectProperties />

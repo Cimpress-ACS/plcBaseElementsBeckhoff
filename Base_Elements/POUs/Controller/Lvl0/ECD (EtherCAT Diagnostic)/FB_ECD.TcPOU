@@ -750,9 +750,9 @@ END_VAR
     <Method Name="sta_PONBusy" Id="{2cd4b2e3-2ca2-409e-beff-ad01f0513a4c}">
       <Declaration><![CDATA[METHOD PROTECTED sta_PONBusy : BOOL
 VAR
-	intI: INT;
+	ii: UINT;
 	/// Internal Variable for Found Address
-	bolAlaveOK: BOOL;
+	bolSlaveOK: BOOL;
 END_VAR
 ]]></Declaration>
       <Implementation>
@@ -772,8 +772,8 @@ END_VAR
 		me.SubStateMachine.intStateNext := cSTA_SUB_INITIALIZE;
 		
 		// Get stored alarmtextes into local Texts
-		FOR intI := 1 TO (E_ALM_ECD.MAX_E_ALM - 1) DO
-			arrAlmtexts[intI] := SIf.Alm[intI].strText;
+		FOR ii := 1 TO (E_ALM_ECD.MAX_E_ALM - 1) DO
+			arrAlmtexts[ii] := SIf.Alm[ii].strText;
 		END_FOR
 	END_IF
 
@@ -918,22 +918,22 @@ END_VAR
 								uinErrorSlaveNbr := 0;
 								// Search if configurated Address if found in the hardware found Slaves
 								// Loop throug the Configrated Arreay...
-								FOR intI := 0 TO (UINT_TO_INT(uinConfigSlaveNbr-1)) DO	
-									bolAlaveOK := FALSE;				
+								FOR ii := 0 TO (uinConfigSlaveNbr-1) DO	
+									bolSlaveOK := FALSE;				
 									//...and search in the found addresses	
 									FOR uinLoop := 0 TO (SIf.Cur.uinNumOfSlaves-1) DO
-										IF (WORD_TO_UINT(arrSlaveConf[intI].nAddr) = SIf.Cur.stSlaveData[uinLoop].uinAddress) THEN // Adress of Configurated and found Slave is the same
+										IF (WORD_TO_UINT(arrSlaveConf[ii].nAddr) = SIf.Cur.stSlaveData[uinLoop].uinAddress) THEN // Adress of Configurated and found Slave is the same
 											// Copy configuration Data in the CUR Structure
-											SIf.Cur.stSlaveData[uinLoop].stConfigData := arrSlaveConf[intI];
+											SIf.Cur.stSlaveData[uinLoop].stConfigData := arrSlaveConf[ii];
 											// This slave is done
-											bolAlaveOK := TRUE;
+											bolSlaveOK := TRUE;
 											EXIT;
 										END_IF
 									END_FOR
 									// If configurated Address is not found in the redaed Hardware addresses, get Address and increment number
-									IF bolAlaveOK = FALSE THEN
+									IF bolSlaveOK = FALSE THEN
 										IF uinErrorSlaveAdr = 0 THEN // only write the first module in Error as information
-											uinErrorSlaveAdr := WORD_TO_UINT(arrSlaveConf[intI].nAddr);
+											uinErrorSlaveAdr := WORD_TO_UINT(arrSlaveConf[ii].nAddr);
 										END_IF
 										uinErrorSlaveNbr := uinErrorSlaveNbr + 1;
 									END_IF
@@ -956,19 +956,19 @@ END_VAR
 									// Search if hardware Address which is not configurated
 									// Loop throug the Hardware Arreay...
 									FOR uinLoop := 0 TO (SIf.Cur.uinNumOfSlaves-1) DO	
-										bolAlaveOK := FALSE;				
+										bolSlaveOK := FALSE;				
 										//...and search in the configuration
-										FOR intI := 0 TO (UINT_TO_INT(uinConfigSlaveNbr)-1) DO										
-											IF (WORD_TO_UINT(arrSlaveConf[intI].nAddr) = SIf.Cur.stSlaveData[uinLoop].uinAddress) THEN // Adress of Configurated and found Slave is the same
+										FOR ii := 0 TO (uinConfigSlaveNbr-1) DO										
+											IF (WORD_TO_UINT(arrSlaveConf[ii].nAddr) = SIf.Cur.stSlaveData[uinLoop].uinAddress) THEN // Adress of Configurated and found Slave is the same
 												// This slave is done
-												bolAlaveOK := TRUE;
+												bolSlaveOK := TRUE;
 												EXIT;
 											END_IF
 										END_FOR
 										// If configurated Address is not found, get Address and increment number
-										IF bolAlaveOK = FALSE THEN
+										IF bolSlaveOK = FALSE THEN
 											IF uinErrorSlaveAdr = 0 THEN // only write the first module in Error as information
-												uinErrorSlaveAdr := WORD_TO_UINT(arrSlaveConf[intI].nAddr);
+												uinErrorSlaveAdr := WORD_TO_UINT(arrSlaveConf[ii].nAddr);
 											END_IF
 											uinErrorSlaveNbr := uinErrorSlaveNbr + 1;
 										END_IF
