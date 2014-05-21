@@ -1,0 +1,18 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_Ctrl_SIf_ECD" Id="{1b148a58-3b69-41f0-8c7d-2947da3da205}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_ECD :
+STRUCT
+	/// configuration
+	Cfg: T_Ctrl_SIf_ECD_Cfg;
+	/// parameter
+	Par: T_Ctrl_SIf_ECD_Par;
+	/// current values
+	Cur: T_Ctrl_SIf_ECD_Cur;
+	/// alarm number used in this controller
+	Alm: ARRAY[1..(E_ALM_ECD.MAX_E_ALM - 1)] OF T_Ctrl_Alm;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

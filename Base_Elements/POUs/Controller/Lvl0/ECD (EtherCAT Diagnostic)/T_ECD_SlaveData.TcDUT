@@ -1,0 +1,18 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_ECD_SlaveData" Id="{3e382130-7769-4e99-9c92-9d08b9ab5518}">
+    <Declaration><![CDATA[TYPE T_ECD_SlaveData :
+STRUCT
+	/// Slave Configuration
+	stConfigData: Tc2_EtherCAT.ST_EcSlaveConfigData;
+	/// Address of the slave (as UINT, beacuase in stConfigData is only as WORD)
+	uinAddress: UINT;
+	/// State of the slave
+	stState: Tc2_EtherCAT.ST_EcSlaveState;
+	/// CRC Error totally
+	stCRCError: Tc2_EtherCAT.ST_EcCrcErrorEx;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

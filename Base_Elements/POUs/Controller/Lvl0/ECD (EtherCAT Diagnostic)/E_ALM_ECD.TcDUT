@@ -1,0 +1,31 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="E_ALM_ECD" Id="{932b64ec-7c8c-42fb-8048-153855c94db6}">
+    <Declaration><![CDATA[TYPE E_ALM_ECD :
+(
+	/// ADS Communication Error to EtherCAT Master => Info = ADS_Errorcode
+	ADS_ComError := 1,
+	/// A Function is not finished after the defined Timeout
+	TimeOutFunction := 2,
+	/// Configured and reached Slaves are not the same => Info Byte 0+1 = Slave Addres from last error Info Byte 2+3 = Numbers of error Slaves
+	NotAllSlaveConnected := 3,
+	/// More slaves at the master as the structure could handle => Info Byte 0+1 = Slave Addres from last error Info Byte 2+3 = Numbers of error Slaves
+	ToManySlaves := 4,
+	/// Master not in the correct state => Info = Masterstate
+	MasterStateError := 5,
+	/// Minimum one Slave not in the correct state => Byte 0+1 = Slave Addres from last error, Info Byte 2 + 3 = State of last error Slave
+	SlaveStateError := 6,
+	/// Minimum one Slave has to many CRC Erros => Byte 0+1 = Slave Addres from last error, Info Byte 2 +3 = Number of CRC Errors from last Slave with error
+	SlaveCRCError := 7,
+	/// Minimum one Slave has a LinkState Erros => Byte 0+1 = Slave Addres from last error Info Byte 2 + 3 = Link State of last error Slave
+	SlaveLinkError := 8,
+	/// No slave found in the network
+	NoSlaveFound := 9,
+	/// To many abnormal State Changes
+	StateChanges := 10,
+	MAX_E_ALM
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

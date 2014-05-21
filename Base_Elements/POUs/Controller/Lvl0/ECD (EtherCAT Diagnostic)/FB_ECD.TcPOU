@@ -1,0 +1,1386 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <POU Name="FB_ECD" Id="{1fea0de2-a9af-4156-b983-ff4982d3f480}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ECD EXTENDS FB_CtrlBase
+VAR
+	/// Specific interface struct for public access
+	SIf: T_Ctrl_SIf_ECD;
+	/// Number State Errors in this cycle
+	udiNumOfStateErrors: UDINT;
+	/// Number CRC Errors in this cycle
+	udiNumOfCRCErrors: UDINT;
+	/// Loop variable for request
+	uinLoop: UINT;
+	/// Loop variable for Slaves
+	uinLoopSlave: UINT;
+	/// Number of Slaves for internal use
+	uinSlaveNbr: UINT;
+	/// Variable to calculat the error information
+	dinAlarmInfo: DINT;
+	/// Feedback from functions
+	bolFBbusy: BOOL;
+	/// Save The Reset of CRC Errors
+	bolResetCRCError: BOOL;
+	/// Feedback from functions
+	bolFBerror: BOOL;
+	udiFBerror: UDINT;
+	/// Array of all Adresses
+	arrSlaveAdress: ARRAY[0..ECD_Const.cuinMaxSlaves] OF UINT;
+	/// Array of all Slave Data
+	arrSlaveConf: ARRAY[0..ECD_Const.cuinMaxSlaves] OF Tc2_EtherCAT.ST_EcSlaveConfigData;
+	/// Array of Abnormal State Changes
+	arrSlaveAbnormalStates: ARRAY[0..ECD_Const.cuinMaxSlaves] OF UDINT;
+	/// Number of configurated Slaves
+	uinConfigSlaveNbr: UINT;
+	/// Slavenumber internal
+	uinErrorSlaveAdr: UINT;
+	/// Numbers of Slave Errors
+	uinErrorSlaveNbr: UINT;
+	/// Information of Error
+	uinErrorSlaveInfo: UINT;
+	/// Adress of Link Error
+	uinErrorSlaveLink: UINT;
+	/// Numbers of Link Error
+	uinErrorSlaveLinkNbr: UINT;
+	/// Information of Link Error
+	uinErrorSlaveLinkInfo: UINT;
+	/// Slavenumber internal
+	uinErrorSlaveAdrCRC: UINT;
+	/// Numbers of Slave Errors
+	uinErrorSlaveNbrCRC: UINT;
+	/// Information of Error
+	uinErrorSlaveInfoCRC: UINT;
+	/// Internal Alarmtextes to insert additional informations
+	arrAlmtexts: ARRAY[1..(E_ALM_ECD.MAX_E_ALM - 1)] OF STRING;
+	strAlarminfo: STRING;
+	/// Functional Blocks
+	fbEcGetAllSlaveAddr: Tc2_EtherCAT.FB_EcGetAllSlaveAddr;
+	fbEcGetConfSlaves: Tc2_EtherCAT.FB_EcGetConfSlaves;
+	fbEcGetMasterState: Tc2_EtherCAT.FB_EcGetMasterState;
+	fbEcGetSlaveState: Tc2_EtherCAT.FB_EcGetSlaveState;
+	fbEcGetSlaveCrcError: Tc2_EtherCAT.FB_EcGetSlaveCrcErrorEx;
+	fbEcGetAllSlaveAbnormalStateChanges: Tc2_EtherCAT.FB_EcGetAllSlaveAbnormalStateChanges;
+	fbEcMasterFrameStatisticClearCRC: Tc2_EtherCAT.FB_EcMasterFrameStatisticClearCRC;
+END_VAR
+VAR CONSTANT
+	/// Sub states
+	cSTA_SUB_INITIALIZE: INT := 500;
+	cSTA_SUB_GetAllSlaveAdress: INT := 501;
+	cSTA_SUB_GetAllSlaveAdressDone: INT := 502;
+	cSTA_SUB_GetConfSlaves: INT := 503;
+	cSTA_SUB_GetConfSlavesDone: INT := 504;
+	cSTA_SUB_CheckMaster: INT := 505;
+	cSTA_SUB_CheckMasterDone: INT := 506;
+	cSTA_SUB_CheckSlaveChanges: INT := 507;
+	cSTA_SUB_CheckSlaveChangesDone: INT := 508;
+	cSTA_SUB_SLAVE_START: INT := 509;
+	cSTA_SUB_CheckSlaveState: INT := 510;
+	cSTA_SUB_CheckSlaveStateDone: INT := 511;
+	cSTA_SUB_CheckCRC: INT := 512;
+	cSTA_SUB_CheckCRCDone: INT := 513;
+	cSTA_SUB_CheckCRCReset: INT := 514;
+	cSTA_SUB_CheckCRCResetDone: INT := 515;
+	cSTA_SUB_Inc: INT := 516;
+	cSTA_SUB_WAIT_NEXT_POLL: INT := 517;
+	cSTA_SUB_ERROR: INT := 560;
+	cSTA_SUB_DONE: INT := 520;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+EtherCAT Diagnostics for Hardware and communication errors
+Diagnosis of the EtherCAT with Beckhoff FUB's to check if there are some errors in the network 
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		25.04.2014		AVME/PRE	Start history
+
+___________________________________________________________________________________________________*)
+
+IF (me.bolActivate) THEN // cyclic call enabled
+	IF (CIf.Info.bolInitDone=FALSE) THEN // first cycle -> init
+		CtrlInit();
+		CIf.Info.bolInitDone := TRUE;
+	ELSE
+		CycleStartDuty();
+	
+		Always();
+		
+		StateMachine();
+		
+		CycleEndDuty();
+	
+	END_IF
+END_IF;
+]]></ST>
+    </Implementation>
+    <Method Name="sta_OFF" Id="{02e40ca3-8345-4dee-9659-31e56a9b2e60}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		// Initialize sub state machine
+		me.SubStateMachine.intState:= cSTA_SUB_INITIALIZE; 
+		me.SubStateMachine.intStateNext := cSTA_SUB_INITIALIZE;
+	END_IF
+	
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN	
+		// State Change Condition
+		IF (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.Alarm.eActivAlmClass<>E_AlmClass.OFF) THEN	
+			IF ((SIf.Cfg.bolRunAlways = TRUE) OR (me.intCmd=BASE_PLC.cCMD_RUN))  THEN
+				me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
+			END_IF
+		END_IF
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_RUN" Id="{1be99cb1-11ca-4a87-a197-56174323634a}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_RUN : BOOL
+VAR
+	/// internal Loop Variable
+	intI: INT;
+	/// Internal Variable for Found Address
+	bolAlaveOK: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		udiNumOfStateErrors:= 0;
+		udiNumOfCRCErrors:= 0;
+		uinLoop:= 0;
+		uinSlaveNbr:= 0;
+
+		// Initialize sub state machine
+		me.SubStateMachine.intState:= cSTA_SUB_INITIALIZE; 
+		me.SubStateMachine.intStateNext := cSTA_SUB_INITIALIZE;
+		
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+			// Simulation
+			IF (CIf.SwCfg.bolSimulation) THEN
+				me.SubStateMachine.intStateNext := cSTA_SUB_WAIT_NEXT_POLL;
+				me.SubStateMachine.udiTimeInState_ms := 0;
+			END_IF
+			
+			// Check if a Reset of the CRC Errors has to be done
+			IF ((SIf.Alm[E_ALM_ECD.SlaveCRCError].bol = TRUE) AND (CIf.Job.bolAlmReset = TRUE)) THEN
+				bolResetCRCError := TRUE;
+				SIf.Alm[E_ALM_ECD.SlaveCRCError].bol := FALSE;
+			END_IF
+			
+		
+			// Sub statemachine to set necessary AMS routes and determine the handle ID of all connections in list	
+			CASE me.SubStateMachine.intState OF	
+			
+				cSTA_SUB_INITIALIZE: 
+					me.SubStateMachine.intStateNext := cSTA_SUB_CheckMaster;		
+
+				
+				// **************************************************************************
+				// Call FUB fbEcGetMasterState to get The State of the EtherCAT Master Device
+				// **************************************************************************
+				cSTA_SUB_CheckMaster:
+				
+					// Prepare Function Block
+					fbEcGetMasterState(sNetId:= SIf.Cfg.strNetID, 
+										bExecute:= FALSE, 
+										tTimeout:= UDINT_TO_TIME(SIf.Par.udiTOCheckAll_ms)); 
+				
+					// Start Function
+					fbEcGetMasterState(bExecute:= TRUE, 
+										tTimeout:= UDINT_TO_TIME(SIf.Par.udiTOCheckAll_ms)); 
+				
+					me.SubStateMachine.intStateNext := cSTA_SUB_CheckMasterDone;		
+							
+				// **************************************************************************
+				// Wait until GetAllSlaveAdress is Done
+				// **************************************************************************
+				cSTA_SUB_CheckMasterDone:
+				
+					fbEcGetMasterState(bExecute:= FALSE);
+					// Wait until done
+					IF NOT (fbEcGetMasterState.bBusy) THEN
+						IF NOT (fbEcGetMasterState.bError) THEN
+							SIf.Cur.worMasterState := fbEcGetMasterState.state;
+							SIf.Cur.worMasterState := fbEcGetMasterState.state;
+							// In Operational State check slaves
+							IF SIf.Cur.worMasterState = Tc2_EtherCAT.EC_DEVICE_STATE_OP THEN
+								me.SubStateMachine.intStateNext := cSTA_SUB_GetAllSlaveAdress;
+							// In Pre-Operational check again
+							ELSIF ((SIf.Cur.worMasterState = Tc2_EtherCAT.EC_DEVICE_STATE_PREOP) OR (SIf.Cur.worMasterState = Tc2_EtherCAT.EC_DEVICE_STATE_PREOP)) THEN
+								me.SubStateMachine.intStateNext := cSTA_SUB_CheckMaster;
+							// ELSE ERROR
+							ELSE
+								// SIf.Alm[E_ALM_ECD.MasterStateError].strText := 'Master State Error'; // Master not in the correct state => Info = Masterstate
+								pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.MasterStateError,WORD_TO_DINT(SIf.Cur.worMasterState),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);								
+							END_IF
+						// Error
+						ELSE
+							// SIf.Alm[E_ALM_ECD.ADS_ComError].strText := 'ADS Communication Error to EtherCAT Master'; // ADS Communication Error to EtherCAT Master => Info = ADS_Errorcode
+							pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.ADS_ComError,UDINT_TO_DINT(fbEcGetMasterState.nErrId),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+							me.SubStateMachine.intStateNext := cSTA_SUB_ERROR;		
+						END_IF
+					END_IF
+							
+				
+				// **************************************************************************
+				// Call FUB fbEcGetAllSlaveAddr to get all connected slaves. 
+				// **************************************************************************
+				cSTA_SUB_GetAllSlaveAdress:
+				
+					// Prepare Function Block
+					fbEcGetAllSlaveAddr(sNetId:= SIf.Cfg.strNetID, 
+										pAddrBuf:= ADR(arrSlaveAdress), 
+										cbBufLen:= SIZEOF(arrSlaveAdress), 
+										bExecute:= FALSE, 
+										tTimeout:= UDINT_TO_TIME(SIf.Par.udiTOCheckAll_ms));
+				
+					// Start Function
+					fbEcGetAllSlaveAddr(bExecute:= TRUE, 
+										tTimeout:= UDINT_TO_TIME(SIf.Par.udiTOCheckAll_ms));
+				
+					me.SubStateMachine.intStateNext := cSTA_SUB_GetAllSlaveAdressDone;		
+							
+				// **************************************************************************
+				// Wait until GetAllSlaveAdress is Done
+				// **************************************************************************
+				cSTA_SUB_GetAllSlaveAdressDone:
+				
+					fbEcGetAllSlaveAddr(bExecute:= FALSE);
+					// Wait until done
+					IF NOT (fbEcGetAllSlaveAddr.bBusy) THEN
+						IF NOT (fbEcGetAllSlaveAddr.bError) THEN
+							// Prepare data
+							SIf.Cur.uinNumOfSlaves := fbEcGetAllSlaveAddr.nSlaves;
+							IF SIf.Cur.uinNumOfSlaves > 0 THEN
+								FOR uinLoop := 0 TO (SIf.Cur.uinNumOfSlaves-1) DO
+									SIf.Cur.stSlaveData[uinLoop].uinAddress := arrSlaveAdress[uinLoop];
+								END_FOR
+							ELSE
+								// SIf.Alm[E_ALM_ECD.NoSlaveFound].strText :=  'No Slave in Network'; 		// No EtherCAT Slave found in the network
+								pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.NoSlaveFound,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);								
+							END_IF
+							me.SubStateMachine.intStateNext := cSTA_SUB_GetConfSlaves;
+						// Error
+						ELSE
+							// SIf.Alm[E_ALM_ECD.ADS_ComError].strText := 'ADS Communication Error to EtherCAT Master'; // ADS Communication Error to EtherCAT Master => Info = ADS_Errorcode
+							pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.ADS_ComError,UDINT_TO_DINT(fbEcGetAllSlaveAddr.nErrId),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+							me.SubStateMachine.intStateNext := cSTA_SUB_ERROR;		
+						END_IF
+					END_IF
+			
+				// **************************************************************************
+				// Call FUB fbEcGetConfSlaves to get all configurated slaves. 
+				// **************************************************************************
+				cSTA_SUB_GetConfSlaves:
+				
+					// Prepare Function Block
+					fbEcGetConfSlaves(sNetId:= SIf.Cfg.strNetID, 
+										pArrEcConfSlaveInfo:= ADR(arrSlaveConf), 
+										cbBufLen:= SIZEOF(arrSlaveConf), 
+										bExecute:= FALSE, 
+										tTimeout:= UDINT_TO_TIME(SIf.Par.udiTOCheckAll_ms));
+				
+					// Start Function
+					fbEcGetConfSlaves(bExecute:= TRUE, 
+										tTimeout:= UDINT_TO_TIME(SIf.Par.udiTOCheckAll_ms));
+				
+					me.SubStateMachine.intStateNext := cSTA_SUB_GetConfSlavesDone;		
+							
+				// **************************************************************************
+				// Wait until fbEcGetConfSlaves is Done
+				// **************************************************************************
+				cSTA_SUB_GetConfSlavesDone:
+				
+					fbEcGetConfSlaves(bExecute:= FALSE);
+					// Wait until done
+					IF NOT (fbEcGetConfSlaves.bBusy) THEN
+						IF NOT (fbEcGetConfSlaves.bError) THEN
+							// Prepare data
+							uinConfigSlaveNbr := fbEcGetConfSlaves.nSlaves;
+							IF uinConfigSlaveNbr > 0 THEN
+								uinErrorSlaveAdr := 0;
+								uinErrorSlaveNbr := 0;
+								// Search if configurated Address if found in the hardware found Slaves
+								// Loop throug the Configrated Arreay...
+								FOR intI := 0 TO (UINT_TO_INT(uinConfigSlaveNbr)-1) DO	
+									bolAlaveOK := FALSE;				
+									//...and search in the found addresses	
+									FOR uinLoop := 0 TO (SIf.Cur.uinNumOfSlaves-1) DO
+										IF (WORD_TO_UINT(arrSlaveConf[intI].nAddr) = SIf.Cur.stSlaveData[uinLoop].uinAddress) THEN // Adress of Configurated and found Slave is the same
+											// Copy configuration Data in the CUR Structure
+											SIf.Cur.stSlaveData[uinLoop].stConfigData := arrSlaveConf[intI];
+											// This slave is done
+											bolAlaveOK := TRUE;
+											EXIT;
+										END_IF
+									END_FOR
+									// If configurated Address is not found in the redaed Hardware addresses, get Address and increment number
+									IF bolAlaveOK = FALSE THEN
+										IF uinErrorSlaveAdr = 0 THEN // only write the first module in Error as information
+											uinErrorSlaveAdr := WORD_TO_UINT(arrSlaveConf[intI].nAddr);
+										END_IF
+										uinErrorSlaveNbr := uinErrorSlaveNbr + 1;
+									END_IF
+								END_FOR
+								// Error handling if minimal one configurated slave not found
+								IF uinErrorSlaveNbr > 0 THEN 		// Minimal one false Slave
+									// Get Error Information
+									dinAlarmInfo := UDINT_TO_DINT(SHL(UINT_TO_UDINT(uinErrorSlaveNbr),16) OR uinErrorSlaveAdr);
+									strAlarminfo := CONCAT(' Slave Number: ' , UINT_TO_STRING(uinErrorSlaveAdr));
+									strAlarminfo := CONCAT(strAlarminfo, ' of totally missings: ');
+									strAlarminfo := CONCAT(strAlarminfo, UDINT_TO_STRING(uinErrorSlaveNbr));
+									SIf.Alm[E_ALM_ECD.NotAllSlaveConnected].strText := CONCAT(arrAlmtexts[E_ALM_ECD.NotAllSlaveConnected], strAlarminfo);
+									
+									// SIf.Alm[E_ALM_ECD.NotAllSlaveConnected].strText := 'Configuration and actual differences';// // Configured and reached Slaves are not the same => Info Byte 0+1 = Slave Addres from last error Info Byte 2+3 = Numbers of error Slaves
+									pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.NotAllSlaveConnected,dinAlarmInfo,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);																	
+								END_IF
+								// If more slaves hardware found as configurated also an error
+								IF SIf.Cur.uinNumOfSlaves > uinConfigSlaveNbr THEN
+									// Search if hardware Address which is not configurated
+									// Loop throug the Hardware Arreay...
+									FOR uinLoop := 0 TO (SIf.Cur.uinNumOfSlaves-1) DO	
+										bolAlaveOK := FALSE;				
+										//...and search in the configuration
+										FOR intI := 0 TO (UINT_TO_INT(uinConfigSlaveNbr)-1) DO										
+											IF (WORD_TO_UINT(arrSlaveConf[intI].nAddr) = SIf.Cur.stSlaveData[uinLoop].uinAddress) THEN // Adress of Configurated and found Slave is the same
+												// This slave is done
+												bolAlaveOK := TRUE;
+												EXIT;
+											END_IF
+										END_FOR
+										// If configurated Address is not found, get Address and increment number
+										IF bolAlaveOK = FALSE THEN
+											IF uinErrorSlaveAdr = 0 THEN // only write the first module in Error as information
+												uinErrorSlaveAdr := WORD_TO_UINT(arrSlaveConf[intI].nAddr);
+											END_IF
+											uinErrorSlaveNbr := uinErrorSlaveNbr + 1;
+										END_IF
+									END_FOR
+										// Error handling if minimal one configurated slave not found
+										IF uinErrorSlaveNbr > 0 THEN 		// Minimal one false Slave
+											// Get Error Information
+											dinAlarmInfo := UDINT_TO_DINT(SHL(UINT_TO_UDINT(uinErrorSlaveNbr),16) OR uinErrorSlaveAdr);
+											// Get Error Information
+											dinAlarmInfo := UDINT_TO_DINT(SHL(UINT_TO_UDINT(uinErrorSlaveNbr),16) OR uinErrorSlaveAdr);
+											strAlarminfo := CONCAT(' Slave Number: ' , UINT_TO_STRING(uinErrorSlaveAdr));
+											strAlarminfo := CONCAT(strAlarminfo, ' of totally missings: ');
+											strAlarminfo := CONCAT(strAlarminfo, UDINT_TO_STRING(uinErrorSlaveNbr));
+											SIf.Alm[E_ALM_ECD.ToManySlaves].strText := CONCAT(arrAlmtexts[E_ALM_ECD.ToManySlaves], strAlarminfo);
+											// SIf.Alm[E_ALM_ECD.ToManySlaves].strText := 'To many slaves';// More slaves at the master as the structure could handle => Info Byte 0+1 = Slave Addres from last error Info Byte 2+3 = Numbers of error Slaves
+											pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.ToManySlaves,dinAlarmInfo,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);																	
+										END_IF										
+								END_IF
+							// No Slaves in Cofiguration Found	
+							ELSE
+								// SIf.Alm[E_ALM_ECD.NoSlaveFound].strText :=  'No Slave in Network'; 		// No EtherCAT Slave found in the network
+								pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.NoSlaveFound,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);								
+							END_IF
+							me.SubStateMachine.intStateNext := cSTA_SUB_CheckSlaveChanges;
+						// Error
+						ELSE
+							// SIf.Alm[E_ALM_ECD.ADS_ComError].strText := 'ADS Communication Error to EtherCAT Master'; // ADS Communication Error to EtherCAT Master => Info = ADS_Errorcode
+							pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.ADS_ComError,UDINT_TO_DINT(fbEcGetConfSlaves.nErrorId),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+							me.SubStateMachine.intStateNext := cSTA_SUB_ERROR;		
+						END_IF
+					END_IF
+					
+				// **************************************************************************
+				// Call FUB fbEcGetAllSlaveAbnormalStateChanges to get The StateChanges
+				// **************************************************************************
+				cSTA_SUB_CheckSlaveChanges:
+				
+					// Prepare Function Block
+					fbEcGetAllSlaveAbnormalStateChanges(sNetId:= SIf.Cfg.strNetID, 
+										pAddrBuf:= ADR(arrSlaveAbnormalStates), 
+										cbBufLen:= SIZEOF(arrSlaveAbnormalStates), 
+										bExecute:= FALSE, 
+										tTimeout:= UDINT_TO_TIME(SIf.Par.udiTOCheckAll_ms)); 
+				
+					// Start Function
+					fbEcGetAllSlaveAbnormalStateChanges(bExecute:= TRUE, 
+										tTimeout:= UDINT_TO_TIME(SIf.Par.udiTOCheckAll_ms)); 
+				
+					me.SubStateMachine.intStateNext := cSTA_SUB_CheckSlaveChangesDone;		
+							
+				// **************************************************************************
+				// Wait until GetAllSlaveAdress is Done
+				// **************************************************************************
+				cSTA_SUB_CheckSlaveChangesDone:
+				
+					fbEcGetAllSlaveAbnormalStateChanges(bExecute:= FALSE);
+					// Wait until done
+					IF NOT (fbEcGetAllSlaveAbnormalStateChanges.bBusy) THEN
+						IF NOT (fbEcGetAllSlaveAbnormalStateChanges.bError) THEN
+							// Check Data
+							uinErrorSlaveAdr := 0;
+							uinErrorSlaveNbr := 0;
+							uinErrorSlaveInfo := 0;
+							FOR uinLoop := 0 TO (SIf.Cur.uinNumOfSlaves-1) DO
+								IF arrSlaveAbnormalStates[uinLoop] > 0 THEN
+									IF uinErrorSlaveAdr = 0 THEN // only write the first module in Error as information
+										uinErrorSlaveAdr := uinLoop;
+										uinErrorSlaveInfo := UDINT_TO_UINT(arrSlaveAbnormalStates[uinLoop]);
+									END_IF
+									uinErrorSlaveNbr := uinErrorSlaveNbr + 1;
+								END_IF
+							END_FOR
+							// Error from a Slave with too many State Changes
+							IF uinErrorSlaveNbr > 0 THEN
+								// Get Error Information
+								dinAlarmInfo := UDINT_TO_DINT(SHL(UINT_TO_UDINT(uinErrorSlaveNbr),16) OR uinErrorSlaveAdr);
+								strAlarminfo := CONCAT(' Slave Number: ' , UINT_TO_STRING(uinErrorSlaveAdr));
+								strAlarminfo := CONCAT(strAlarminfo, ' with Errors: ');
+								strAlarminfo := CONCAT(strAlarminfo, UDINT_TO_STRING(uinErrorSlaveInfo));
+								SIf.Alm[E_ALM_ECD.StateChanges].strText := CONCAT(arrAlmtexts[E_ALM_ECD.StateChanges], strAlarminfo);
+								// SIf.Alm[E_ALM_ECD.SlaveCRCError].strText :=  'Slave CRC Error';	// Minimum one Slave has to many CRC Erros => Byte 0+1 = Slave Addres from last error, Info Byte 2 + 3 = Number of CRC Errors from last Slave with error
+								pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.StateChanges,dinAlarmInfo,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);																								
+							END_IF
+							me.SubStateMachine.intStateNext := cSTA_SUB_SLAVE_START;
+						// Error
+						ELSE
+							// SIf.Alm[E_ALM_ECD.ADS_ComError].strText := 'ADS Communication Error to EtherCAT Master'; // ADS Communication Error to EtherCAT Master => Info = ADS_Errorcode
+							pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.ADS_ComError,UDINT_TO_DINT(fbEcGetAllSlaveAbnormalStateChanges.nErrId),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+							me.SubStateMachine.intStateNext := cSTA_SUB_ERROR;		
+						END_IF
+					END_IF
+							
+				
+				
+				// **************************************************************************
+				// Prepare Data for Slave Checks 
+				// **************************************************************************
+				cSTA_SUB_SLAVE_START:
+					uinLoopSlave := 0;
+					uinErrorSlaveAdr := 0;
+					uinErrorSlaveNbr := 0;
+					uinErrorSlaveInfo := 0;
+					uinErrorSlaveAdrCRC := 0;
+					uinErrorSlaveNbrCRC := 0;
+					uinErrorSlaveInfoCRC := 0;
+					uinErrorSlaveLink := 0;
+					uinErrorSlaveLinkNbr := 0;
+					uinErrorSlaveLinkInfo := 0;
+					me.SubStateMachine.intStateNext := cSTA_SUB_CheckSlaveState;
+					
+				// **************************************************************************
+				// Call FUB fbEcGetSlaveState to get the State of 
+				// **************************************************************************
+				cSTA_SUB_CheckSlaveState:
+				
+					// Prepare Function Block
+					fbEcGetSlaveState(sNetId:= SIf.Cfg.strNetID, 
+										nSlaveAddr:= SIf.Cur.stSlaveData[uinLoopSlave].uinAddress, 
+										bExecute:= FALSE, 
+										tTimeout:= UDINT_TO_TIME(SIf.Par.udiTOCheckOne_ms));
+				
+					// Start Function
+					fbEcGetSlaveState(bExecute:= TRUE, 
+										nSlaveAddr:= SIf.Cur.stSlaveData[uinLoopSlave].uinAddress, 
+										tTimeout:= UDINT_TO_TIME(SIf.Par.udiTOCheckOne_ms));
+				
+					me.SubStateMachine.intStateNext := cSTA_SUB_CheckSlaveStateDone;		
+							
+				// **************************************************************************
+				// Wait until GetAllSlaveAdress is Done
+				// **************************************************************************
+				cSTA_SUB_CheckSlaveStateDone:
+				
+					fbEcGetSlaveState(bExecute:= FALSE);
+					// Wait until done
+					IF NOT (fbEcGetSlaveState.bBusy) THEN
+						IF NOT (fbEcGetSlaveState.bError) THEN
+							// Check State of Slave
+							SIf.Cur.stSlaveData[uinLoopSlave].stState := fbEcGetSlaveState.state;
+							IF (SIf.Cur.stSlaveData[uinLoopSlave].stState.deviceState <> Tc2_EtherCAT.EC_DEVICE_STATE_OP) THEN
+								IF uinErrorSlaveAdr = 0 THEN // only write the first module in Error as information
+									uinErrorSlaveAdr := SIf.Cur.stSlaveData[uinLoopSlave].uinAddress;
+									uinErrorSlaveInfo := SIf.Cur.stSlaveData[uinLoopSlave].stState.deviceState;
+								END_IF
+								uinErrorSlaveNbr := uinErrorSlaveNbr+1;
+							END_IF
+							// Check Link State
+							// Word 1 = State, Word 2 = Port
+							IF ((SIf.Cur.stSlaveData[uinLoopSlave].stState.linkState AND 16#0F) > 0) THEN
+								IF uinErrorSlaveLink = 0 THEN // only write the first module in Error as information
+									uinErrorSlaveLink := SIf.Cur.stSlaveData[uinLoopSlave].uinAddress;
+									uinErrorSlaveLinkInfo := SIf.Cur.stSlaveData[uinLoopSlave].stState.linkState;
+								END_IF
+								uinErrorSlaveLinkNbr := uinErrorSlaveNbr+1;
+							END_IF
+							me.SubStateMachine.intStateNext := cSTA_SUB_CheckCRC;
+						// Error
+						ELSE
+							// SIf.Alm[E_ALM_ECD.ADS_ComError].strText := 'ADS Communication Error to EtherCAT Master'; // ADS Communication Error to EtherCAT Master => Info = ADS_Errorcode
+							pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.ADS_ComError,UDINT_TO_DINT(fbEcGetSlaveState.nErrId),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+							me.SubStateMachine.intStateNext := cSTA_SUB_ERROR;		
+						END_IF
+					END_IF
+			
+				// **************************************************************************
+				// Call FUB fbEcGetSlaveCrcError to get the CRC Errors of the Slaves
+				// **************************************************************************
+				cSTA_SUB_CheckCRC:
+				
+					// Prepare Function Block
+					fbEcGetSlaveCrcError(sNetId:= SIf.Cfg.strNetID, 
+										nSlaveAddr:= SIf.Cur.stSlaveData[uinLoopSlave].uinAddress, 
+										bExecute:= FALSE, 
+										tTimeout:= UDINT_TO_TIME(SIf.Par.udiTOCheckOne_ms));
+				
+					// Start Function
+					fbEcGetSlaveCrcError(bExecute:= TRUE, 
+										nSlaveAddr:= SIf.Cur.stSlaveData[uinLoopSlave].uinAddress, 
+										tTimeout:= UDINT_TO_TIME(SIf.Par.udiTOCheckOne_ms));
+				
+					me.SubStateMachine.intStateNext := cSTA_SUB_CheckCRCDone;		
+							
+				// **************************************************************************
+				// Wait until GetAllSlaveAdress is Done
+				// **************************************************************************
+				cSTA_SUB_CheckCRCDone:
+				
+					fbEcGetSlaveCrcError(bExecute:= FALSE);
+					// Wait until done
+					IF NOT (fbEcGetSlaveCrcError.bBusy) THEN
+						IF NOT (fbEcGetSlaveCrcError.bError) THEN
+							// Check data
+							SIf.Cur.stSlaveData[uinLoopSlave].stCRCError := fbEcGetSlaveCrcError.crcError;
+							IF (SIf.Cur.stSlaveData[uinLoopSlave].stCRCError.portA >= SIf.Par.udiMaxCRC) THEN
+								IF ( (uinErrorSlaveAdrCRC = 0) OR (uinErrorSlaveInfoCRC < UDINT_TO_UINT(SIf.Cur.stSlaveData[uinLoopSlave].stCRCError.portA)) ) THEN // only write the first module in Error as information or the slave with the most CRC errors
+									uinErrorSlaveAdrCRC := SIf.Cur.stSlaveData[uinLoopSlave].uinAddress;
+									uinErrorSlaveInfoCRC := UDINT_TO_UINT(SIf.Cur.stSlaveData[uinLoopSlave].stCRCError.portA);
+								END_IF
+								uinErrorSlaveNbrCRC := uinErrorSlaveNbrCRC + 1;
+							END_IF
+							IF (SIf.Cur.stSlaveData[uinLoopSlave].stCRCError.portB >= SIf.Par.udiMaxCRC) THEN
+								IF ( (uinErrorSlaveAdrCRC = 0) OR (uinErrorSlaveInfoCRC < UDINT_TO_UINT(SIf.Cur.stSlaveData[uinLoopSlave].stCRCError.portA)) ) THEN // only write the first module in Error as information or the slave with the most CRC errors
+									uinErrorSlaveAdrCRC := SIf.Cur.stSlaveData[uinLoopSlave].uinAddress;
+									uinErrorSlaveInfoCRC := UDINT_TO_UINT(SIf.Cur.stSlaveData[uinLoopSlave].stCRCError.portB);
+								END_IF
+								uinErrorSlaveNbrCRC := uinErrorSlaveNbrCRC + 1;
+							END_IF
+							IF (SIf.Cur.stSlaveData[uinLoopSlave].stCRCError.portC >= SIf.Par.udiMaxCRC) THEN
+								IF ( (uinErrorSlaveAdrCRC = 0) OR (uinErrorSlaveInfoCRC < UDINT_TO_UINT(SIf.Cur.stSlaveData[uinLoopSlave].stCRCError.portA)) ) THEN // only write the first module in Error as information or the slave with the most CRC errors
+									uinErrorSlaveAdrCRC := SIf.Cur.stSlaveData[uinLoopSlave].uinAddress;
+									uinErrorSlaveInfoCRC := UDINT_TO_UINT(SIf.Cur.stSlaveData[uinLoopSlave].stCRCError.portC);
+								END_IF
+								uinErrorSlaveNbrCRC := uinErrorSlaveNbrCRC + 1;
+							END_IF
+							IF (SIf.Cur.stSlaveData[uinLoopSlave].stCRCError.portD >= SIf.Par.udiMaxCRC) THEN
+								IF ( (uinErrorSlaveAdrCRC = 0) OR (uinErrorSlaveInfoCRC < UDINT_TO_UINT(SIf.Cur.stSlaveData[uinLoopSlave].stCRCError.portA)) ) THEN // only write the first module in Error as information or the slave with the most CRC errors
+									uinErrorSlaveAdrCRC := SIf.Cur.stSlaveData[uinLoopSlave].uinAddress;
+									uinErrorSlaveInfoCRC := UDINT_TO_UINT(SIf.Cur.stSlaveData[uinLoopSlave].stCRCError.portD);
+								END_IF
+								uinErrorSlaveNbrCRC := uinErrorSlaveNbrCRC + 1;
+							END_IF
+							me.SubStateMachine.intStateNext := cSTA_SUB_Inc;
+						// Error
+						ELSE
+							// SIf.Alm[E_ALM_ECD.ADS_ComError].strText := 'ADS Communication Error to EtherCAT Master'; // ADS Communication Error to EtherCAT Master => Info = ADS_Errorcode
+							pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.ADS_ComError,UDINT_TO_DINT(fbEcGetSlaveCrcError.nErrId),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+							me.SubStateMachine.intStateNext := cSTA_SUB_ERROR;		
+						END_IF
+					END_IF
+
+				//************************************************************************
+				// Prepare Function for next Slave 
+				//************************************************************************	
+				cSTA_SUB_Inc:
+					IF (uinLoopSlave < (SIf.Cur.uinNumOfSlaves-1)) THEN
+						// Another slave to check
+						uinLoopSlave := uinLoopSlave + 1;
+						me.SubStateMachine.intStateNext := cSTA_SUB_CheckSlaveState;
+					// Otherwise all slaves are checked
+					ELSE
+						// Check states
+						// Error handling if minimal one configurated slave not found
+						IF uinErrorSlaveNbr > 0 THEN 		// Minimal one false Slave
+							// Get Error Information
+							dinAlarmInfo := UDINT_TO_DINT(SHL(UINT_TO_UDINT(uinErrorSlaveInfo),16) OR uinErrorSlaveAdr);
+							strAlarminfo := CONCAT(' Slave Number: ' , UINT_TO_STRING(uinErrorSlaveAdr));
+							strAlarminfo := CONCAT(strAlarminfo, ' in State: ');
+							strAlarminfo := CONCAT(strAlarminfo, UDINT_TO_STRING(uinErrorSlaveInfo));
+							SIf.Alm[E_ALM_ECD.SlaveStateError].strText := CONCAT(arrAlmtexts[E_ALM_ECD.SlaveStateError], strAlarminfo);
+							// SIf.Alm[E_ALM_ECD.SlaveStateError].strText := 'Slave State Error'; // Minimum one Slave not in the correct state => Byte 0+1 = Slave Addres from last error, Info Byte 2 + 3 = State of last error Slave
+							pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.SlaveStateError,dinAlarmInfo,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);																	
+						END_IF	
+						// Check Link Error
+						IF uinErrorSlaveLinkNbr > 0 THEN 		// Minimal one false Slave
+							// Get Error Information
+							dinAlarmInfo := UDINT_TO_DINT(SHL(UINT_TO_UDINT(uinErrorSlaveLinkInfo),16) OR uinErrorSlaveLink);
+							strAlarminfo := CONCAT(' Slave Number:  ' , UINT_TO_STRING(uinErrorSlaveLink));
+							strAlarminfo := CONCAT(strAlarminfo, ' Link Error: ');
+							strAlarminfo := CONCAT(strAlarminfo, UDINT_TO_STRING(uinErrorSlaveLinkInfo));
+							SIf.Alm[E_ALM_ECD.SlaveLinkError].strText := CONCAT(arrAlmtexts[E_ALM_ECD.SlaveLinkError], strAlarminfo);
+							// SIf.Alm[E_ALM_ECD.SlaveLinkError].strText :=  'Slave Link State Error'; // Minimum one Slave has a LinkState Erros => Byte 0+1 = Slave Addres from last error Info Byte 2 + 3 = Link State of last error Slave
+							pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.SlaveLinkError,dinAlarmInfo,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);																	
+						END_IF	
+						// Check CRC Errors
+						SIf.Cur.udiCRCSumm := 0;
+						FOR uinLoop := 0 TO (SIf.Cur.uinNumOfSlaves-1) DO
+							// Add all CRC Errors for informations   
+							SIf.Cur.udiCRCSumm := SIf.Cur.udiCRCSumm + SIf.Cur.stSlaveData[uinLoop].stCRCError.portA + SIf.Cur.stSlaveData[uinLoop].stCRCError.portB + SIf.Cur.stSlaveData[uinLoop].stCRCError.portC + SIf.Cur.stSlaveData[uinLoop].stCRCError.portD;
+						END_FOR
+						// Error from a Slave with too many CRC Errors
+						IF uinErrorSlaveNbrCRC > 0 THEN
+							// Get Error Information
+							dinAlarmInfo := UDINT_TO_DINT(SHL(UINT_TO_UDINT(uinErrorSlaveInfoCRC),16) OR uinErrorSlaveAdrCRC);
+							strAlarminfo := CONCAT(' Slave Number: ' , UINT_TO_STRING(uinErrorSlaveAdrCRC));
+							strAlarminfo := CONCAT(strAlarminfo, ' CRC Errors: ');
+							strAlarminfo := CONCAT(strAlarminfo, UDINT_TO_STRING(uinErrorSlaveInfoCRC));
+							SIf.Alm[E_ALM_ECD.SlaveCRCError].strText := CONCAT(arrAlmtexts[E_ALM_ECD.SlaveCRCError], strAlarminfo);
+							// SIf.Alm[E_ALM_ECD.SlaveCRCError].strText :=  'Slave CRC Error';	// Minimum one Slave has to many CRC Erros => Byte 0+1 = Slave Addres from last error, Info Byte 2 + 3 = Number of CRC Errors from last Slave with error
+							pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.SlaveCRCError,dinAlarmInfo,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);																								
+							SIf.Alm[E_ALM_ECD.SlaveCRCError].bol := TRUE;
+						END_IF
+						me.SubStateMachine.intStateNext := cSTA_SUB_WAIT_NEXT_POLL;
+						
+					END_IF
+		
+				//************************************************************************
+				// Wait for next polling - Connection list completely processed 
+				//************************************************************************	
+				cSTA_SUB_WAIT_NEXT_POLL:
+				
+					// Wait polling time expired 	
+					IF (me.SubStateMachine.udiTimeInState_ms >= SIf.Par.udiPollingInterval_ms) THEN				
+						//Start again at first connection in list
+						me.SubStateMachine.intStateNext := cSTA_SUB_INITIALIZE;
+					ELSIF bolResetCRCError = TRUE THEN
+						me.SubStateMachine.intStateNext := cSTA_SUB_CheckCRCReset;						
+					END_IF
+					
+				// **************************************************************************
+				// Call FUB fbEcMasterFrameStatisticClearCRC to reset all CRC Errors of the Slaves
+				// **************************************************************************
+				cSTA_SUB_CheckCRCReset:
+				
+					// Prepare Function Block
+					fbEcMasterFrameStatisticClearCRC(sNetId:= SIf.Cfg.strNetID, 
+										bExecute:= FALSE, 
+										tTimeout:= UDINT_TO_TIME(SIf.Par.udiTOCheckAll_ms));
+				
+					// Start Function
+					fbEcMasterFrameStatisticClearCRC(bExecute:= TRUE, 
+										tTimeout:= UDINT_TO_TIME(SIf.Par.udiTOCheckAll_ms));
+				
+					me.SubStateMachine.intStateNext := cSTA_SUB_CheckCRCResetDone;		
+							
+				// **************************************************************************
+				// Wait until Reset all CRC Error is Done
+				// **************************************************************************
+				cSTA_SUB_CheckCRCResetDone:
+				
+					fbEcMasterFrameStatisticClearCRC(bExecute:= FALSE);
+					// Wait until done
+					IF NOT (fbEcMasterFrameStatisticClearCRC.bBusy) THEN
+						IF NOT (fbEcMasterFrameStatisticClearCRC.bError) THEN
+							me.SubStateMachine.intStateNext := cSTA_SUB_WAIT_NEXT_POLL;
+							bolResetCRCError := FALSE;
+						// Error
+						ELSE
+							// SIf.Alm[E_ALM_ECD.ADS_ComError].strText := 'ADS Communication Error to EtherCAT Master'; // ADS Communication Error to EtherCAT Master => Info = ADS_Errorcode
+							pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.ADS_ComError,UDINT_TO_DINT(fbEcGetSlaveCrcError.nErrId),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+							me.SubStateMachine.intStateNext := cSTA_SUB_ERROR;		
+						END_IF
+					END_IF
+
+				//************************************************************************
+				// ERROR			
+				//************************************************************************	
+				cSTA_SUB_ERROR:
+					// SIf.Alm[E_ALM_ECD.ADS_ComError].strText := 'ADS Communication Error to EtherCAT Master'; // ADS Communication Error to EtherCAT Master => Info = ADS_Errorcode
+					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.ADS_ComError,UDINT_TO_DINT(udiFBerror),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+					me.StateMachine.intStateNext := BASE_PLC.cSTA_ERROR;	
+			
+				
+			END_CASE	
+			
+		
+		// State Change Condition
+		IF ((me.SubStateMachine.intState=cSTA_SUB_ERROR) OR ((me.SubStateMachine.udiTimeInState_ms >= SIf.Par.udiTOPowerOn_ms) AND (me.SubStateMachine.intState <> cSTA_SUB_WAIT_NEXT_POLL))) THEN
+			// In case if TO
+			IF (me.SubStateMachine.udiTimeInState_ms >= SIf.Par.udiTOPowerOn_ms) THEN
+				// SIf.Alm[E_ALM_ECD.TimeOutFunction].strText := 'Timeout EtherCAT function'; // A Function is not finished after the defined Timeout
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.TimeOutFunction,UDINT_TO_DINT(me.SubStateMachine.udiTimeInState_ms),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			END_IF
+			me.StateMachine.intStateNext := cSTA_ERROR;				
+		END_IF
+			
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_PONBusy" Id="{2cd4b2e3-2ca2-409e-beff-ad01f0513a4c}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_PONBusy : BOOL
+VAR
+	intI: INT;
+	/// Internal Variable for Found Address
+	bolAlaveOK: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		udiNumOfStateErrors:= 0;
+		udiNumOfCRCErrors:= 0;
+		uinLoop:= 0;
+		uinSlaveNbr:= 0;
+
+		// Initialize sub state machine
+		me.SubStateMachine.intState:= cSTA_SUB_INITIALIZE; 
+		me.SubStateMachine.intStateNext := cSTA_SUB_INITIALIZE;
+		
+		// Get stored alarmtextes into local Texts
+		FOR intI := 1 TO (E_ALM_ECD.MAX_E_ALM - 1) DO
+			arrAlmtexts[intI] := SIf.Alm[intI].strText;
+		END_FOR
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+			// Simulation
+			IF (CIf.SwCfg.bolSimulation) THEN
+				me.SubStateMachine.intStateNext := cSTA_SUB_DONE;
+			END_IF
+		
+			// Sub statemachine to set necessary AMS routes and determine the handle ID of all connections in list	
+			CASE me.SubStateMachine.intState OF	
+			
+				cSTA_SUB_INITIALIZE: 
+					me.SubStateMachine.intStateNext := cSTA_SUB_CheckMaster;		
+
+				
+				// **************************************************************************
+				// Call FUB fbEcGetMasterState to get The State of the EtherCAT Master Device
+				// **************************************************************************
+				cSTA_SUB_CheckMaster:
+				
+					// Prepare Function Block
+					fbEcGetMasterState(sNetId:= SIf.Cfg.strNetID, 
+										bExecute:= FALSE, 
+										tTimeout:= UDINT_TO_TIME(SIf.Par.udiTOCheckAll_ms)); 
+				
+					// Start Function
+					fbEcGetMasterState(bExecute:= TRUE, 
+										tTimeout:= UDINT_TO_TIME(SIf.Par.udiTOCheckAll_ms)); 
+				
+					me.SubStateMachine.intStateNext := cSTA_SUB_CheckMasterDone;		
+							
+				// **************************************************************************
+				// Wait until GetAllSlaveAdress is Done
+				// **************************************************************************
+				cSTA_SUB_CheckMasterDone:
+				
+					fbEcGetMasterState(bExecute:= FALSE);
+					// Wait until done
+					IF NOT (fbEcGetMasterState.bBusy) THEN
+						IF NOT (fbEcGetMasterState.bError) THEN
+							SIf.Cur.worMasterState := fbEcGetMasterState.state;
+							// In Operational State check slaves
+							IF SIf.Cur.worMasterState = Tc2_EtherCAT.EC_DEVICE_STATE_OP THEN
+								me.SubStateMachine.intStateNext := cSTA_SUB_GetAllSlaveAdress;
+							// In Pre-Operational check again
+							ELSIF ((SIf.Cur.worMasterState = Tc2_EtherCAT.EC_DEVICE_STATE_PREOP) OR (SIf.Cur.worMasterState = Tc2_EtherCAT.EC_DEVICE_STATE_PREOP)) THEN
+								me.SubStateMachine.intStateNext := cSTA_SUB_CheckMaster;
+							// ELSE ERROR
+							ELSE
+								// SIf.Alm[E_ALM_ECD.MasterStateError].strText := 'Master State Error'; // Master not in the correct state => Info = Masterstate
+								pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.MasterStateError,WORD_TO_DINT(SIf.Cur.worMasterState),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);								
+							END_IF
+						// Error
+						ELSE
+							// SIf.Alm[E_ALM_ECD.ADS_ComError].strText := 'ADS Communication Error to EtherCAT Master'; // ADS Communication Error to EtherCAT Master => Info = ADS_Errorcode
+							pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.ADS_ComError,UDINT_TO_DINT(fbEcGetMasterState.nErrId),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+							me.SubStateMachine.intStateNext := cSTA_SUB_ERROR;		
+						END_IF
+					END_IF
+							
+				
+				// **************************************************************************
+				// Call FUB fbEcGetAllSlaveAddr to get all connected slaves. 
+				// **************************************************************************
+				cSTA_SUB_GetAllSlaveAdress:
+				
+					// Prepare Function Block
+					fbEcGetAllSlaveAddr(sNetId:= SIf.Cfg.strNetID, 
+										pAddrBuf:= ADR(arrSlaveAdress), 
+										cbBufLen:= SIZEOF(arrSlaveAdress), 
+										bExecute:= FALSE, 
+										tTimeout:= UDINT_TO_TIME(SIf.Par.udiTOCheckAll_ms));
+				
+					// Start Function
+					fbEcGetAllSlaveAddr(bExecute:= TRUE, 
+										tTimeout:= UDINT_TO_TIME(SIf.Par.udiTOCheckAll_ms));
+				
+					me.SubStateMachine.intStateNext := cSTA_SUB_GetAllSlaveAdressDone;		
+							
+				// **************************************************************************
+				// Wait until GetAllSlaveAdress is Done
+				// **************************************************************************
+				cSTA_SUB_GetAllSlaveAdressDone:
+				
+					fbEcGetAllSlaveAddr(bExecute:= FALSE);
+					// Wait until done
+					IF NOT (fbEcGetAllSlaveAddr.bBusy) THEN
+						IF NOT (fbEcGetAllSlaveAddr.bError) THEN
+							// Prepare data
+							SIf.Cur.uinNumOfSlaves := fbEcGetAllSlaveAddr.nSlaves;
+							IF SIf.Cur.uinNumOfSlaves > 0 THEN
+								FOR uinLoop := 0 TO (SIf.Cur.uinNumOfSlaves-1) DO
+									SIf.Cur.stSlaveData[uinLoop].uinAddress := arrSlaveAdress[uinLoop];
+								END_FOR
+							ELSE
+								// SIf.Alm[E_ALM_ECD.NoSlaveFound].strText :=  'No Slave in Network'; 		// No EtherCAT Slave found in the network
+								pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.NoSlaveFound,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);								
+							END_IF
+							me.SubStateMachine.intStateNext := cSTA_SUB_GetConfSlaves;
+						// Error
+						ELSE
+							// SIf.Alm[E_ALM_ECD.ADS_ComError].strText := 'ADS Communication Error to EtherCAT Master'; // ADS Communication Error to EtherCAT Master => Info = ADS_Errorcode
+							pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.ADS_ComError,UDINT_TO_DINT(fbEcGetAllSlaveAddr.nErrId),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+							me.SubStateMachine.intStateNext := cSTA_SUB_ERROR;		
+						END_IF
+					END_IF
+			
+				// **************************************************************************
+				// Call FUB fbEcGetConfSlaves to get all configurated slaves. 
+				// **************************************************************************
+				cSTA_SUB_GetConfSlaves:
+				
+					// Prepare Function Block
+					fbEcGetConfSlaves(sNetId:= SIf.Cfg.strNetID, 
+										pArrEcConfSlaveInfo:= ADR(arrSlaveConf), 
+										cbBufLen:= SIZEOF(arrSlaveConf), 
+										bExecute:= FALSE, 
+										tTimeout:= UDINT_TO_TIME(SIf.Par.udiTOCheckAll_ms));
+				
+					// Start Function
+					fbEcGetConfSlaves(bExecute:= TRUE, 
+										tTimeout:= UDINT_TO_TIME(SIf.Par.udiTOCheckAll_ms));
+				
+					me.SubStateMachine.intStateNext := cSTA_SUB_GetConfSlavesDone;		
+							
+				// **************************************************************************
+				// Wait until fbEcGetConfSlaves is Done
+				// **************************************************************************
+				cSTA_SUB_GetConfSlavesDone:
+				
+					fbEcGetConfSlaves(bExecute:= FALSE);
+					// Wait until done
+					IF NOT (fbEcGetConfSlaves.bBusy) THEN
+						IF NOT (fbEcGetConfSlaves.bError) THEN
+							// Prepare data
+							uinConfigSlaveNbr := fbEcGetConfSlaves.nSlaves;
+							IF uinConfigSlaveNbr > 0 THEN
+								uinErrorSlaveAdr := 0;
+								uinErrorSlaveNbr := 0;
+								// Search if configurated Address if found in the hardware found Slaves
+								// Loop throug the Configrated Arreay...
+								FOR intI := 0 TO (UINT_TO_INT(uinConfigSlaveNbr-1)) DO	
+									bolAlaveOK := FALSE;				
+									//...and search in the found addresses	
+									FOR uinLoop := 0 TO (SIf.Cur.uinNumOfSlaves-1) DO
+										IF (WORD_TO_UINT(arrSlaveConf[intI].nAddr) = SIf.Cur.stSlaveData[uinLoop].uinAddress) THEN // Adress of Configurated and found Slave is the same
+											// Copy configuration Data in the CUR Structure
+											SIf.Cur.stSlaveData[uinLoop].stConfigData := arrSlaveConf[intI];
+											// This slave is done
+											bolAlaveOK := TRUE;
+											EXIT;
+										END_IF
+									END_FOR
+									// If configurated Address is not found in the redaed Hardware addresses, get Address and increment number
+									IF bolAlaveOK = FALSE THEN
+										IF uinErrorSlaveAdr = 0 THEN // only write the first module in Error as information
+											uinErrorSlaveAdr := WORD_TO_UINT(arrSlaveConf[intI].nAddr);
+										END_IF
+										uinErrorSlaveNbr := uinErrorSlaveNbr + 1;
+									END_IF
+								END_FOR
+								// Error handling if minimal one configurated slave not found
+								IF uinErrorSlaveNbr > 0 THEN 		// Minimal one false Slave
+									// Get Error Information
+									dinAlarmInfo := UDINT_TO_DINT(SHL(UINT_TO_UDINT(uinErrorSlaveNbr),16) OR uinErrorSlaveAdr);
+									strAlarminfo := CONCAT( 'Slave Number: ' , UINT_TO_STRING(uinErrorSlaveAdr));
+									strAlarminfo := CONCAT(strAlarminfo, ' of totally missings: ');
+									strAlarminfo := CONCAT(strAlarminfo, UDINT_TO_STRING(uinErrorSlaveNbr));
+									
+									SIf.Alm[E_ALM_ECD.NotAllSlaveConnected].strText := CONCAT(arrAlmtexts[E_ALM_ECD.NotAllSlaveConnected], strAlarminfo);
+									
+									// SIf.Alm[E_ALM_ECD.NotAllSlaveConnected].strText := 'Configuration and actual differences';// // Configured and reached Slaves are not the same => Info Byte 0+1 = Slave Addres from last error Info Byte 2+3 = Numbers of error Slaves
+									pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.NotAllSlaveConnected,dinAlarmInfo,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);																	
+								END_IF
+								// If more slaves hardware found as configurated also an error
+								IF SIf.Cur.uinNumOfSlaves > uinConfigSlaveNbr THEN
+									// Search if hardware Address which is not configurated
+									// Loop throug the Hardware Arreay...
+									FOR uinLoop := 0 TO (SIf.Cur.uinNumOfSlaves-1) DO	
+										bolAlaveOK := FALSE;				
+										//...and search in the configuration
+										FOR intI := 0 TO (UINT_TO_INT(uinConfigSlaveNbr)-1) DO										
+											IF (WORD_TO_UINT(arrSlaveConf[intI].nAddr) = SIf.Cur.stSlaveData[uinLoop].uinAddress) THEN // Adress of Configurated and found Slave is the same
+												// This slave is done
+												bolAlaveOK := TRUE;
+												EXIT;
+											END_IF
+										END_FOR
+										// If configurated Address is not found, get Address and increment number
+										IF bolAlaveOK = FALSE THEN
+											IF uinErrorSlaveAdr = 0 THEN // only write the first module in Error as information
+												uinErrorSlaveAdr := WORD_TO_UINT(arrSlaveConf[intI].nAddr);
+											END_IF
+											uinErrorSlaveNbr := uinErrorSlaveNbr + 1;
+										END_IF
+									END_FOR
+										// Error handling if minimal one configurated slave not found
+										IF uinErrorSlaveNbr > 0 THEN 		// Minimal one false Slave
+											// Get Error Information
+											strAlarminfo := CONCAT(' Slave Number: ' , UINT_TO_STRING(uinErrorSlaveAdr));
+											strAlarminfo := CONCAT(strAlarminfo, ' of totally missings: ');
+											strAlarminfo := CONCAT(strAlarminfo, UDINT_TO_STRING(uinErrorSlaveNbr));
+											
+											SIf.Alm[E_ALM_ECD.ToManySlaves].strText := CONCAT(arrAlmtexts[E_ALM_ECD.ToManySlaves], strAlarminfo);
+											dinAlarmInfo := UDINT_TO_DINT(SHL(UINT_TO_UDINT(uinErrorSlaveNbr),16) OR uinErrorSlaveAdr);
+											// SIf.Alm[E_ALM_ECD.ToManySlaves].strText := 'To many slaves';// More slaves at the master as the structure could handle => Info Byte 0+1 = Slave Addres from last error Info Byte 2+3 = Numbers of error Slaves
+											pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.ToManySlaves,dinAlarmInfo,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);																	
+										END_IF										
+								END_IF
+							// No Slaves in Cofiguration Found	
+							ELSE
+								// SIf.Alm[E_ALM_ECD.NoSlaveFound].strText :=  'No Slave in Network'; 		// No EtherCAT Slave found in the network
+								pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.NoSlaveFound,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);								
+							END_IF
+							me.SubStateMachine.intStateNext := cSTA_SUB_DONE;
+						// Error
+						ELSE
+							// SIf.Alm[E_ALM_ECD.ADS_ComError].strText := 'ADS Communication Error to EtherCAT Master'; // ADS Communication Error to EtherCAT Master => Info = ADS_Errorcode
+							pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.ADS_ComError,UDINT_TO_DINT(fbEcGetConfSlaves.nErrorId),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+							me.SubStateMachine.intStateNext := cSTA_SUB_ERROR;		
+						END_IF
+					END_IF
+			
+
+				
+				// **************************************************************************
+				// All necessary AMS routes set and connection handles are determined 
+				// **************************************************************************
+				cSTA_SUB_DONE:
+				
+				// **************************************************************************
+				// Error
+				// **************************************************************************
+				cSTA_SUB_ERROR:
+				
+			END_CASE	
+			
+		
+		// State Change Condition
+		IF ((me.SubStateMachine.intState=cSTA_SUB_ERROR) OR (me.StateMachine.udiTimeInState_ms >= SIf.Par.udiTOPowerOn_ms)) THEN
+			// In case if TO
+			IF (me.StateMachine.udiTimeInState_ms >= SIf.Par.udiTOPowerOn_ms) THEN
+				// SIf.Alm[E_ALM_ECD.TimeOutFunction].strText := 'Timeout EtherCAT function'; // A Function is not finished after the defined Timeout
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.TimeOutFunction,UDINT_TO_DINT(me.StateMachine.udiTimeInState_ms),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			END_IF
+			me.StateMachine.intStateNext := cSTA_ERROR;				
+		ELSIF (me.SubStateMachine.intState=cSTA_SUB_DONE) THEN
+			me.StateMachine.intStateNext := cSTA_PON;
+		END_IF
+			
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_ERRORQuit" Id="{333c5c46-87eb-4a59-90e3-182833d9400c}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_ERRORQuit : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		// Prepare Function Block
+		bolResetCRCError := TRUE;
+		fbEcMasterFrameStatisticClearCRC(sNetId:= SIf.Cfg.strNetID, 
+										bExecute:= FALSE, 
+										tTimeout:= UDINT_TO_TIME(SIf.Par.udiTOCheckAll_ms));
+				
+		// Start Function
+		fbEcMasterFrameStatisticClearCRC(bExecute:= TRUE, 
+										tTimeout:= UDINT_TO_TIME(SIf.Par.udiTOCheckAll_ms));
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		// evtl. wait time if reset of device is necessary and then decide to go to states or ERROR state
+		IF (CIf.Job.bolAlmReset = TRUE) THEN
+			CIf.Job.eMe_ActivAlmClass := E_AlmClass.NONE; // reset feedback channel for parent
+			CIf.Job.bolAlmReset := FALSE;
+		END_IF
+		// **************************************************************************
+		// Wait until Reset all CRC Error is Done
+		// **************************************************************************
+			fbEcMasterFrameStatisticClearCRC(bExecute:= FALSE);
+			// Wait until done
+			IF NOT (fbEcMasterFrameStatisticClearCRC.bBusy) THEN
+				IF NOT (fbEcMasterFrameStatisticClearCRC.bError) THEN
+					bolResetCRCError := FALSE;
+				// Error
+				ELSE
+					// SIf.Alm[E_ALM_ECD.ADS_ComError].strText := 'ADS Communication Error to EtherCAT Master'; // ADS Communication Error to EtherCAT Master => Info = ADS_Errorcode
+					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_ECD.ADS_ComError,UDINT_TO_DINT(fbEcGetSlaveCrcError.nErrId),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+					me.StateMachine.intStateNext := cSTA_SUB_ERROR;		
+				END_IF
+			END_IF
+		
+		// State Change Condition
+		IF ((CIf.Job.bolAlmReset = FALSE) AND (bolResetCRCError = FALSE)) THEN
+			IF (me.StateMachine.intStateHistory<=cSTA_PON) THEN
+				me.StateMachine.intStateNext := cSTA_PONBusy;
+			ELSIF ((SIf.Cfg.bolRunAlways = TRUE) OR (me.intCmd=BASE_PLC.cCMD_RUN)) THEN
+				me.StateMachine.intStateNext := cSTA_RUNBusy;
+			ELSE
+				me.StateMachine.intStateNext := cSTA_OFFBusy;
+			END_IF
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Always" Id="{3b27a24d-3662-4f62-b0ac-ba0540163417}">
+      <Declaration><![CDATA[METHOD PROTECTED Always : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.Always();
+
+// ----------------------------------------------------------------------------------
+// cyclic actions outside of statemachine
+IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
+	;	
+END_IF
+
+
+// ----------------------------------------------------------------------------------
+// Always change actions in Base Library
+// ----------------------------------------------------------------------------------
+// overrule error always from base -> no EOFF State!! in EOFF go to OFF
+IF (me.StateMachine.intStateNext = cSTA_EOFFBusy) THEN
+	IF (me.StateMachine.intState=cSTA_OFF) THEN
+		me.StateMachine.intStateNext := cSTA_OFF;
+	ELSE // stay in OFF
+		me.StateMachine.intStateNext := cSTA_OFFBusy;
+	END_IF
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="FB_init" Id="{3ff121ce-11c0-4fa8-addc-65cf351fcf1d}">
+      <Declaration><![CDATA[METHOD FB_init : BOOL
+VAR_INPUT
+	///if TRUE, the retain variables are initialized (warm start / cold start)
+	bInitRetains: BOOL;
+	///if TRUE, the instance afterwards gets moved into the copy code (online change)
+	bInCopyCode: BOOL;
+END_VAR
+VAR
+	udiTaskCnt: UDINT;
+	ii: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
+// to manually change in new FUB implementation!!!
+// define valid commands for this controller
+FOR ii:= 0 TO (SIZEOF(CIf.Job.aCmdList)/SIZEOF(CIf.Job.aCmdList[0])-1) BY 1 DO
+	IF (CIf.Job.aCmdList[ii].intCmd=cCMD_INITIALIZED) THEN
+		// found first empty array element
+		EXIT;
+	END_IF
+END_FOR
+CIf.Job.aCmdList[ii].intCmd := cCMD_RUN;
+CIf.Job.aCmdList[ii].strName := 'Run'; 
+CIf.Job.aCmdList[ii].bolAvailable := TRUE;
+ii := ii +1;
+
+// set name of class/typ
+CIf.Info.strType := 'FB_ECD'; 
+
+// set alarm class
+SIf.Alm[E_ALM_ECD.ADS_ComError].eAlmClass := E_AlmClass.INFO;
+SIf.Alm[E_ALM_ECD.ADS_ComError].strText := 'ADS Communication Error to EtherCAT Master'; // ADS Communication Error to EtherCAT Master => Info = ADS_Errorcode
+SIf.Alm[E_ALM_ECD.TimeOutFunction].eAlmClass := E_AlmClass.INFO;
+SIf.Alm[E_ALM_ECD.TimeOutFunction].strText := 'Timeout EtherCAT function'; // A Function is not finished after the defined Timeout
+SIf.Alm[E_ALM_ECD.NotAllSlaveConnected].eAlmClass := E_AlmClass.OFF;
+SIf.Alm[E_ALM_ECD.NotAllSlaveConnected].strText := 'Not all configurated Slaves Found ';// Configured and reached Slaves are not the same => Info Byte 0+1 = Slave Addres from last error Info Byte 2+3 = Numbers of error Slaves
+SIf.Alm[E_ALM_ECD.ToManySlaves].eAlmClass := E_AlmClass.INFO;
+SIf.Alm[E_ALM_ECD.ToManySlaves].strText := 'To many slaves';// More slaves at the master as the structure could handle => Info Byte 0+1 = Slave Addres from last error Info Byte 2+3 = Numbers of error Slaves
+SIf.Alm[E_ALM_ECD.MasterStateError].eAlmClass := E_AlmClass.OFF;
+SIf.Alm[E_ALM_ECD.MasterStateError].strText := 'Master State Error'; // Master not in the correct state => Info = Masterstate
+SIf.Alm[E_ALM_ECD.SlaveStateError].eAlmClass := E_AlmClass.INFO;
+SIf.Alm[E_ALM_ECD.SlaveStateError].strText := 'Slave State Error'; // Minimum one Slave not in the correct state => Byte 0+1 = Slave Addres from first error, Info Byte 2 + 3 = State of first error Slave
+SIf.Alm[E_ALM_ECD.SlaveCRCError].eAlmClass := E_AlmClass.INFO;
+SIf.Alm[E_ALM_ECD.SlaveCRCError].strText :=  'Slave CRC Error';	// Minimum one Slave has to many CRC Erros => Byte 0+1 = Slave Addres from first error or the one with the most CRC errors, Info Byte 2 + 3 = Number of CRC Errors from first Slave with error
+SIf.Alm[E_ALM_ECD.SlaveLinkError].eAlmClass := E_AlmClass.INFO;
+SIf.Alm[E_ALM_ECD.SlaveLinkError].strText :=  'Slave Link State Error'; // Minimum one Slave has a LinkState Erros => Byte 0+1 = Slave Addres from first error Info Byte 2 + 3 = Link State of first error Slave
+SIf.Alm[E_ALM_ECD.NoSlaveFound].eAlmClass := E_AlmClass.INFO;
+SIf.Alm[E_ALM_ECD.NoSlaveFound].strText :=  'No Slave in Network'; 		// No EtherCAT Slave found in the network
+SIf.Alm[E_ALM_ECD.StateChanges].eAlmClass := E_AlmClass.INFO;
+SIf.Alm[E_ALM_ECD.StateChanges].strText :=  'To many Abnormal State Changes'; 		// No EtherCAT Slave found in the network
+
+//*******************************************************************************
+// initial values
+//*******************************************************************************
+
+// software configuration
+CIf.SwCfg.bolExist := TRUE;
+CIf.SwCfg.bolSimulation := FALSE;
+
+// parameter
+SIf.Par.udiTOCheckOne_ms:= 1500;
+SIf.Par.udiTOCheckAll_ms:= 5000;
+SIf.Par.udiTOPowerOn_ms:= 10000;
+SIf.Par.udiPollingInterval_ms:= 10000;
+SIf.Par.udiMaxCRC:= 50;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_RUNBusy" Id="{6598c86e-bc38-4e9a-9e3b-f22dccb24314}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_RUNBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		;
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		IF (TRUE) THEN
+			me.StateMachine.intStateNext := BASE_PLC.cSTA_RUN;
+		END_IF
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="StateMachine" Id="{724f052e-faae-482c-af16-153019b383d6}">
+      <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.StateMachine();
+
+// main statemachine of base controller
+CASE me.StateMachine.intState OF
+	cSTA_RUNBusy: 
+        THIS^.sta_RUNBusy();
+    cSTA_RUN: 
+        THIS^.sta_RUN();				
+END_CASE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_ERROR" Id="{876f0e49-e9c1-49e4-b503-d87cb82aa3e0}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_ERROR : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		// Initialize sub state machine
+		me.SubStateMachine.intState:= cSTA_SUB_INITIALIZE; 
+		me.SubStateMachine.intStateNext := cSTA_SUB_INITIALIZE;
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		// State Change Condition
+		IF (CIf.Job.bolAlmReset = TRUE) THEN
+			me.StateMachine.intStateNext := cSTA_ERRORQuit;
+		END_IF
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getCtrlSIf" Id="{9de49631-3c4b-425f-8cc9-cd4acf422a4e}">
+      <Declaration><![CDATA[METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_ECD
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_PON" Id="{c0d150d4-d1ae-426e-9be5-d64068fb4cb7}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;	
+		// State Change Condition
+		IF ((me.intCmd<>cCMD_PON) AND (me.intCmd<>cCMD_DONE)) OR (SIf.Cfg.bolRunAlways = TRUE) THEN
+			me.StateMachine.intStateNext := BASE_PLC.cSTA_OFFBusy;
+		END_IF
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getCmdState" Id="{feee4ac9-1fc5-4241-8928-60636091e9ca}">
+      <Declaration><![CDATA[METHOD PROTECTED getCmdState : STRING
+VAR_INPUT
+	intCmdState: INT;
+	bolState: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
+IF (getCmdState='') THEN // global not defined get local
+	// get string cmd/state string information in runtime
+	IF (bolState=FALSE) THEN
+		(*
+		// cmd's
+		CASE intCmdState OF
+			;
+		END_CASE
+		*)
+	ELSE
+		// states
+		CASE intCmdState OF
+			// SUB States
+			cSTA_SUB_INITIALIZE:
+				getCmdState := 'cSTA_SUB_INITIALIZE';
+			cSTA_SUB_GetAllSlaveAdress:
+				getCmdState := 'cSTA_SUB_GetAllSlaveAdress';
+			cSTA_SUB_GetAllSlaveAdressDone:
+				getCmdState := 'cSTA_SUB_GetAllSlaveAdressDone';
+			cSTA_SUB_GetConfSlaves:
+				getCmdState := 'cSTA_SUB_GetConfSlaves';
+			cSTA_SUB_GetConfSlavesDone:
+				getCmdState := 'cSTA_SUB_GetConfSlavesDone';			
+			cSTA_SUB_CheckMaster:
+				getCmdState := 'cSTA_SUB_CheckMaster';	
+			cSTA_SUB_CheckMasterDone:
+				getCmdState := 'cSTA_SUB_CheckMasterDone';	
+			cSTA_SUB_CheckSlaveChanges:
+				getCmdState := 'cSTA_SUB_CheckSlaveChanges';	
+			cSTA_SUB_CheckSlaveChangesDone:
+				getCmdState := 'cSTA_SUB_CheckSlaveChangesDone';				
+			cSTA_SUB_SLAVE_START:
+				getCmdState := 'cSTA_SUB_SLAVE_START';				
+			cSTA_SUB_CheckSlaveState:
+				getCmdState := 'cSTA_SUB_CheckSlaveState';	
+			cSTA_SUB_CheckSlaveStateDone:
+				getCmdState := 'cSTA_SUB_CheckSlaveStateDone';	
+			cSTA_SUB_CheckCRC:
+				getCmdState := 'cSTA_SUB_CheckCRC';	
+			cSTA_SUB_CheckCRCDone:
+				getCmdState := 'cSTA_SUB_CheckCRCDone';	
+			cSTA_SUB_CheckCRCReset:
+				getCmdState := 'cSTA_SUB_CheckCRCReset';	
+			cSTA_SUB_CheckCRCResetDone:
+				getCmdState := 'cSTA_SUB_CheckCRCResetDone';	
+			cSTA_SUB_Inc:
+				getCmdState := 'cSTA_SUB_Inc';	
+		
+			cSTA_SUB_ERROR:
+				getCmdState := 'cSTA_SUB_ERROR';
+			cSTA_SUB_DONE:
+				getCmdState := 'cSTA_SUB_DONE';
+			cSTA_SUB_WAIT_NEXT_POLL:
+				getCmdState := 'cSTA_SUB_WAIT_NEXT_POLL';
+				
+
+		END_CASE
+	END_IF
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

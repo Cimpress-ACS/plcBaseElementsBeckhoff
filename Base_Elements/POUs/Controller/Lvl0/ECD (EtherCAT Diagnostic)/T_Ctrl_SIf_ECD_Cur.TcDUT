@@ -1,0 +1,20 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_Ctrl_SIf_ECD_Cur" Id="{100f61e7-53bf-46d9-97f9-d0372380cc5d}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_ECD_Cur :
+STRUCT
+	/// Shows the number of EtherCAT Slaves
+	uinNumOfSlaves: UINT;
+	/// Information of every slave
+	stSlaveData: ARRAY[0..ECD_Const.cuinMaxSlaves] OF T_ECD_SlaveData;
+	/// State Of Master
+	worMasterState: WORD;
+	/// All CRC Errors
+	udiCRCSumm: UDINT;
+	/// Counter of Slave Errors State
+	uinNumOfSlaveErrors: UINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

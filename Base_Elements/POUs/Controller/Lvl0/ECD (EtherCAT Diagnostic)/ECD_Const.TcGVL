@@ -1,0 +1,8 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <GVL Name="ECD_Const" Id="{9b105619-e1da-40d5-b99f-e7b61135db23}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	cuinMaxSlaves: UINT := 256;
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

@@ -6,7 +6,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{62bbd5fb-17f2-4e98-9143-d240a873429a}</ProjectGuid>
     <Name>Base_Elements</Name>
-    <ProgramVersion>3.1.0.5</ProgramVersion>
+    <ProgramVersion>3.1.0.8</ProgramVersion>
     <Application>{84ae8d91-d8f9-4b8b-8d1b-864ed6cb383d}</Application>
     <TypeSystem>{84b8bf35-c3e3-432c-b94a-9f4aaa4025f6}</TypeSystem>
     <Implicit_Task_Info>{afef96a8-cee5-4db1-9b26-7b70ef99be80}</Implicit_Task_Info>
@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.1.7</ProjectVersion>
+    <ProjectVersion>0.0.1.8</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.1.7 - More RFW Error information
+    <Description>0.0.1.8 - Integrate ECD (EtherCAT Diagnostic)
+0.0.1.7 - More RFW Error information
 0.0.1.5 - Added new controller FB_VLV
 0.0.1.4 - Fix for the BCD, BCC controller to support also messages without diagnostics
 0.0.1.2 - Simulation UMC; FB_CtrlModule added
@@ -290,6 +291,30 @@
     <Compile Include="POUs\Controller\Lvl0\DRV %28Drive%29\T_Ctrl_SIf_DRV_Par.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\Controller\Lvl0\ECD %28EtherCAT Diagnostic%29\ECD_Const.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\ECD %28EtherCAT Diagnostic%29\E_ALM_ECD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\ECD %28EtherCAT Diagnostic%29\FB_ECD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\ECD %28EtherCAT Diagnostic%29\T_Ctrl_SIf_ECD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\ECD %28EtherCAT Diagnostic%29\T_Ctrl_SIf_ECD_Cfg.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\ECD %28EtherCAT Diagnostic%29\T_Ctrl_SIf_ECD_Cur.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\ECD %28EtherCAT Diagnostic%29\T_Ctrl_SIf_ECD_Par.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\ECD %28EtherCAT Diagnostic%29\T_ECD_SlaveData.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29\E_Typ_RFW.TcDUT">
       <SubType>Code</SubType>
     </Compile>
@@ -494,6 +519,7 @@
     <Folder Include="POUs\Controller\Lvl0\BCC %28Barcode controller%29\" />
     <Folder Include="POUs\Controller\Lvl0\CYL %28Cylinder%29" />
     <Folder Include="POUs\Controller\Lvl0\DRV %28Drive%29\" />
+    <Folder Include="POUs\Controller\Lvl0\ECD %28EtherCAT Diagnostic%29" />
     <Folder Include="POUs\Controller\Lvl0\VLV %28Valve controller%29\" />
     <Folder Include="POUs\Controller\Lvl0\VPC [Vacuum Pump Controller]" />
     <Folder Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]" />

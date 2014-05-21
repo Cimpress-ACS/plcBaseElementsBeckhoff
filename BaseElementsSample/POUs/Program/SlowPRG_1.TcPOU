@@ -45,6 +45,7 @@ IF ((NOT bolPlcStartupDone) AND (g_uinStartProzess>=(uinTaskNbr-1))) THEN
 	g_p_fbAlm_Man := ADR(fbAlm_Man);
 	bolPlcStartupDone := TRUE;	
 	g_uinStartProzess := g_uinStartProzess + 1; // For StartUp order
+	
 END_IF
 // -----------------------------------------------------------------------------------------------
 

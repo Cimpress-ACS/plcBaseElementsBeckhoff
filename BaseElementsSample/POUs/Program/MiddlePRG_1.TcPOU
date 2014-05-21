@@ -30,6 +30,10 @@ VAR
 	DrvCfgData: T_Ctrl_SIf_DRV_Cfg;	
 	// ADS Client Example
 	
+	// EtherCAT Diagnose
+	fbECD_1: FB_ECD;
+	pTmpSIf_ECD: POINTER TO T_Ctrl_SIf_ECD;
+	
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -155,6 +159,12 @@ IF (NOT bolPlcStartupDone) AND (g_uinStartProzess>=(uinTaskNbr-1)) THEN
 	
 	bolPlcStartupDone := TRUE;	
 	g_uinStartProzess := g_uinStartProzess + 1; // For StartUp order
+	
+		// EtherCAT Diagnostic Element
+	fbECD_1.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.ECD_1); // init and entry fb_instance in global fb pointer array
+	pTmpSIf_ECD := fbECD_1.getCtrlSIf();
+	pTmpSIf_ECD^.Cfg.strNetID := '192.168.70.24.2.1'; //PLC NetId
+
 END_IF
 // -----------------------------------------------------------------------------------------------
 
@@ -199,6 +209,8 @@ IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone AND (g_uinStartProzess
 	
 	// fbBCC_1();   // Barcode reader example
 	fbACL_1();		// ADS client example
+		
+	fbECD_1(); // EtherCAT Diagnostic
 END_IF
 // -----------------------------------------------------------------------------------------------]]></ST>
     </Implementation>

@@ -1,0 +1,20 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_Ctrl_SIf_ECD_Par" Id="{01379ec2-bf43-4e18-96a1-59fd7c4b2c58}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_ECD_Par :
+STRUCT
+	/// [ms] Timeout power on. Timeout for initialize all ADS connections.
+	udiTOPowerOn_ms: UDINT;
+	/// [ms] Timeout function over all slaves
+	udiTOCheckAll_ms: UDINT;
+	/// [ms] Timeout function for one slave
+	udiTOCheckOne_ms: UDINT;
+	/// [ms] Polling interval for States
+	udiPollingInterval_ms: UDINT;
+	/// Maximum CRC Value one slave 
+	udiMaxCRC: UDINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

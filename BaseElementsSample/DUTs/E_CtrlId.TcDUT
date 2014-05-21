@@ -14,6 +14,7 @@
 	RFW_12,
 	ACL_1,
 	VLV_1,
+	ECD_1,
 	E_CtrlIdMax
 );
 END_TYPE

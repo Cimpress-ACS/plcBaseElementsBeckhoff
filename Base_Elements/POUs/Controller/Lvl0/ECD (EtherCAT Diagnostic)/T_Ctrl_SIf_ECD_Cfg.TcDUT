@@ -1,0 +1,14 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_Ctrl_SIf_ECD_Cfg" Id="{6e57999f-20da-4b90-b2ab-1a877f653fbf}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_ECD_Cfg :
+STRUCT
+	/// NetID
+	strNetID: STRING(30);
+	/// Run allways the scanning without set into run
+	bolRunAlways: BOOL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>
