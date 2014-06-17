@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
   <GVL Name="Io" Id="{407668e5-83c7-4fef-b1ff-b6c883942ff7}">
     <Declaration><![CDATA[VAR_GLOBAL
 	In_bol_11_0_B1_Doublestopper_full AT %I* : BOOL; //VOLLMELDUNG DOPPELSTOPPER
@@ -15,6 +15,10 @@
 	Out_bol_11_0_Q14_Doublestopper AT %Q* : BOOL; //DOPPELSTOPPER
 	In_bol_11_0_B15_New_part AT %I* : BOOL; //NEUES TEIL
 	In_bol_EmergencyOff AT %I* : BOOL; // Emergency Off Button
+	Out_bolLED_RD AT %Q* : BOOL; // Red LED
+	Out_bolLED_YE AT %Q* : BOOL; // Yellow LED
+	Out_bolLED_GN AT %Q* : BOOL; // Green LED
+	Out_bolBeep AT %Q* : BOOL; // Beeper
 END_VAR]]></Declaration>
     <ObjectProperties />
   </GVL>

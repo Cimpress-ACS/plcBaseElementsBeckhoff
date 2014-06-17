@@ -1,0 +1,18 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_Ctrl_SIf_SGT" Id="{9e172bd7-7fc6-4aac-ba50-a15e176a7521}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_SGT :
+STRUCT
+	/// configuration
+	Cfg: T_Ctrl_SIf_SGT_Cfg;
+	/// parameter
+	Par: T_Ctrl_SIf_SGT_Par;
+	/// io output
+	Out: T_Ctrl_SIf_SGT_Out;
+	/// alarm number used in this controller
+	Alm: ARRAY[1..(E_ALM_SGT.MAX_E_ALM - 1)] OF T_Ctrl_Alm;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

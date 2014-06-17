@@ -1,0 +1,18 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_Ctrl_SIf_SGT_Par" Id="{c9b3c771-0266-4303-9b25-0bad0c77e050}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_SGT_Par :
+STRUCT
+	/// [ms] Blink interval time
+	udiBlinkTime_ms: UDINT;
+	/// [ms] Beep on time
+	udiBeepOnTime_ms: UDINT;
+	/// [ms] Beep off time
+	udiBeepOffTime_ms: UDINT;
+	/// [ms] Lamp test time, used in PONBusy
+	udiLampTestTime_ms: UDINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

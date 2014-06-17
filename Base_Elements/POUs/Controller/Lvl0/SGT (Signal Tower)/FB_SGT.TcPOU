@@ -1,0 +1,642 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <POU Name="FB_SGT" Id="{3e38ff1c-8932-4771-aa3a-87f55e3483ce}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SGT EXTENDS FB_CtrlBase
+VAR_INPUT
+	/// Green lamp ON
+	In_bolGreenOn: BOOL;
+	/// Yellow lamp ON
+	In_bolYellowOn: BOOL;
+	/// Red lamp ON
+	In_bolRedOn: BOOL;
+	/// Beep ON
+	In_bolBeepOn: BOOL;
+	/// Green lamp BLINK
+	In_bolGreenBlink: BOOL;
+	/// Yellow lamp BLINK
+	In_bolYellowBlink: BOOL;
+	/// Red lamp BLINK
+	In_bolRedBlink: BOOL;
+	/// Counter Green (Blink by change, On by Value > 0)
+	In_uinCntGreen: UINT;
+	/// Counter Yellow (Blink by change, On by Value > 0)
+	In_uinCntYellow: UINT;
+	/// Counter Red (Blink by change, On by Value > 0)
+	In_uinCntRed: UINT;
+	/// Counter Beep	(Blink by change, On by Value > 0)
+	In_uinCntBeep: UINT;
+END_VAR
+VAR_OUTPUT
+	Out_bolGreen: BOOL;
+	Out_bolYellow: BOOL;
+	Out_bolRed: BOOL;
+	Out_bolBeep: BOOL;
+END_VAR
+VAR
+	/// Shadow copy of In Green Cnt
+	uin_InCntGreenOld: UINT;
+	/// Shadow copy of In Yellow Cnt
+	uin_InCntYellowOld: UINT;
+	/// Shadow copy of In Red Cnt
+	uin_InCntRedOld: UINT;
+	/// Shadow copy of In Beep Cnt
+	uin_InCntBeepOld: UINT;
+	/// Timer for Oszilator
+	udiTimer: UDINT;
+	/// Oszilator Signal
+	bolTimer: BOOL;
+	/// Timer for Beep-Oszilator
+	udiBeepTimer: UDINT;
+	/// Beep Signal
+	bolBeepTimer: BOOL;
+	/// Specific interface struct for public access
+	SIf: T_Ctrl_SIf_SGT;
+END_VAR
+VAR CONSTANT
+	/// sub States for PONBusy test sequence
+	cSTA_SUB_INITIALIZED: INT := 500;
+	cSTA_SUB_TestGreen: INT := 502;
+	cSTA_SUB_TestYellow: INT := 504;
+	cSTA_SUB_TestRed: INT := 506;
+	cSTA_SUB_TestBeep: INT := 508;
+	cSTA_SUB_FINISH: INT := 510;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+Control for the Signal Tower.
+
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		03.06.2014		AVME/MRU	Start history
+
+
+___________________________________________________________________________________________________*)
+
+
+IF (me.bolActivate) THEN // cyclic call enabled
+	IF (CIf.Info.bolInitDone=FALSE) THEN // first cycle -> init
+		CtrlInit();
+		CIf.Info.bolInitDone := TRUE;
+	ELSE
+		CycleStartDuty();
+	
+		Always();
+		
+		StateMachine();
+		
+		CycleEndDuty();
+	END_IF
+END_IF;
+]]></ST>
+    </Implementation>
+    <Method Name="StateMachine" Id="{071e78d1-35ef-48f4-aa56-3babb01ae9b2}">
+      <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.StateMachine();
+
+// main statemachine of base controller
+CASE me.StateMachine.intState OF
+	cSTA_RUN:
+		THIS^.sta_RUN();
+	cSTA_RUNBusy:
+		THIS^.sta_RUNBusy();
+END_CASE;]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="getCmdState" Id="{11488f8c-fb9a-4a89-875a-9b9e9ea32d8b}">
+      <Declaration><![CDATA[METHOD PROTECTED getCmdState : STRING
+VAR_INPUT
+	intCmdState: INT;
+	bolState: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
+
+IF (getCmdState='') THEN // global not defined get local
+	// get string cmd/state string information in runtime
+	IF (bolState=FALSE) THEN
+		// States's
+		CASE intCmdState OF
+			(*cCMD_Standby: 
+				getCmdState := 'cCMD_Standby'; *)
+		END_CASE;  
+	ELSE
+		// States's
+		CASE intCmdState OF
+			cSTA_SUB_INITIALIZED: 
+				getCmdState := 'cSTA_SUB_INITIALIZED';
+			cSTA_SUB_TestGreen: 
+				getCmdState := 'cSTA_SUB_TestGreen';
+			cSTA_SUB_TestYellow: 
+				getCmdState := 'cSTA_SUB_TestYellow';
+			cSTA_SUB_TestRed: 
+				getCmdState := 'cSTA_SUB_TestRed';
+			cSTA_SUB_TestBeep: 
+				getCmdState := 'cSTA_SUB_TestBeep';	
+			cSTA_SUB_FINISH: 
+				getCmdState := 'cSTA_SUB_FINISH';			
+		END_CASE;
+	END_IF
+END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="Always" Id="{16a4f14f-8c70-47c3-aefd-a640fa4d18e2}">
+      <Declaration><![CDATA[METHOD PROTECTED Always : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// not inherite from base !!!
+// SUPER^.Always();
+
+IF (me.bolChangeBackToAUTO=TRUE) THEN // switch mode to automatic switch off controller
+	//me.StateMachine.intStateNext := cSTA_OFFBusy;
+	me.bolChangeBackToAUTO := FALSE; // for cylinder no change to off when switch to automatic!!
+END_IF
+
+IF (CIf.SwCfg.bolExist=FALSE) THEN // hardware of controller does not exist
+	me.StateMachine.intStateNext := cSTA_SINGLE_ANSWER;
+ELSE
+	// Init or power on requested -> change to state PONbusy
+	IF (((me.StateMachine.intState=cSTA_INITIALIZED) OR (me.intCmd=cCMD_PON)) 
+		AND (me.StateMachine.intState<>cSTA_PONBusy) AND (me.StateMachine.intState<>cSTA_PON)
+		AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) 
+		AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)) THEN // switch after startup to PONBusy
+		me.StateMachine.intStateNext := cSTA_PONBusy;
+	END_IF
+END_IF
+
+// ----------------------------------------------------------------------------------
+// cyclic actions outside of statemachine
+IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
+	;
+END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="getCtrlSIf" Id="{1f52b74c-ab5f-4872-8160-08d2ca48b0f8}">
+      <Declaration><![CDATA[METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_SGT
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="FB_init" Id="{2c1d78e1-d2ba-44f1-b62f-82ce282d2a3c}">
+      <Declaration><![CDATA[METHOD FB_init : BOOL
+VAR_INPUT
+	///if TRUE, the retain variables are initialized (warm start / cold start)
+	bInitRetains: BOOL;
+	///if TRUE, the instance afterwards gets moved into the copy code (online change)
+	bInCopyCode: BOOL;
+END_VAR
+VAR
+	ii: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
+// to manually change in new FUB implementation!!!
+// define valid commands for this controller
+FOR ii:= 0 TO (SIZEOF(CIf.Job.aCmdList)/SIZEOF(CIf.Job.aCmdList[0])-1) BY 1 DO
+	IF (CIf.Job.aCmdList[ii].intCmd=cCMD_INITIALIZED) THEN
+		// found first empty array element
+		EXIT;
+	END_IF
+END_FOR
+
+// set name of class/typ
+CIf.Info.strType := 'FB_SGT'; 
+
+// set alarm class
+SIf.Alm[E_ALM_SGT.Dummy].eAlmClass := E_AlmClass.INFO;
+SIf.Alm[E_ALM_SGT.Dummy].strText := 'DUMMY';
+
+//*******************************************************************************
+// initial values
+//*******************************************************************************
+
+// Configuration defaults of class
+CIf.SwCfg.bolExist := TRUE;
+CIf.SwCfg.bolEnable := TRUE;
+CIf.SwCfg.bolSimulation := FALSE;
+SIf.Cfg.bolEnableLampTest := TRUE;
+
+// Parameter defaults of class
+SIf.Par.udiBlinkTime_ms := 1000;
+SIf.Par.udiBeepOnTime_ms := 250;	
+SIf.Par.udiBeepOffTime_ms := 2000;
+SIf.Par.udiLampTestTime_ms := 500;]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="sta_RUNBusy" Id="{4599e496-dbed-46f2-881a-5717ff0ba1d1}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_RUNBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		
+		// State Change Condition
+		IF (TRUE) THEN
+			me.StateMachine.intStateNext := cSTA_RUN;
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="sta_PON" Id="{4d78f065-c5de-4fbb-b74e-f27f17ab7875}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		
+		// State Change Condition
+		IF(TRUE) THEN // Auto start of Signal Tower
+			me.StateMachine.intStateNext := cSTA_RUNBusy;
+		END_IF
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="sta_OFF" Id="{611bf975-a4e4-4abc-9b49-b98753cbb3c2}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		
+		// State Change Condition
+		IF (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.Alarm.eActivAlmClass<>E_AlmClass.OFF) THEN
+			IF (me.intCmd=cCMD_RUN) THEN
+				me.StateMachine.intStateNext :=  cSTA_RUNBusy;
+			END_IF
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="sta_RUN" Id="{860d867e-aded-4dc3-b96a-6c7237c7f688}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_RUN : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			;
+		END_IF
+		
+		// Oscillator for blinking lamp
+		IF (udiTimer >= 2*SIf.Par.udiBlinkTime_ms) THEN
+			bolTimer:= FALSE;
+			udiTimer:= 0;
+		ELSIF (udiTimer >= SIf.Par.udiBlinkTime_ms) THEN
+			bolTimer:= TRUE;
+		END_IF
+		udiTimer:= udiTimer + me.FUBInfo.udiSample_ms;
+		// Oscillator for Beep
+		IF (udiBeepTimer >= (SIf.Par.udiBeepOffTime_ms + SIf.Par.udiBeepOnTime_ms)) THEN
+			bolBeepTimer:= TRUE;
+			udiBeepTimer:= 0;
+		ELSIF (udiBeepTimer >= SIf.Par.udiBeepOnTime_ms) THEN
+			bolBeepTimer:= FALSE;
+		END_IF
+		udiBeepTimer:= udiBeepTimer + me.FUBInfo.udiSample_ms;	
+		
+		// Green Lamp
+		SIf.Out.bolGreen.intern := setLampOutput(bolBlink:= In_bolGreenBlink, bolOn:= In_bolGreenOn, uinCnt:= In_uinCntGreen, 
+												uinCntOLD:= uin_InCntGreenOld, bolOscillator:= bolTimer);
+		// Yellow Lamp
+		SIf.Out.bolYellow.intern := setLampOutput(bolBlink:= In_bolYellowBlink, bolOn:= In_bolYellowOn, uinCnt:= In_uinCntYellow, 
+												uinCntOLD:= uin_InCntYellowOld, bolOscillator:= bolTimer);
+		// Red Lamp
+		SIf.Out.bolRed.intern := setLampOutput(bolBlink:= In_bolRedBlink, bolOn:= In_bolRedOn, uinCnt:= In_uinCntRed, 
+												uinCntOLD:= uin_InCntRedOld, bolOscillator:= bolTimer);
+		// Beep										
+		SIf.Out.bolBeep.intern := setBeepOutput(bolOscillate:= In_bolBeepOn, uinCnt:= In_uinCntBeep,
+												uinCntOLD:= uin_InCntBeepOld, bolOscillator:= bolBeepTimer);
+												
+		// Reset
+		IF (CIf.Job.bolAlmReset) THEN
+			uin_InCntGreenOld:= In_uinCntGreen;
+			uin_InCntYellowOld:= In_uinCntYellow;
+			uin_InCntRedOld:= In_uinCntRed;
+			uin_InCntBeepOld:= In_uinCntBeep;
+			CIf.Job.bolAlmReset := FALSE;
+		END_IF
+		
+		// State Change Condition
+		IF(me.intCmd=cCMD_OFF) THEN
+			me.StateMachine.intStateNext := cSTA_OFFBusy;
+		END_IF
+	END_IF
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="setLampOutput" Id="{b2eced1b-5f5c-41c2-9a66-6cdd9f3f979d}">
+      <Declaration><![CDATA[METHOD setLampOutput : BOOL
+VAR_INPUT
+	/// Blink On Input
+	bolBlink: BOOL;
+	/// Lamp On Input
+	bolOn: BOOL;
+	/// Counter Input
+	uinCnt: UINT;
+	/// Shadow copy of counter
+	uinCntOLD: UINT;
+	/// Oscillator Toggle Bit
+	bolOscillator: BOOL;
+END_VAR
+VAR
+	bolBlinkOn: BOOL;
+	bolLampOn: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Lamp blink
+IF ((uinCnt > uinCntOLD) OR bolBlink) THEN
+	bolBlinkOn:= TRUE;
+END_IF
+// Lamp On
+IF ((uinCnt > 0) OR bolOn) THEN
+	bolLampOn:= TRUE;
+END_IF
+
+// Set/Reset Output
+IF bolBlinkOn THEN	// first prio blink
+	setLampOutput:= bolOscillator;
+ELSIF bolLampOn THEN // second prio 
+	setLampOutput:= TRUE;
+ELSE
+	setLampOutput:= FALSE;
+END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="IoOutBridge" Id="{d7e11bf8-8223-4355-8ad1-e44891247a41}">
+      <Declaration><![CDATA[METHOD PROTECTED IoOutBridge : BOOL
+VAR
+	bolSwitchValvesOff: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
+IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+	setOutBol(CIf.Job.bolIoForce ,ADR(SIf.Out.bolGreen));
+	setOutBol(CIf.Job.bolIoForce ,ADR(SIf.Out.bolRed));
+	setOutBol(CIf.Job.bolIoForce ,ADR(SIf.Out.bolYellow));
+	setOutBol(CIf.Job.bolIoForce ,ADR(SIf.Out.bolBeep));
+	
+	THIS^.Out_bolGreen := SIf.Out.bolGreen.map;
+	THIS^.Out_bolRed := SIf.Out.bolRed.map;
+	THIS^.Out_bolYellow := SIf.Out.bolYellow.map;
+	THIS^.Out_bolBeep := SIf.Out.bolBeep.map;
+END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="sta_OFFBusy" Id="{df7cc5fc-37c4-45d7-b614-d169e6e63f44}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_OFFBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		// Green Lamp
+		SIf.Out.bolGreen.intern := FALSE;
+		// Yellow Lamp
+		SIf.Out.bolYellow.intern := FALSE;
+		// Red Lamp
+		SIf.Out.bolRed.intern := FALSE;
+		// Beep
+		SIf.Out.bolBeep.intern :=FALSE;		
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		// State Change Condition
+		IF (TRUE) THEN
+			me.StateMachine.intStateNext := cSTA_OFF;
+		END_IF
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="setBeepOutput" Id="{e59c31d2-688b-43f4-bfd2-9d7a3cbe5aee}">
+      <Declaration><![CDATA[METHOD setBeepOutput : BOOL
+VAR_INPUT
+	/// Oscillate On Input
+	bolOscillate: BOOL;
+	/// Counter Input
+	uinCnt: UINT;
+	/// Shadow copy of counter
+	uinCntOLD: UINT;
+	/// Oscillator Toggle Bit
+	bolOscillator: BOOL;
+END_VAR
+VAR
+	bolOscillatorOn: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Beep Oscillate
+IF ((uinCnt > uinCntOLD) OR bolOscillate) THEN
+	bolOscillatorOn:= TRUE;
+END_IF
+// Set/Reset Output
+IF bolOscillatorOn THEN
+	setBeepOutput:= bolOscillator;
+ELSE
+	setBeepOutput:= FALSE;
+END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="sta_PONBusy" Id="{eb33caa0-1f4b-402c-8167-358cefcc0764}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_PONBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		// Green Lamp
+		SIf.Out.bolGreen.intern := FALSE;
+		// Yellow Lamp
+		SIf.Out.bolYellow.intern := FALSE;
+		// Red Lamp
+		SIf.Out.bolRed.intern := FALSE;
+		// Beep
+		SIf.Out.bolBeep.intern :=FALSE;	
+		
+		// Initialize sub state machine
+		me.SubStateMachine.intState:= cSTA_SUB_INITIALIZED; 
+		me.SubStateMachine.intStateNext:= cSTA_SUB_INITIALIZED;		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		IF (SIf.Cfg.bolEnableLampTest) THEN
+			//--------------------------------------------------------------------------------------
+			// sub state machine for lamp test sequence
+			CASE me.SubStateMachine.intState OF
+				cSTA_SUB_INITIALIZED:
+					me.SubStateMachine.intStateNext := cSTA_SUB_TestGreen;
+				cSTA_SUB_TestGreen:
+					SIf.Out.bolGreen.intern := TRUE;
+					IF (me.SubStateMachine.udiTimeInState_ms > SIf.Par.udiLampTestTime_ms) THEN 
+						me.SubStateMachine.intStateNext := cSTA_SUB_TestYellow;
+					END_IF
+				cSTA_SUB_TestYellow:
+					SIf.Out.bolYellow.intern := TRUE;
+					IF (me.SubStateMachine.udiTimeInState_ms > SIf.Par.udiLampTestTime_ms) THEN 
+						me.SubStateMachine.intStateNext := cSTA_SUB_TestRed;
+					END_IF			
+				cSTA_SUB_TestRed:
+					SIf.Out.bolRed.intern := TRUE;
+					IF (me.SubStateMachine.udiTimeInState_ms > SIf.Par.udiLampTestTime_ms) THEN 
+						me.SubStateMachine.intStateNext := cSTA_SUB_TestBeep;
+					END_IF				
+				cSTA_SUB_TestBeep:
+					SIf.Out.bolBeep.intern := TRUE;
+					IF (me.SubStateMachine.udiTimeInState_ms > SIf.Par.udiLampTestTime_ms) THEN
+						SIf.Out.bolGreen.intern := FALSE;
+						SIf.Out.bolYellow.intern := FALSE;
+						SIf.Out.bolRed.intern := FALSE;
+						SIf.Out.bolBeep.intern := FALSE; 
+						me.SubStateMachine.intStateNext := cSTA_SUB_FINISH;
+					END_IF				
+				cSTA_SUB_FINISH:
+					;
+				
+			END_CASE
+		ELSE // Lamp test not enabled, PONBusy is done
+			me.SubStateMachine.intStateNext := cSTA_SUB_FINISH;
+		END_IF
+
+		
+		// State Change Condition
+		IF (me.SubStateMachine.intState = cSTA_SUB_FINISH) THEN	// Test done
+			me.StateMachine.intStateNext :=  cSTA_PON;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,12 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_Ctrl_SIf_SGT_Cfg" Id="{3273db0a-4fb0-4402-8d78-b703159a5254}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_SGT_Cfg :
+STRUCT
+	/// Enable lamp test in PONBusy state
+	bolEnableLampTest: BOOL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

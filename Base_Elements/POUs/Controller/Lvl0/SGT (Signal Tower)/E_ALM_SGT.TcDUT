@@ -1,0 +1,13 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="E_ALM_SGT" Id="{bc7ed57b-bdcd-4e99-8136-da85d9f53475}">
+    <Declaration><![CDATA[{attribute 'qualified_only' := ''}
+TYPE E_ALM_SGT :
+(
+	Dummy := 1,
+	MAX_E_ALM
+) UINT;
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

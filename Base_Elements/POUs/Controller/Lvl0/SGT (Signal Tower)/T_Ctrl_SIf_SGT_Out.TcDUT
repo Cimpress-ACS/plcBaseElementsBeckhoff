@@ -1,0 +1,18 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_Ctrl_SIf_SGT_Out" Id="{74828ba3-5fa7-4c13-a659-f7267e3bb943}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_SGT_Out :
+STRUCT
+	/// green lamp
+	bolGreen: T_Ctrl_IoBool;
+	/// yellow lamp
+	bolYellow: T_Ctrl_IoBool;
+	/// red lamp
+	bolRed: T_Ctrl_IoBool;
+	/// acoustic signal
+	bolBeep: T_Ctrl_IoBool;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

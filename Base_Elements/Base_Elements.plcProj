@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.1.9</ProjectVersion>
+    <ProjectVersion>0.0.1.10</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.1.9 - Newest Base_PLC added 0.3.4.5
+    <Description>0.0.1.10 - SGT added
+0.0.1.9 - Newest Base_PLC added 0.3.4.5
 0.0.1.8 - Integrate ECD (EtherCAT Diagnostic)
 0.0.1.7 - More RFW Error information
 0.0.1.5 - Added new controller FB_VLV
@@ -361,6 +362,24 @@
     <Compile Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29\T_RFW.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\Controller\Lvl0\SGT %28Signal Tower%29\E_ALM_SGT.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\SGT %28Signal Tower%29\FB_SGT.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\SGT %28Signal Tower%29\T_Ctrl_SIf_SGT.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\SGT %28Signal Tower%29\T_Ctrl_SIf_SGT_Cfg.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\SGT %28Signal Tower%29\T_Ctrl_SIf_SGT_Out.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\SGT %28Signal Tower%29\T_Ctrl_SIf_SGT_Par.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]\E_ALM_UMC.TcDUT">
       <SubType>Code</SubType>
     </Compile>
@@ -521,6 +540,7 @@
     <Folder Include="POUs\Controller\Lvl0\CYL %28Cylinder%29" />
     <Folder Include="POUs\Controller\Lvl0\DRV %28Drive%29\" />
     <Folder Include="POUs\Controller\Lvl0\ECD %28EtherCAT Diagnostic%29" />
+    <Folder Include="POUs\Controller\Lvl0\SGT %28Signal Tower%29\" />
     <Folder Include="POUs\Controller\Lvl0\VLV %28Valve controller%29\" />
     <Folder Include="POUs\Controller\Lvl0\VPC [Vacuum Pump Controller]" />
     <Folder Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]" />

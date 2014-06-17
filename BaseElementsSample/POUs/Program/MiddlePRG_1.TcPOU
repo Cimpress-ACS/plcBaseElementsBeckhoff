@@ -33,7 +33,10 @@ VAR
 	// EtherCAT Diagnose
 	fbECD_1: FB_ECD;
 	pTmpSIf_ECD: POINTER TO T_Ctrl_SIf_ECD;
-	
+
+	fbSGT_1: 		FB_SGT;		// Signal tower	
+	pDRV_CIf:		POINTER TO Base_PLC.T_Ctrl_CIf; // Used for Signal tower example
+	pDRV_SIf:		POINTER TO Base_Elements.T_Ctrl_SIf_DRV; // Used for Signal tower example
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -60,6 +63,8 @@ Version		Date			Author		Comment
 0.00.6		13.01.2014		AVME/PRE	Implement Starting Up Process
 0.00.7		05.02.2014		AVME/DSC	Insert ADS client example
 0.00.8		06.03.2014		AVME/DSC	Insert FB_VLV example
+0.00.9		17.06.2014		AVME/MRU	SGT example added
+
 ___________________________________________________________________________________________________*)
 
 // -----------------------------------------------------------------------------------------------
@@ -211,6 +216,46 @@ IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone AND (g_uinStartProzess
 	fbACL_1();		// ADS client example
 		
 	fbECD_1(); // EtherCAT Diagnostic
+	
+	// --------------------------------------------------
+	// Signal tower
+	// --------------------------------------------------
+
+	// Signal tower conditions for red, yellow and green
+	// -------------------------------------------------
+	
+	// Get access to FB_DRV
+	pDRV_CIf := fbDRV_1.CtrlCIf;
+	pDRV_SIf := fbDRV_1.getCtrlSIf();
+	
+	// GreenBlink
+	IF (pDRV_CIf^.Job.intState = Base_PLC.cSTA_RUNBusy) THEN
+		fbSGT_1.In_bolGreenBlink:= TRUE;
+	ELSE
+		fbSGT_1.In_bolGreenBlink:= FALSE;
+	END_IF
+	
+	// GreenOn
+	IF (pDRV_CIf^.Job.intState = Base_PLC.cSTA_RUN) THEN
+		fbSGT_1.In_bolGreenOn:= TRUE;
+	ELSE
+		fbSGT_1.In_bolGreenOn:= FALSE;
+	END_IF
+	
+(*	// Yellow
+	fbSGT_1.In_uinCntYellow:= pDRV_SIf^.Cur.uinNrOfActiveInfo;
+	// Red
+	fbSGT_1.In_uinCntRed:= pDRV_SIf^.Cur.uinNrOfActiveAlarm;
+	// Beep (only in case of an alarm)
+	fbSGT_1.In_uinCntBeep:= pDRV_SIf^.Cur.uinNrOfActiveAlarm;
+*)
+	// Call SGT 
+	fbSGT_1();	
+	Out_bolLED_RD:= fbSGT_1.Out_bolRed;
+	Out_bolLED_YE:= fbSGT_1.Out_bolYellow;
+	Out_bolLED_GN:= fbSGT_1.Out_bolGreen;	
+	Out_bolBeep:= fbSGT_1.Out_bolBeep;
+	
 END_IF
 // -----------------------------------------------------------------------------------------------]]></ST>
     </Implementation>
