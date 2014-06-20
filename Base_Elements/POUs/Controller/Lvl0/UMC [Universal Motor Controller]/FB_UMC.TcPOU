@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
   <POU Name="FB_UMC" Id="{95b426bb-96dc-4ca4-9df1-b53c93e4707b}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_UMC EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -69,138 +69,6 @@ IF (me.bolActivate) THEN // cyclic call enabled
 END_IF;
 ]]></ST>
     </Implementation>
-    <Method Name="FB_init" Id="{a745ae60-38a1-42bf-9cab-5742f75b9766}">
-      <Declaration><![CDATA[METHOD FB_init : BOOL
-VAR_INPUT
-	bInitRetains : BOOL; // if TRUE, the retain variables are initialized (warm start / cold start)
-	bInCopyCode : BOOL;  // if TRUE, the instance afterwards gets moved into the copy code (online change)
-END_VAR
-VAR
-	iIdx		: UINT;
-	iLength		: UINT;	
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
-// to manually change in new FUB implementation!!!
-// define valid commands for this controller
-iLength := SIZEOF(CIf.Job.aCmdList)/SIZEOF(CIf.Job.aCmdList[0]);
-iIdx := 0;
-
-WHILE (iIdx < iLength) AND (CIf.Job.aCmdList[iIdx].intCmd <> cCMD_INITIALIZED) DO
-	iIdx := iIdx + 1; 
-END_WHILE
-
-IF (iIdx < iLength) THEN
-// Add configuration of own comands	
-	CIf.Job.aCmdList[iIdx].intCmd := BASE_PLC.cCMD_STOP;
-	CIf.Job.aCmdList[iIdx].strName := 'Stop'; 
-	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
-	iIdx := iIdx + 1;
-	CIf.Job.aCmdList[iIdx].intCmd := cCMD_RUN;
-	CIf.Job.aCmdList[iIdx].strName := 'Run'; 
-	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
-	iIdx := iIdx + 1;
-	CIf.Job.aCmdList[iIdx].intCmd := cCMD_LEFT;
-	CIf.Job.aCmdList[iIdx].strName := 'Left'; 
-	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
-	iIdx := iIdx + 1;
-	CIf.Job.aCmdList[iIdx].intCmd := cCMD_RIGHT;
-	CIf.Job.aCmdList[iIdx].strName := 'Right'; 
-	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
-	iIdx := iIdx + 1;
-ELSE
-	;// Error if the aCmdList Array is to small
-END_IF
-
-// set name of class/typ
-CIf.Info.strType := 'FB_UMC'; 
-
-// set alarm class
-SIf.Alm[E_ALM_UMC.MotorOnTimeout].eAlmClass := Base_PLC.E_AlmClass.TSTOP;
-SIf.Alm[E_ALM_UMC.MotorOnTimeout].strText := 'Motor On Timeout'; 
-SIf.Alm[E_ALM_UMC.MotorError].eAlmClass := Base_PLC.E_AlmClass.TSTOP;
-SIf.Alm[E_ALM_UMC.MotorError].strText := 'Motor Error';
-SIf.Alm[E_ALM_UMC.MotorWarning].eAlmClass := Base_PLC.E_AlmClass.WARNING;
-SIf.Alm[E_ALM_UMC.MotorWarning].strText := 'Motor Warning';
-SIf.Alm[E_ALM_UMC.MotorOverCurrent].eAlmClass := Base_PLC.E_AlmClass.WARNING;
-SIf.Alm[E_ALM_UMC.MotorOverCurrent].strText := 'Motor Over Current';
-SIf.Alm[E_ALM_UMC.MotorNotReady].eAlmClass := Base_PLC.E_AlmClass.TSTOP;
-SIf.Alm[E_ALM_UMC.MotorNotReady].strText := 'Motor Not Ready';
-SIf.Alm[E_ALM_UMC.DirectionParameterOverflow].eAlmClass := Base_PLC.E_AlmClass.TSTOP;
-SIf.Alm[E_ALM_UMC.DirectionParameterOverflow].strText := 'Direction Parameter Overflow';
-SIf.Alm[E_ALM_UMC.SpeedOverLimit].eAlmClass := Base_PLC.E_AlmClass.WARNING;
-SIf.Alm[E_ALM_UMC.SpeedOverLimit].strText := 'Motor Setpoint over the limit';
-
-//*******************************************************************************
-// initial values
-//*******************************************************************************
-
-// software configuration
-CIf.SwCfg.bolExist := TRUE;
-CIf.SwCfg.bolEnable := TRUE;
-CIf.SwCfg.bolSimulation := FALSE;
-
-// configuration
-SIf.Cfg.uinLC11 := 1500;
-SIf.Cfg.uinLC11_100 := 16384;
-SIf.Cfg.uinMaxSpeed := 150;
-
-// parameter
-SIf.Par.udiStartupOnTime_ms := 5000;
-SIf.Par.udiMotorOnTime_ms 	:= 10000;
-SIf.Par.uinSpeed_rpm 		:= 1000;
-SIf.Par.uinMotorResetPulseTime_ms	:= 500;
-SIf.Par.uinMotorResetCnt 		:= 3;
-SIf.Par.udiMoveStartLatency 	:= 15;
-SIf.Par.udiMoveStopLatency 		:= 60;
-SIf.Par.eRotationDirection  := E_TURN_DIRECTION.LEFT;
-
-SIf.Par.udiSimMotorOnTime_ms := SIf.Par.udiMotorOnTime_ms / 10;]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="Always" Id="{47fa4c02-141a-44a5-9bd0-72272f1d4112}">
-      <Declaration><![CDATA[METHOD PROTECTED Always : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[SUPER^.Always();
-
-// ----------------------------------------------------------------------------------
-// Simulation
-IF (CIf.SwCfg.bolSimulation) THEN
-	// Simulate inputs (no physical inputs)
-	SIf.In.bolEmoOk.intern := TRUE;
-END_IF
-
-// ----------------------------------------------------------------------------------
-// Conditions Always
-IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
-	IF (((me.Alarm.eActivAlmClass=E_AlmClass.OFF) OR (me.intCmd=cCMD_OFF))
-			AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit)
-			AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)
-			AND (me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_OFFBusy)
-			AND (me.StateMachine.intState<>UMC_CmdState.cSTA_RESETMOTORERROR) 
-			AND (me.StateMachine.intState<>UMC_CmdState.cSTA_SETOPERATIONMODE)) THEN
-		me.StateMachine.intStateNext := cSTA_OFFBusy;	
-	END_IF
-
-	//-------------------------------------------------------------------------------
-	// Monitoring of inputs from Safety PLC (no physical inputs)
-	//-------------------------------------------------------------------------------
-	// Emergency Off
-	IF ((SIf.In.bolEmoOk.intern = FALSE) AND (me.StateMachine.intState <> cSTA_EOFF) 
-		AND (me.StateMachine.intState <> BASE_PLC.cSTA_EOFFBusy)
-		AND (me.StateMachine.intState <> BASE_PLC.cSTA_ERROR) 
-		AND (me.StateMachine.intState <> BASE_PLC.cSTA_PON) 
-		AND (me.StateMachine.intState <> BASE_PLC.cSTA_PONBusy) 
-		AND (me.StateMachine.intState<>BASE_PLC.cSTA_INITIALIZED)
-		AND (me.StateMachine.intState <> BASE_PLC.cSTA_ERRORQuit)) THEN
-		me.StateMachine.intStateNext := cSTA_EOFFBusy;				
-	END_IF	
-END_IF
-]]></ST>
-      </Implementation>
-    </Method>
     <Method Name="getCmdState" Id="{142cba6f-071e-4fbc-9b2e-8f6d03c2b875}">
       <Declaration><![CDATA[METHOD PROTECTED getCmdState : STRING
 
@@ -237,80 +105,50 @@ IF (getCmdState='') THEN // global not defined get local
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="getCtrlSIf" Id="{acb56b64-0a6e-4c07-93ae-4c4905c668b4}">
-      <Declaration><![CDATA[METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_UMC
-
+    <Method Name="cmd_MotorStop" Id="{152850e5-84a6-4d14-9e9c-c0b18ab6dc05}">
+      <Declaration><![CDATA[METHOD PROTECTED cmd_MotorStop : BOOL
+VAR_INPUT
+END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
+        <ST><![CDATA[Out_unControl.Output 				:= 0;
+Out_unControl.Data.SetDCBreak 		:= 1;
+Out_unControl.Data.SetHalt        	:= 1;
+Out_unControl.Data.SetQuickStop    	:= 1;]]></ST>
       </Implementation>
     </Method>
-    <Method Name="IoInBridge" Id="{e96c8918-614f-4a10-b14d-7ccad3e92fa6}">
-      <Declaration><![CDATA[METHOD PROTECTED IoInBridge : BOOL
+    <Method Name="cmd_MotorOff" Id="{20537daa-c4c1-4fa9-a96c-810bc92e7ace}">
+      <Declaration><![CDATA[METHOD PROTECTED cmd_MotorOff : BOOL
+
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
-SIf.In.uinStatus.map			:= THIS^.In_uinStatus				;
-SIf.In.intMotorActualSpeed.map	:= THIS^.In_intMotorActualSpeed	;
-SIf.In.uinMotorSetSpeed.map		:= THIS^.In_uinMotorSetSpeed		;
-SIf.In.bolEmoOk.map				:= THIS^.In_bolEmoOk		;
-
-IF (CIf.SwCfg.bolSimulation = FALSE) THEN
-	BASE_PLC.getInUint(CIf.Job.bolIoForce,ADR(SIf.In.uinStatus));
-	BASE_PLC.getInUint(CIf.Job.bolIoForce,ADR(SIf.In.intMotorActualSpeed));
-	BASE_PLC.getInUint(CIf.Job.bolIoForce,ADR(SIf.In.uinMotorSetSpeed));
-	BASE_PLC.getInUint(CIf.Job.bolIoForce,ADR(SIf.In.bolEmoOk));
-ELSE
-	//simulation of global IO
-END_IF
+        <ST><![CDATA[Out_unControl.Output 				:= 0;
+Out_unControl.Data.SetDCBreak 		:= 1;
+Out_unControl.Data.SetHalt        	:= 1;
+Out_unControl.Data.SetQuickStop    	:= 1;
+SIf.Out.uinSpeedSetpoint.intern 	:= 0;
 ]]></ST>
       </Implementation>
     </Method>
-    <Method Name="IoOutBridge" Id="{d1f368f7-6114-4b3a-a3b7-893a4112fcc7}">
-      <Declaration><![CDATA[METHOD PROTECTED IoOutBridge : BOOL
-VAR
-	bolSwitchValvesOff: BOOL;
+    <Method Name="sta_PON" Id="{2311706f-676b-4db4-9141-5b41e21fa6e7}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
+VAR_INPUT
 END_VAR
-
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
-IF (CIf.SwCfg.bolSimulation = FALSE) THEN
-	BASE_PLC.setOutUint(CIf.Job.bolIoForce ,ADR(SIf.Out.uinControl));
-	BASE_PLC.setOutUint(CIf.Job.bolIoForce ,ADR(SIf.Out.uinSpeedSetpoint));
-
-	THIS^.Out_uinControl			:= SIf.Out.uinControl.map	;
-	THIS^.Out_uinSpeedSetpoint		:= SIf.Out.uinSpeedSetpoint.map	;
-END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_ERROR" Id="{81678cf7-d126-4a6f-b2e1-afa2645116d6}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_ERROR : BOOL
-
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
 // Entry action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		SIf.Cur.uinMotorResetCnt := 0;
-		cmd_MotorOff();
+		
 	END_IF
 
 
 //--------------------------------------------------------------------------------------
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
 		;
-		
-		
-		// State Change Condition
-		IF (CIf.Job.bolAlmReset = TRUE) THEN
-			me.StateMachine.intStateNext := cSTA_ERRORQuit;
-		END_IF
 	END_IF
 
 
@@ -321,6 +159,64 @@ END_IF]]></ST>
 	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 		;
 	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CtrlInit" Id="{3d6278bc-4119-4d76-a46c-9220dc78a04c}">
+      <Declaration><![CDATA[METHOD PROTECTED CtrlInit : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.CtrlInit();
+
+arTurnDirection[E_TURN_DIRECTION.AUTOMATIC] := FALSE;
+arTurnDirection[E_TURN_DIRECTION.LEFT] 		:= FALSE;
+arTurnDirection[E_TURN_DIRECTION.RIGHT] 	:= TRUE;
+
+SIf.Cur.uinSpeedLimit := SIf.Cfg.uinMaxSpeed * SIf.Cfg.uinLC11_100 / 100;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Always" Id="{47fa4c02-141a-44a5-9bd0-72272f1d4112}">
+      <Declaration><![CDATA[METHOD PROTECTED Always : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//SUPER^.Always();
+
+// ----------------------------------------------------------------------------------
+// Simulation
+IF (CIf.SwCfg.bolSimulation) THEN
+	// Simulate inputs (no physical inputs)
+	SIf.In.bolEmoOk.intern := TRUE;
+END_IF
+
+// ----------------------------------------------------------------------------------
+// Conditions Always
+IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
+	IF (((me.Alarm.eActivAlmClass=E_AlmClass.OFF) OR (me.intCmd=cCMD_OFF))
+			AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit)
+			AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)
+			AND (me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_OFFBusy)
+			AND (me.StateMachine.intState<>UMC_CmdState.cSTA_RESETMOTORERROR) 
+			AND (me.StateMachine.intState<>UMC_CmdState.cSTA_SETOPERATIONMODE)) THEN
+		me.StateMachine.intStateNext := cSTA_OFFBusy;	
+	END_IF
+
+	//-------------------------------------------------------------------------------
+	// Monitoring of inputs from Safety PLC (no physical inputs)
+	//-------------------------------------------------------------------------------
+	// Emergency Off
+	IF ((SIf.In.bolEmoOk.intern = FALSE) AND (me.StateMachine.intState <> cSTA_EOFF) 
+		AND (me.StateMachine.intState <> BASE_PLC.cSTA_EOFFBusy)
+		AND (me.StateMachine.intState <> BASE_PLC.cSTA_ERROR) 
+		AND (me.StateMachine.intState <> BASE_PLC.cSTA_PON) 
+		AND (me.StateMachine.intState <> BASE_PLC.cSTA_PONBusy) 
+		AND (me.StateMachine.intState<>BASE_PLC.cSTA_INITIALIZED)
+		AND (me.StateMachine.intState <> BASE_PLC.cSTA_ERRORQuit)) THEN
+		me.StateMachine.intStateNext := cSTA_EOFFBusy;				
+	END_IF	
+END_IF
+]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_ERRORQuit" Id="{4ff591d5-1166-4edf-964c-9bb76285ccb4}">
@@ -369,8 +265,8 @@ END_IF]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_PON" Id="{2311706f-676b-4db4-9141-5b41e21fa6e7}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
+    <Method Name="sta_EOFF" Id="{517d1816-ab01-4702-9554-90bf346088dc}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_EOFF : BOOL
 VAR_INPUT
 END_VAR
 ]]></Declaration>
@@ -379,65 +275,20 @@ END_VAR
 //--------------------------------------------------------------------------------------
 // Entry action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;	
 	END_IF
-
 
 //--------------------------------------------------------------------------------------
 // Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		;
-	END_IF
-
-
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_OFFBusy" Id="{d535dac6-29f0-4c66-a808-4d4fa368fe03}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_OFFBusy : BOOL
-VAR
-	uinECatStatus	: UINT;
-	eMotorStatus	: E_UMC_MOTOR_STATUS;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		cmd_MotorOff();
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		eMotorStatus := GetMotorStatus(sif.In.uinStatus.intern);
-		uinECatStatus := In_uinECATState AND cEtherCAT_MODE_MASK;
-
-		IF    (uinECatStatus = cEtherCAT_OP_MODE)
-		  AND NOT In_unStatus.Data.Trouble 
-		  AND In_unStatus.Data.ActSpeedIsZero
-		  AND (eMotorStatus = E_UMC_MOTOR_STATUS.ReadyToSwitchON) THEN
-			me.StateMachine.intStateNext := Base_PLC.cSTA_OFF;
-		ELSIF (CIf.SwCfg.bolSimulation = TRUE) THEN	// Do not set operation mode in simulation
-			me.StateMachine.intStateNext := BASE_PLC.cSTA_OFF;
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN		
+		// As long as the EMO is not reseted!
+		IF SIf.In.bolEmoOk.intern THEN
+			me.StateMachine.intStateNext := BASE_PLC.cSTA_OFFBusy;			
 		ELSE
-			IF me.StateMachine.udiTimeInState_ms > SIf.Par.uinMotorResetPulseTime_ms THEN
-				IF SIf.Cur.uinMotorResetCnt > SIf.Par.uinMotorResetCnt THEN
-					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_UMC.MotorError),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-					me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;	
-				ELSE
-					me.StateMachine.intStateNext := UMC_CmdState.cSTA_SETOPERATIONMODE;
-				END_IF
+			IF me.intCmd <> BASE_PLC.cCMD_OFF THEN
+				// Clear pending and new commands cyclic to prevent automatic recovery!	
+				CIf.Job.intACmd := BASE_PLC.cCMD_DONE;
+				CIf.Job.intMCmd := BASE_PLC.cCMD_DONE;		
 			END_IF
 		END_IF
 	END_IF
@@ -449,101 +300,6 @@ END_VAR
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_OFF" Id="{90f727a3-208a-41ee-8fa0-865956879137}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
-VAR_INPUT
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-
-		SIf.Cur.uinMotorResetCnt := 0;
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		CASE me.intCmd OF
-			cCMD_Left:
-				SIf.Par.eRotationDirection := E_TURN_DIRECTION.LEFT;
-				me.StateMachine.intStateNext := cSTA_RUNBusy;
-			cCMD_Right:
-				SIf.Par.eRotationDirection := E_TURN_DIRECTION.RIGHT;
-				me.StateMachine.intStateNext := cSTA_RUNBusy;
-			BASE_PLC.cCMD_STOP:
-				me.StateMachine.intStateNext := BASE_PLC.cSTA_STOPBusy;
-			BASE_PLC.cCMD_RUN:
-				me.StateMachine.intStateNext := cSTA_RUNBusy;
-		END_CASE
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="StateMachine" Id="{b02dbe36-1201-40e8-9b9c-9bb09d9c998c}">
-      <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL
-
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[SUPER^.StateMachine();
-
-// main statemachine of base controller
-CASE me.StateMachine.intState OF
-	cSTA_RUNBusy:
-		THIS^.sta_RUNBusy();
-	cSTA_RUN:
-		THIS^.sta_RUN();
-	cSTA_STOPBusy: 
-        THIS^.sta_STOPBusy();
-    cSTA_STOP: 
-        THIS^.sta_STOP();
-	UMC_CmdState.cSTA_RESETMOTORERROR:
-		THIS^.sta_RESETMOTORERROR();
-	UMC_CmdState.cSTA_SETOPERATIONMODE:
-		THIS^.sta_SETOPERATIONMODE();
-END_CASE;]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="cmd_MotorOff" Id="{20537daa-c4c1-4fa9-a96c-810bc92e7ace}">
-      <Declaration><![CDATA[METHOD PROTECTED cmd_MotorOff : BOOL
-
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[Out_unControl.Output 				:= 0;
-Out_unControl.Data.SetDCBreak 		:= 1;
-Out_unControl.Data.SetHalt        	:= 1;
-Out_unControl.Data.SetQuickStop    	:= 1;
-SIf.Out.uinSpeedSetpoint.intern 	:= 0;
-]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="cmd_MotorOn" Id="{5fba66c0-ff72-4abf-a6cf-a878375ce832}">
-      <Declaration><![CDATA[METHOD PROTECTED cmd_MotorOn : BOOL
-VAR_INPUT
-	bDirection		: BOOL;		// Direction of the drive; False = Right; True = Left
-	uinSpeed		: UINT;					// Speed of the belt
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[Out_unControl.Output 				:= 0;
-Out_unControl.Data.EnableOperation 	:= 1;
-Out_unControl.Data.SwitchOn        	:= 1;
-Out_unControl.Data.SetSpeedCcw     	:= bDirection;
-
-SIf.Out.uinSpeedSetpoint.intern 	:= uinSpeed;
-]]></ST>
-      </Implementation>
-    </Method>
     <Method Name="CycleStartDuty" Id="{52dc840d-ed8a-4517-af3d-9d0805703d2b}">
       <Declaration><![CDATA[METHOD PROTECTED CycleStartDuty : BOOL
 VAR_INPUT
@@ -553,101 +309,6 @@ END_VAR
         <ST><![CDATA[SUPER^.CycleStartDuty();
 
 In_unStatus.Input := SIf.In.uinStatus.intern;]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="CycleEndDuty" Id="{be820387-c131-49cd-8a3e-ec5c466b2768}">
-      <Declaration><![CDATA[METHOD PROTECTED CycleEndDuty : BOOL
-VAR_INPUT
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[SIf.Out.uinControl.intern := Out_unControl.Output;
-
-SUPER^.CycleEndDuty();]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_STOPBusy" Id="{b55f6f1f-e285-4e9b-87d3-20b9bd30135c}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_STOPBusy : BOOL
-VAR
-	uniStatus 		: U_UMC_Lenze_Status;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		// Switch Motor Off
-		cmd_MotorStop();
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		IF (CIf.SwCfg.bolSimulation) THEN
-			SIf.In.uinMotorSetSpeed.intern 	:= 0;
-			SIf.In.intMotorActualSpeed.intern 	:= 0;
-			uniStatus.Input 				:= 0;
-			uniStatus.Data.ActSpeedIsZero	:= TRUE;
-			SIf.In.uinStatus.intern 		:= uniStatus.Input;
-		END_IF
-
-		IF (me.StateMachine.udiTimeInState_ms < SIf.Par.udiMotorOnTime_ms) THEN
-			IF (NOT In_unStatus.Data.Trouble) AND (In_unStatus.Data.ActSpeedIsZero) THEN
-				me.StateMachine.intStateNext := Base_PLC.cSTA_STOP;
-			END_IF;	
-		ELSE
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_UMC.MotorError),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;	
-		END_IF
-END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		Out_unControl.Data.ResetFault := FALSE;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_STOP" Id="{fabf4a40-db3a-455c-9e73-b959fe6544f7}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_STOP : BOOL
-VAR_INPUT
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		CASE me.intCmd OF
-			cCMD_Left:
-				SIf.Par.eRotationDirection := E_TURN_DIRECTION.LEFT;
-				me.StateMachine.intStateNext := cSTA_RUNBusy;
-			cCMD_Right:
-				SIf.Par.eRotationDirection := E_TURN_DIRECTION.RIGHT;
-				me.StateMachine.intStateNext := cSTA_RUNBusy;
-			BASE_PLC.cCMD_RUN:
-				me.StateMachine.intStateNext := cSTA_RUNBusy;
-		END_CASE
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_RUNBusy" Id="{5677b46f-6b90-4f51-8f06-07809321a849}">
@@ -753,6 +414,444 @@ END_IF
 	END_IF]]></ST>
       </Implementation>
     </Method>
+    <Method Name="cmd_MotorOn" Id="{5fba66c0-ff72-4abf-a6cf-a878375ce832}">
+      <Declaration><![CDATA[METHOD PROTECTED cmd_MotorOn : BOOL
+VAR_INPUT
+	bDirection		: BOOL;		// Direction of the drive; False = Right; True = Left
+	uinSpeed		: UINT;					// Speed of the belt
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Out_unControl.Output 				:= 0;
+Out_unControl.Data.EnableOperation 	:= 1;
+Out_unControl.Data.SwitchOn        	:= 1;
+Out_unControl.Data.SetSpeedCcw     	:= bDirection;
+
+SIf.Out.uinSpeedSetpoint.intern 	:= uinSpeed;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="CtrlSIf" Id="{647335bc-e279-4764-9976-06282d07dd64}">
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_UMC]]></Declaration>
+      <Get Name="Get" Id="{00c3feb1-2e98-444a-b023-2a28f641132d}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{73ee206d-060a-4c20-94b1-47268f2dbfb6}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Method Name="sta_SETOPERATIONMODE" Id="{6e71e2b6-44ba-4353-ae18-ab8e79f0c705}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_SETOPERATIONMODE : BOOL
+VAR
+	uinECatStatus		: UINT;
+
+	fbEcReqSlaveState 	: FB_EcReqSlaveState;
+	bExecute        	: BOOL;
+	uinReqState     	: WORD := EC_DEVICE_STATE_OP;
+	bError          	: BOOL;
+	nErrId          	: UDINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		bExecute := NOT ((In_uinECATState AND cEtherCAT_MODE_MASK) = cEtherCAT_OP_MODE);
+
+		IF NOT bExecute THEN
+			me.StateMachine.intStateNext := UMC_CmdState.cSTA_RESETMOTORERROR;
+		END_IF
+
+		fbEcReqSlaveState(
+			sNetId		:= F_CreateAmsNetId(In_strNetId), 
+			nSlaveAddr	:= In_uintPort, 
+			bExecute	:= bExecute, 
+			state		:= uinReqState  );
+
+		IF (me.StateMachine.udiTimeInState_ms > SIf.Par.udiStartupOnTime_ms) THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_UMC.MotorError),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;	
+		END_IF
+END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		Out_unControl.Data.ResetFault := FALSE;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="GetMotorStatus" Id="{79c8cc2d-da91-4664-bef0-d7010296b689}">
+      <Declaration><![CDATA[METHOD PROTECTED GetMotorStatus : E_UMC_MOTOR_STATUS
+VAR_INPUT
+	uinMotorStatus		: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[uinMotorStatus := uinMotorStatus AND 16#0F00;
+uinMotorStatus := SHR(uinMotorStatus,8);
+GetMotorStatus := UINT_TO_INT(uinMotorStatus);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_ERROR" Id="{81678cf7-d126-4a6f-b2e1-afa2645116d6}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_ERROR : BOOL
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		SIf.Cur.uinMotorResetCnt := 0;
+		cmd_MotorOff();
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		
+		
+		// State Change Condition
+		IF (CIf.Job.bolAlmReset = TRUE) THEN
+			me.StateMachine.intStateNext := cSTA_ERRORQuit;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="GetSpeedValue" Id="{8377784a-78d3-4660-ba1c-318606b30ca3}">
+      <Declaration><![CDATA[METHOD PROTECTED GetSpeedValue : UINT
+VAR
+	uinSpeedOutput			: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[uinSpeedOutput := SIf.Par.uinSpeed_rpm * SIf.Cfg.uinLC11_100 / SIf.Cfg.uinLC11;
+
+IF uinSpeedOutput > SIf.Cur.uinSpeedLimit THEN
+	uinSpeedOutput := SIf.Cur.uinSpeedLimit;
+	pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_UMC.SpeedOverLimit),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+END_IF
+
+GetSpeedValue := uinSpeedOutput;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_OFF" Id="{90f727a3-208a-41ee-8fa0-865956879137}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+		SIf.Cur.uinMotorResetCnt := 0;
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		CASE me.intCmd OF
+			cCMD_Left:
+				SIf.Par.eRotationDirection := E_TURN_DIRECTION.LEFT;
+				me.StateMachine.intStateNext := cSTA_RUNBusy;
+			cCMD_Right:
+				SIf.Par.eRotationDirection := E_TURN_DIRECTION.RIGHT;
+				me.StateMachine.intStateNext := cSTA_RUNBusy;
+			BASE_PLC.cCMD_STOP:
+				me.StateMachine.intStateNext := BASE_PLC.cSTA_STOPBusy;
+			BASE_PLC.cCMD_RUN:
+				me.StateMachine.intStateNext := cSTA_RUNBusy;
+		END_CASE
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_EOFFbusy" Id="{a0e681a9-b1a0-4235-80d7-2d11be64d287}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_EOFFbusy : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	cmd_MotorOff();
+END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+	IF (TRUE) THEN
+		me.StateMachine.intStateNext := BASE_PLC.cSTA_EOFF;
+	END_IF
+END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+	;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="FB_init" Id="{a745ae60-38a1-42bf-9cab-5742f75b9766}">
+      <Declaration><![CDATA[METHOD FB_init : BOOL
+VAR_INPUT
+	bInitRetains : BOOL; // if TRUE, the retain variables are initialized (warm start / cold start)
+	bInCopyCode : BOOL;  // if TRUE, the instance afterwards gets moved into the copy code (online change)
+END_VAR
+VAR
+	iIdx		: UINT;
+	iLength		: UINT;	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
+// to manually change in new FUB implementation!!!
+// define valid commands for this controller
+iLength := SIZEOF(CIf.Job.aCmdList)/SIZEOF(CIf.Job.aCmdList[0]);
+iIdx := 0;
+
+WHILE (iIdx < iLength) AND (CIf.Job.aCmdList[iIdx].intCmd <> cCMD_INITIALIZED) DO
+	iIdx := iIdx + 1; 
+END_WHILE
+
+IF (iIdx < iLength) THEN
+// Add configuration of own comands	
+	CIf.Job.aCmdList[iIdx].intCmd := BASE_PLC.cCMD_STOP;
+	CIf.Job.aCmdList[iIdx].strName := 'Stop'; 
+	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
+	iIdx := iIdx + 1;
+	CIf.Job.aCmdList[iIdx].intCmd := cCMD_RUN;
+	CIf.Job.aCmdList[iIdx].strName := 'Run'; 
+	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
+	iIdx := iIdx + 1;
+	CIf.Job.aCmdList[iIdx].intCmd := cCMD_LEFT;
+	CIf.Job.aCmdList[iIdx].strName := 'Left'; 
+	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
+	iIdx := iIdx + 1;
+	CIf.Job.aCmdList[iIdx].intCmd := cCMD_RIGHT;
+	CIf.Job.aCmdList[iIdx].strName := 'Right'; 
+	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
+	iIdx := iIdx + 1;
+ELSE
+	;// Error if the aCmdList Array is to small
+END_IF
+
+// set name of class/typ
+CIf.Info.strType := 'FB_UMC'; 
+
+// set alarm class
+SIf.Alm[E_ALM_UMC.MotorOnTimeout].eAlmClass := Base_PLC.E_AlmClass.TSTOP;
+SIf.Alm[E_ALM_UMC.MotorOnTimeout].strText := 'Motor On Timeout'; 
+SIf.Alm[E_ALM_UMC.MotorError].eAlmClass := Base_PLC.E_AlmClass.TSTOP;
+SIf.Alm[E_ALM_UMC.MotorError].strText := 'Motor Error';
+SIf.Alm[E_ALM_UMC.MotorWarning].eAlmClass := Base_PLC.E_AlmClass.WARNING;
+SIf.Alm[E_ALM_UMC.MotorWarning].strText := 'Motor Warning';
+SIf.Alm[E_ALM_UMC.MotorOverCurrent].eAlmClass := Base_PLC.E_AlmClass.WARNING;
+SIf.Alm[E_ALM_UMC.MotorOverCurrent].strText := 'Motor Over Current';
+SIf.Alm[E_ALM_UMC.MotorNotReady].eAlmClass := Base_PLC.E_AlmClass.TSTOP;
+SIf.Alm[E_ALM_UMC.MotorNotReady].strText := 'Motor Not Ready';
+SIf.Alm[E_ALM_UMC.DirectionParameterOverflow].eAlmClass := Base_PLC.E_AlmClass.TSTOP;
+SIf.Alm[E_ALM_UMC.DirectionParameterOverflow].strText := 'Direction Parameter Overflow';
+SIf.Alm[E_ALM_UMC.SpeedOverLimit].eAlmClass := Base_PLC.E_AlmClass.WARNING;
+SIf.Alm[E_ALM_UMC.SpeedOverLimit].strText := 'Motor Setpoint over the limit';
+
+//*******************************************************************************
+// initial values
+//*******************************************************************************
+
+// software configuration
+CIf.SwCfg.bolExist := TRUE;
+CIf.SwCfg.bolEnable := TRUE;
+CIf.SwCfg.bolSimulation := FALSE;
+
+// configuration
+SIf.Cfg.uinLC11 := 1500;
+SIf.Cfg.uinLC11_100 := 16384;
+SIf.Cfg.uinMaxSpeed := 150;
+
+// parameter
+SIf.Par.udiStartupOnTime_ms := 5000;
+SIf.Par.udiMotorOnTime_ms 	:= 10000;
+SIf.Par.uinSpeed_rpm 		:= 1000;
+SIf.Par.uinMotorResetPulseTime_ms	:= 500;
+SIf.Par.uinMotorResetCnt 		:= 3;
+SIf.Par.udiMoveStartLatency 	:= 15;
+SIf.Par.udiMoveStopLatency 		:= 60;
+SIf.Par.eRotationDirection  := E_TURN_DIRECTION.LEFT;
+
+SIf.Par.udiSimMotorOnTime_ms := SIf.Par.udiMotorOnTime_ms / 10;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getCtrlSIf" Id="{acb56b64-0a6e-4c07-93ae-4c4905c668b4}">
+      <Declaration><![CDATA[METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_UMC
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="StateMachine" Id="{b02dbe36-1201-40e8-9b9c-9bb09d9c998c}">
+      <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.StateMachine();
+
+// main statemachine of base controller
+CASE me.StateMachine.intState OF
+	cSTA_RUNBusy:
+		THIS^.sta_RUNBusy();
+	cSTA_RUN:
+		THIS^.sta_RUN();
+	cSTA_STOPBusy: 
+        THIS^.sta_STOPBusy();
+    cSTA_STOP: 
+        THIS^.sta_STOP();
+	UMC_CmdState.cSTA_RESETMOTORERROR:
+		THIS^.sta_RESETMOTORERROR();
+	UMC_CmdState.cSTA_SETOPERATIONMODE:
+		THIS^.sta_SETOPERATIONMODE();
+END_CASE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_STOPBusy" Id="{b55f6f1f-e285-4e9b-87d3-20b9bd30135c}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_STOPBusy : BOOL
+VAR
+	uniStatus 		: U_UMC_Lenze_Status;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		// Switch Motor Off
+		cmd_MotorStop();
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		IF (CIf.SwCfg.bolSimulation) THEN
+			SIf.In.uinMotorSetSpeed.intern 	:= 0;
+			SIf.In.intMotorActualSpeed.intern 	:= 0;
+			uniStatus.Input 				:= 0;
+			uniStatus.Data.ActSpeedIsZero	:= TRUE;
+			SIf.In.uinStatus.intern 		:= uniStatus.Input;
+		END_IF
+
+		IF (me.StateMachine.udiTimeInState_ms < SIf.Par.udiMotorOnTime_ms) THEN
+			IF (NOT In_unStatus.Data.Trouble) AND (In_unStatus.Data.ActSpeedIsZero) THEN
+				me.StateMachine.intStateNext := Base_PLC.cSTA_STOP;
+			END_IF;	
+		ELSE
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_UMC.MotorError),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;	
+		END_IF
+END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		Out_unControl.Data.ResetFault := FALSE;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CycleEndDuty" Id="{be820387-c131-49cd-8a3e-ec5c466b2768}">
+      <Declaration><![CDATA[METHOD PROTECTED CycleEndDuty : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SIf.Out.uinControl.intern := Out_unControl.Output;
+
+SUPER^.CycleEndDuty();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_RESETMOTORERROR" Id="{c4bd1966-3b93-4b08-9e75-20f93b303fe1}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_RESETMOTORERROR : BOOL
+VAR
+	eMotorStatus	: E_UMC_MOTOR_STATUS;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		cmd_MotorReset();
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		eMotorStatus := GetMotorStatus(sif.In.uinStatus.intern);
+
+		IF me.SubStateMachine.udiTimeInState_ms > SIf.Par.uinMotorResetPulseTime_ms THEN
+			SIf.Cur.uinMotorResetCnt := SIf.Cur.uinMotorResetCnt + 1;
+			me.StateMachine.intStateNext := BASE_PLC.cSTA_OFFBusy;
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		Out_unControl.Data.ResetFault := FALSE;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="sta_RUN" Id="{ca1f6dc3-8b4a-4f81-a2ec-bc79c70cea58}">
       <Declaration><![CDATA[METHOD PROTECTED sta_RUN : BOOL
 VAR
@@ -808,37 +907,92 @@ END_IF
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="CtrlInit" Id="{3d6278bc-4119-4d76-a46c-9220dc78a04c}">
-      <Declaration><![CDATA[METHOD PROTECTED CtrlInit : BOOL
-VAR_INPUT
+    <Method Name="IoOutBridge" Id="{d1f368f7-6114-4b3a-a3b7-893a4112fcc7}">
+      <Declaration><![CDATA[METHOD PROTECTED IoOutBridge : BOOL
+VAR
+	bolSwitchValvesOff: BOOL;
 END_VAR
+
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[SUPER^.CtrlInit();
+        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
+IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+	BASE_PLC.setOutUint(CIf.Job.bolIoForce ,ADR(SIf.Out.uinControl));
+	BASE_PLC.setOutUint(CIf.Job.bolIoForce ,ADR(SIf.Out.uinSpeedSetpoint));
 
-arTurnDirection[E_TURN_DIRECTION.AUTOMATIC] := FALSE;
-arTurnDirection[E_TURN_DIRECTION.LEFT] 		:= FALSE;
-arTurnDirection[E_TURN_DIRECTION.RIGHT] 	:= TRUE;
-
-SIf.Cur.uinSpeedLimit := SIf.Cfg.uinMaxSpeed * SIf.Cfg.uinLC11_100 / 100;
-]]></ST>
+	THIS^.Out_uinControl			:= SIf.Out.uinControl.map	;
+	THIS^.Out_uinSpeedSetpoint		:= SIf.Out.uinSpeedSetpoint.map	;
+END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="GetSpeedValue" Id="{8377784a-78d3-4660-ba1c-318606b30ca3}">
-      <Declaration><![CDATA[METHOD PROTECTED GetSpeedValue : UINT
+    <Method Name="sta_OFFBusy" Id="{d535dac6-29f0-4c66-a808-4d4fa368fe03}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_OFFBusy : BOOL
 VAR
-	uinSpeedOutput			: UINT;
+	uinECatStatus	: UINT;
+	eMotorStatus	: E_UMC_MOTOR_STATUS;
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[uinSpeedOutput := SIf.Par.uinSpeed_rpm * SIf.Cfg.uinLC11_100 / SIf.Cfg.uinLC11;
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		cmd_MotorOff();
+	END_IF
 
-IF uinSpeedOutput > SIf.Cur.uinSpeedLimit THEN
-	uinSpeedOutput := SIf.Cur.uinSpeedLimit;
-	pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_UMC.SpeedOverLimit),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		eMotorStatus := GetMotorStatus(sif.In.uinStatus.intern);
+		uinECatStatus := In_uinECATState AND cEtherCAT_MODE_MASK;
+
+		IF    (uinECatStatus = cEtherCAT_OP_MODE)
+		  AND NOT In_unStatus.Data.Trouble 
+		  AND In_unStatus.Data.ActSpeedIsZero
+		  AND (eMotorStatus = E_UMC_MOTOR_STATUS.ReadyToSwitchON) THEN
+			me.StateMachine.intStateNext := Base_PLC.cSTA_OFF;
+		ELSIF (CIf.SwCfg.bolSimulation = TRUE) THEN	// Do not set operation mode in simulation
+			me.StateMachine.intStateNext := BASE_PLC.cSTA_OFF;
+		ELSE
+			IF me.StateMachine.udiTimeInState_ms > SIf.Par.uinMotorResetPulseTime_ms THEN
+				IF SIf.Cur.uinMotorResetCnt > SIf.Par.uinMotorResetCnt THEN
+					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_UMC.MotorError),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+					me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;	
+				ELSE
+					me.StateMachine.intStateNext := UMC_CmdState.cSTA_SETOPERATIONMODE;
+				END_IF
+			END_IF
+		END_IF
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="IoInBridge" Id="{e96c8918-614f-4a10-b14d-7ccad3e92fa6}">
+      <Declaration><![CDATA[METHOD PROTECTED IoInBridge : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
+SIf.In.uinStatus.map			:= THIS^.In_uinStatus				;
+SIf.In.intMotorActualSpeed.map	:= THIS^.In_intMotorActualSpeed	;
+SIf.In.uinMotorSetSpeed.map		:= THIS^.In_uinMotorSetSpeed		;
+SIf.In.bolEmoOk.map				:= THIS^.In_bolEmoOk		;
+
+IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+	BASE_PLC.getInUint(CIf.Job.bolIoForce,ADR(SIf.In.uinStatus));
+	BASE_PLC.getInUint(CIf.Job.bolIoForce,ADR(SIf.In.intMotorActualSpeed));
+	BASE_PLC.getInUint(CIf.Job.bolIoForce,ADR(SIf.In.uinMotorSetSpeed));
+	BASE_PLC.getInUint(CIf.Job.bolIoForce,ADR(SIf.In.bolEmoOk));
+ELSE
+	//simulation of global IO
 END_IF
-
-GetSpeedValue := uinSpeedOutput;]]></ST>
+]]></ST>
       </Implementation>
     </Method>
     <Method Name="cmd_MotorReset" Id="{efe6cd65-958e-40ee-a863-1c37135f956e}">
@@ -852,40 +1006,9 @@ Out_unControl.Data.ResetFault 		:= 1;
 ]]></ST>
       </Implementation>
     </Method>
-    <Method Name="GetMotorStatus" Id="{79c8cc2d-da91-4664-bef0-d7010296b689}">
-      <Declaration><![CDATA[METHOD PROTECTED GetMotorStatus : E_UMC_MOTOR_STATUS
+    <Method Name="sta_STOP" Id="{fabf4a40-db3a-455c-9e73-b959fe6544f7}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_STOP : BOOL
 VAR_INPUT
-	uinMotorStatus		: UINT;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[uinMotorStatus := uinMotorStatus AND 16#0F00;
-uinMotorStatus := SHR(uinMotorStatus,8);
-GetMotorStatus := UINT_TO_INT(uinMotorStatus);]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="cmd_MotorStop" Id="{152850e5-84a6-4d14-9e9c-c0b18ab6dc05}">
-      <Declaration><![CDATA[METHOD PROTECTED cmd_MotorStop : BOOL
-VAR_INPUT
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[Out_unControl.Output 				:= 0;
-Out_unControl.Data.SetDCBreak 		:= 1;
-Out_unControl.Data.SetHalt        	:= 1;
-Out_unControl.Data.SetQuickStop    	:= 1;]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_SETOPERATIONMODE" Id="{6e71e2b6-44ba-4353-ae18-ab8e79f0c705}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_SETOPERATIONMODE : BOOL
-VAR
-	uinECatStatus		: UINT;
-
-	fbEcReqSlaveState 	: FB_EcReqSlaveState;
-	bExecute        	: BOOL;
-	uinReqState     	: WORD := EC_DEVICE_STATE_OP;
-	bError          	: BOOL;
-	nErrId          	: UDINT;
 END_VAR
 ]]></Declaration>
       <Implementation>
@@ -894,100 +1017,25 @@ END_VAR
 // Entry action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
 	END_IF
 
 
 //--------------------------------------------------------------------------------------
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		bExecute := NOT ((In_uinECATState AND cEtherCAT_MODE_MASK) = cEtherCAT_OP_MODE);
-
-		IF NOT bExecute THEN
-			me.StateMachine.intStateNext := UMC_CmdState.cSTA_RESETMOTORERROR;
-		END_IF
-
-		fbEcReqSlaveState(
-			sNetId		:= F_CreateAmsNetId(In_strNetId), 
-			nSlaveAddr	:= In_uintPort, 
-			bExecute	:= bExecute, 
-			state		:= uinReqState  );
-
-		IF (me.StateMachine.udiTimeInState_ms > SIf.Par.udiStartupOnTime_ms) THEN
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_UMC.MotorError),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;	
-		END_IF
-END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		Out_unControl.Data.ResetFault := FALSE;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_RESETMOTORERROR" Id="{c4bd1966-3b93-4b08-9e75-20f93b303fe1}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_RESETMOTORERROR : BOOL
-VAR
-	eMotorStatus	: E_UMC_MOTOR_STATUS;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		cmd_MotorReset();
+		CASE me.intCmd OF
+			cCMD_Left:
+				SIf.Par.eRotationDirection := E_TURN_DIRECTION.LEFT;
+				me.StateMachine.intStateNext := cSTA_RUNBusy;
+			cCMD_Right:
+				SIf.Par.eRotationDirection := E_TURN_DIRECTION.RIGHT;
+				me.StateMachine.intStateNext := cSTA_RUNBusy;
+			BASE_PLC.cCMD_RUN:
+				me.StateMachine.intStateNext := cSTA_RUNBusy;
+		END_CASE
 	END_IF
 
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		eMotorStatus := GetMotorStatus(sif.In.uinStatus.intern);
-
-		IF me.SubStateMachine.udiTimeInState_ms > SIf.Par.uinMotorResetPulseTime_ms THEN
-			SIf.Cur.uinMotorResetCnt := SIf.Cur.uinMotorResetCnt + 1;
-			me.StateMachine.intStateNext := BASE_PLC.cSTA_OFFBusy;
-		END_IF
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		Out_unControl.Data.ResetFault := FALSE;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_EOFF" Id="{517d1816-ab01-4702-9554-90bf346088dc}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_EOFF : BOOL
-VAR_INPUT
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;	
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN		
-		// As long as the EMO is not reseted!
-		IF SIf.In.bolEmoOk.intern THEN
-			me.StateMachine.intStateNext := BASE_PLC.cSTA_OFFBusy;			
-		ELSE
-			IF me.intCmd <> BASE_PLC.cCMD_OFF THEN
-				// Clear pending and new commands cyclic to prevent automatic recovery!	
-				CIf.Job.intACmd := BASE_PLC.cCMD_DONE;
-				CIf.Job.intMCmd := BASE_PLC.cCMD_DONE;		
-			END_IF
-		END_IF
-	END_IF
 
 //--------------------------------------------------------------------------------------
 // Exit action
@@ -996,54 +1044,6 @@ END_VAR
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_EOFFbusy" Id="{a0e681a9-b1a0-4235-80d7-2d11be64d287}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_EOFFbusy : BOOL
-VAR_INPUT
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-	cmd_MotorOff();
-END_IF
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-	IF (TRUE) THEN
-		me.StateMachine.intStateNext := BASE_PLC.cSTA_EOFF;
-	END_IF
-END_IF
-
-//--------------------------------------------------------------------------------------
-// Exit action
-IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-	;
-END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Property Name="CtrlSIf" Id="{647335bc-e279-4764-9976-06282d07dd64}">
-      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_UMC]]></Declaration>
-      <Get Name="Get" Id="{00c3feb1-2e98-444a-b023-2a28f641132d}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
-        </Implementation>
-      </Get>
-      <Set Name="Set" Id="{73ee206d-060a-4c20-94b1-47268f2dbfb6}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[]]></ST>
-        </Implementation>
-      </Set>
-    </Property>
     <ObjectProperties>﻿<XmlArchive>
   <Data>
     <o xml:space="preserve" t="POUImageProperty">
