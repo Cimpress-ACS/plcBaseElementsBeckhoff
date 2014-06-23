@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
   <POU Name="FB_CtrlModule" Id="{93bcbc09-e224-4f3b-9fe5-ea80da832953}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_CtrlModule EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -104,186 +104,51 @@ IF (me.bolActivate) AND (SIf_MOD.Cur<>0) AND (SIf_MOD.Cfg<>0) AND (SIf_MOD.Par<>
 END_IF;
 ]]></ST>
     </Implementation>
-    <Method Name="sta_RUNBusy" Id="{459b0430-9f25-4ebc-ba23-68dcaa75419d}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_RUNBusy : BOOL
-VAR
-	ii: INT;
-	bolFurtherGrpExist: BOOL;
+    <Method Name="IoOutBridge" Id="{0547fd7b-a1af-4009-8ecb-2ef72dd56f49}">
+      <Declaration><![CDATA[METHOD PROTECTED IoOutBridge : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
+IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+	// check interlocks to prevent damages
+	IF (CIf.Job.bolIlkOverwrite=FALSE) THEN
+	;
+	END_IF
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getCmdState" Id="{12fc8a53-4b7a-4d57-b5d7-3d215ebc1d8b}">
+      <Declaration><![CDATA[METHOD PROTECTED getCmdState : STRING
+VAR_INPUT
+	intCmdState: INT;
+	bolState: BOOL;
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		// Init sub state machine
-		me.SubStateMachine.intState := cSTA_SUB_INITIALIZED; 
-		me.SubStateMachine.intStateNext := cSTA_SUB_INITIALIZED;
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-
-		// Simulation
-		IF (CIf.SwCfg.bolSimulation) THEN
-			;
-		END_IF
+        <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
+IF (getCmdState='') THEN // global not defined get local
+	// get string cmd/state string information in runtime
+	IF (bolState=FALSE) THEN
+		// cmd's
+	ELSE
 	
-		// Start Cycle with substates	
-		//--------------------------------------------------------------------------------------
-		// sub state machine for sequence
-		CASE me.SubStateMachine.intState OF
-			//--------------------------------------------------------------------------------------
+	// cmd's
+		CASE intCmdState OF	
+			// SUB States
 			cSTA_SUB_INITIALIZED:
-			
-				// Loop over all registered childs
-				FOR ii:=0 TO usiNumOfSeq-1 BY 1 DO
-					// Clear checked flag		
-					aListOfSeq[ii].bolChecked:= FALSE;
-				END_FOR
-				uinGroupIndex:= 1;
-				me.SubStateMachine.intStateNext := cSTA_SUB_SEND_GROUP_CMD;
-				
+				getCmdState := 'cSTA_SUB_INITIALIZED';
 			cSTA_SUB_SEND_GROUP_CMD:
-				
-				intCheckCounter:= 0;
-				// Loop over all registered childs
-				FOR ii:=0 TO usiNumOfSeq-1 BY 1 DO
-					// If child is associated for the current group index		
-					IF (aListOfSeq[ii].uinGroupRun = uinGroupIndex) THEN
-						// Send defined command
-						aListOfSeq[ii].pCIF^.Job.intACmd:= aListOfSeq[ii].intCmdSeqRun;
-						intCheckCounter:= intCheckCounter + 1;
-					END_IF			
-				END_FOR
-				// Change state
-				me.SubStateMachine.intStateNext := cSTA_SUB_CHECK_GROUP_STATUS;
-			
-			
+				getCmdState := 'cSTA_SUB_SEND_GROUP_CMD';
 			cSTA_SUB_CHECK_GROUP_STATUS:
-	
-				// Loop over all registered childs
-				FOR ii:=0 TO usiNumOfSeq-1 BY 1 DO
-					// If child is associated for the current group index		
-					IF (aListOfSeq[ii].uinGroupRun = uinGroupIndex) THEN
-						// Check defined status and if child not already checked
-						IF (((aListOfSeq[ii].pCIF^.Job.intState = aListOfSeq[ii].intStatusSeqRun) OR 
-						(aListOfSeq[ii].pCIF^.Job.intState = aListOfSeq[ii].intStatusSeqRun2)) AND (aListOfSeq[ii].bolChecked = FALSE)) THEN
-							aListOfSeq[ii].bolChecked:= TRUE;
-							intCheckCounter:= intCheckCounter - 1;
-						END_IF				
-					END_IF			
-				END_FOR
-				
-				// All childs in group has the right state
-				IF (intCheckCounter <= 0) THEN		
-					bolFurtherGrpExist:= FALSE;
-					// Check if a further group exist!	
-					FOR ii:=0 TO usiNumOfSeq-1 BY 1 DO	
-						IF (aListOfSeq[ii].uinGroupRun > uinGroupIndex) THEN
-							bolFurtherGrpExist:= TRUE;
-							EXIT;
-						END_IF			
-					END_FOR
-					// further group exist
-					IF (bolFurtherGrpExist = TRUE) THEN
-						IF (uinGroupIndex < uinMaxNrOfGroups) THEN			
-							me.SubStateMachine.intStateNext := cSTA_SUB_WAIT;	
-						END_IF
-					ELSE
-						me.SubStateMachine.intStateNext := cSTA_SUB_FINISHED;		
-					END_IF
-				END_IF
-
+				getCmdState := 'cSTA_SUB_CHECK_GROUP_STATUS';
 			cSTA_SUB_WAIT:
-				
-				IF (me.SubStateMachine.udiTimeInState_ms >= SIf_Par^.aListOfRunGrpWaitTime_ms[uinGroupIndex-1]) THEN
-					// Inc. group index 
-					uinGroupIndex:= uinGroupIndex + 1;	
-					// Change state, send command for next group
-					me.SubStateMachine.intStateNext := cSTA_SUB_SEND_GROUP_CMD;
-				END_IF
-			
+				getCmdState := 'cSTA_SUB_WAIT';
 			cSTA_SUB_FINISHED:
-					;		
-		END_CASE
-		
-		// Check time out error
-		IF (me.SubStateMachine.udiTimeInState_ms > (SIf_Par^.aListOfRunGrpWaitTime_ms[uinGroupIndex-1] + 30000)) THEN
-			// SIf_MOD.Alm[5].strText := 'Timeout start group '; 
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,5,uinGroupIndex,ADR(SIf_MOD.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-		END_IF
-		
-		// State Change Condition
-		IF (me.SubStateMachine.intState = cSTA_SUB_FINISHED) THEN
-			me.StateMachine.intStateNext := cSTA_RUN;
-		ELSIF (me.intCmd=cCMD_STOP) THEN
-			me.StateMachine.intStateNext :=  cSTA_STOPBusy;	
-		END_IF
+				getCmdState := 'cSTA_SUB_FINISHED';
+		END_CASE;
 	END_IF
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
+END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
-    </Method>
-    <Method Name="CtrlInit" Id="{7a0ac12c-cff4-4e9e-8849-3ec85fb70fac}">
-      <Declaration><![CDATA[METHOD PROTECTED CtrlInit : BOOL
-VAR
-	ii: INT;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[SUPER^.CtrlInit();
-
-// Initialize all child controller
-// Childs are listed in list of sequences
-FOR ii:=0 TO usiNumOfSeq-1 BY 1 DO	
-	aListOfSeq[ii].pCIF := THIS^.AddChild(aListOfSeq[ii].pChild^);
-END_FOR]]></ST>
-      </Implementation>
-      <ObjectProperties />
-    </Method>
-    <Method Name="sta_RUN" Id="{2b57d42b-4072-44ef-bdb5-a7ee1dbac08c}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_RUN : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		;
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-
-		// Simulation
-		IF (CIf.SwCfg.bolSimulation) THEN
-			;
-		END_IF
-
-		// State Change Condition	
-		IF (me.intCmd=cCMD_STOP)  THEN
-			me.StateMachine.intStateNext :=  cSTA_STOPBusy;	
-		END_IF
-
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="Always" Id="{2b2066c4-4e8e-4805-ad8b-8de49b1882dd}">
       <Declaration><![CDATA[METHOD PROTECTED Always : BOOL
@@ -396,7 +261,406 @@ IF (me.Alarm.eActivAlmClass=E_AlmClass.STOP) AND (me.StateMachine.intStateNext<>
 END_IF
 ]]></ST>
       </Implementation>
-      <ObjectProperties />
+    </Method>
+    <Method Name="sta_RUN" Id="{2b57d42b-4072-44ef-bdb5-a7ee1dbac08c}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_RUN : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		;
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			;
+		END_IF
+
+		// State Change Condition	
+		IF (me.intCmd=cCMD_STOP)  THEN
+			me.StateMachine.intStateNext :=  cSTA_STOPBusy;	
+		END_IF
+
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_OFF" Id="{3750f796-76b8-4174-8fb8-c3e13e87b7c5}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		;		
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+				
+		// State Change Condition
+		IF (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.Alarm.eActivAlmClass<>E_AlmClass.OFF) THEN
+			IF (me.intCmd=cCMD_RUN) THEN 
+				me.StateMachine.intStateNext := cSTA_RUNBusy;
+			END_IF
+		END_IF
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_EOFFBusy" Id="{43926500-8b3f-40d9-9943-c6ef440eaefb}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_EOFFBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		// In case of an emergency, set all childs to off 
+		// Set in cyclic action because of possible errors or manual/auto changes!
+		SUPER^.SetAllChildCmd(BASE_PLC.cCMD_OFF);
+
+		// check if all childs have reached the state
+		IF CheckAllChildState(cSTA_OFF) THEN
+			me.StateMachine.intStateNext := cSTA_EOFF;
+		END_IF
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_STOP" Id="{44340596-81ec-4934-a2c3-05ad5626426e}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_STOP : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;	
+		// State Change Condition
+		IF (me.Alarm.eActivAlmClass<>E_AlmClass.STOP) THEN
+			IF (me.intCmd=cCMD_RUN) THEN
+				me.StateMachine.intStateNext :=  cSTA_RUNBusy;
+			END_IF
+		END_IF
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_RUNBusy" Id="{459b0430-9f25-4ebc-ba23-68dcaa75419d}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_RUNBusy : BOOL
+VAR
+	ii: INT;
+	bolFurtherGrpExist: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		// Init sub state machine
+		me.SubStateMachine.intState := cSTA_SUB_INITIALIZED; 
+		me.SubStateMachine.intStateNext := cSTA_SUB_INITIALIZED;
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			;
+		END_IF
+	
+		// Start Cycle with substates	
+		//--------------------------------------------------------------------------------------
+		// sub state machine for sequence
+		CASE me.SubStateMachine.intState OF
+			//--------------------------------------------------------------------------------------
+			cSTA_SUB_INITIALIZED:
+			
+				// Loop over all registered childs
+				FOR ii:=0 TO usiNumOfSeq-1 BY 1 DO
+					// Clear checked flag		
+					aListOfSeq[ii].bolChecked:= FALSE;
+				END_FOR
+				uinGroupIndex:= 1;
+				me.SubStateMachine.intStateNext := cSTA_SUB_SEND_GROUP_CMD;
+				
+			cSTA_SUB_SEND_GROUP_CMD:
+				
+				intCheckCounter:= 0;
+				// Loop over all registered childs
+				FOR ii:=0 TO usiNumOfSeq-1 BY 1 DO
+					// If child is associated for the current group index		
+					IF (aListOfSeq[ii].uinGroupRun = uinGroupIndex) THEN
+						// Send defined command
+						aListOfSeq[ii].pCIF^.Job.intACmd:= aListOfSeq[ii].intCmdSeqRun;
+						intCheckCounter:= intCheckCounter + 1;
+					END_IF			
+				END_FOR
+				// Change state
+				me.SubStateMachine.intStateNext := cSTA_SUB_CHECK_GROUP_STATUS;
+			
+			
+			cSTA_SUB_CHECK_GROUP_STATUS:
+	
+				// Loop over all registered childs
+				FOR ii:=0 TO usiNumOfSeq-1 BY 1 DO
+					// If child is associated for the current group index		
+					IF (aListOfSeq[ii].uinGroupRun = uinGroupIndex) THEN
+						// Check defined status and if child not already checked
+						IF (((aListOfSeq[ii].pCIF^.Job.intState = aListOfSeq[ii].intStatusSeqRun) OR 
+						(aListOfSeq[ii].pCIF^.Job.intState = aListOfSeq[ii].intStatusSeqRun2)) AND (aListOfSeq[ii].bolChecked = FALSE)) THEN
+							aListOfSeq[ii].bolChecked:= TRUE;
+							intCheckCounter:= intCheckCounter - 1;
+						END_IF				
+					END_IF			
+				END_FOR
+				
+				// All childs in group has the right state
+				IF (intCheckCounter <= 0) THEN		
+					bolFurtherGrpExist:= FALSE;
+					// Check if a further group exist!	
+					FOR ii:=0 TO usiNumOfSeq-1 BY 1 DO	
+						IF (aListOfSeq[ii].uinGroupRun > uinGroupIndex) THEN
+							bolFurtherGrpExist:= TRUE;
+							EXIT;
+						END_IF			
+					END_FOR
+					// further group exist
+					IF (bolFurtherGrpExist = TRUE) THEN
+						IF (uinGroupIndex < uinMaxNrOfGroups) THEN			
+							me.SubStateMachine.intStateNext := cSTA_SUB_WAIT;	
+						END_IF
+					ELSE
+						me.SubStateMachine.intStateNext := cSTA_SUB_FINISHED;		
+					END_IF
+				END_IF
+
+			cSTA_SUB_WAIT:
+				
+				IF (me.SubStateMachine.udiTimeInState_ms >= SIf_Par^.aListOfRunGrpWaitTime_ms[uinGroupIndex-1]) THEN
+					// Inc. group index 
+					uinGroupIndex:= uinGroupIndex + 1;	
+					// Change state, send command for next group
+					me.SubStateMachine.intStateNext := cSTA_SUB_SEND_GROUP_CMD;
+				END_IF
+			
+			cSTA_SUB_FINISHED:
+					;		
+		END_CASE
+		
+		// Check time out error
+		IF (SIf_MOD.Par^.udiTimeoutStarting_ms <> 0) AND (me.SubStateMachine.udiTimeInState_ms > (SIf_Par^.aListOfRunGrpWaitTime_ms[uinGroupIndex-1] + SIf_MOD.Par^.udiTimeoutStarting_ms)) THEN
+			// SIf_MOD.Alm[5].strText := 'Timeout start group '; 
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,5,uinGroupIndex,ADR(SIf_MOD.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+		END_IF
+		
+		// State Change Condition
+		IF (me.SubStateMachine.intState = cSTA_SUB_FINISHED) THEN
+			me.StateMachine.intStateNext := cSTA_RUN;
+		ELSIF (me.intCmd=cCMD_STOP) THEN
+			me.StateMachine.intStateNext :=  cSTA_STOPBusy;	
+		END_IF
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CtrlInit" Id="{7a0ac12c-cff4-4e9e-8849-3ec85fb70fac}">
+      <Declaration><![CDATA[METHOD PROTECTED CtrlInit : BOOL
+VAR
+	ii: INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.CtrlInit();
+
+// Initialize all child controller
+// Childs are listed in list of sequences
+FOR ii:=0 TO usiNumOfSeq-1 BY 1 DO	
+	aListOfSeq[ii].pCIF := THIS^.AddChild(aListOfSeq[ii].pChild^);
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_EOFF" Id="{7a7e2512-7c7d-4cf3-97d1-a6e983988ed7}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_EOFF : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;	
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN		
+		
+		// As long as the EMO is not reseted!
+		IF NOT (SIf_In^.bolEmergencyOffOk.intern) THEN
+			// Clear pending and new commands cyclic to prevent automatic recovery!
+			CIf.Job.intACmd := BASE_PLC.cCMD_DONE;
+			CIf.Job.intMCmd := BASE_PLC.cCMD_DONE;
+		END_IF
+	
+		// State Change Condition
+		IF (SIf_In^.bolEmergencyOffOk.intern) AND (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.intCmd<>BASE_PLC.cCMD_EOFF) AND (me.intCmd<>BASE_PLC.cCMD_DONE) THEN
+			me.StateMachine.intStateNext := cSTA_OFF;
+		END_IF
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="checkValidPointer" Id="{7bc44136-2728-423e-a49d-d06c4040b9ac}">
+      <Declaration><![CDATA[METHOD PROTECTED checkValidPointer : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF (usiNumOfSeq = usiNumOfValidPointerSeqChild) AND (SIf_Cfg<>0) AND (SIf_Par<>0) AND (SIf_Cur<>0) AND (SIf_In<>0) THEN
+	checkValidPointer:= TRUE;
+ELSE
+	// Invalid child pointer
+	checkValidPointer:= FALSE;	
+	// SIf.Alm[1].strText := 'Invalid pointer'; 
+	pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,1,0,ADR(SIf_MOD.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);	
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="AddIBufferFullChilds" Id="{7bcb42ec-0ed0-4411-889a-451df2a9d0ed}">
+      <Declaration><![CDATA[METHOD AddIBufferFullChilds
+VAR_INPUT
+	pFB_ChildTypeIBuffer: POINTER TO FB_IBuffer;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Method add childs with BufferFull information to the array
+IF (usiNumOfIBufferFullChild <= (Base_Const.cMaxNrOfChilds-1)) THEN
+	// Add child controller to list
+	a_IBufferFullChildCtrl[usiNumOfIBufferFullChild] := pFB_ChildTypeIBuffer^;
+
+	// Inc. number of IBufferFull childs
+	usiNumOfIBufferFullChild:= usiNumOfIBufferFullChild+1;
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="SIf_Cur" Id="{7c2240cf-17ab-4950-a777-bd60151c9f81}">
+      <Declaration><![CDATA[PROPERTY SIf_Cur : POINTER TO T_Ctrl_SIf_MOD_Cur
+]]></Declaration>
+      <Set Name="Set" Id="{aec5c1a4-65f2-404c-8954-9252443dd039}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[SIf_MOD.Cur := SIf_Cur; ]]></ST>
+        </Implementation>
+      </Set>
+      <Get Name="Get" Id="{b3d9c14f-7bba-46aa-8d01-2c4134f173fd}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[SIf_Cur:= SIf_MOD.Cur; ]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="IoInBridge" Id="{95c556ec-c88e-4a00-9f2f-5c4a543adc13}">
+      <Declaration><![CDATA[METHOD PROTECTED IoInBridge : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Inputs from global module for general supervision (no physical inputs)
+SIf_In^.bolEmergencyOffOk.map := THIS^.In_bolEmergencyOffOk;
+SIf_In^.bolNoGeneralError.map := THIS^.In_bolNoGeneralError;
+
+IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+	getInBol(CIf.Job.bolIoForce,ADR(SIf_In^.bolEmergencyOffOk));
+	getInBol(CIf.Job.bolIoForce,ADR(SIf_In^.bolNoGeneralError));
+ELSE
+	//simulation of global IO
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="AddSeqChild" Id="{a0025313-0b7e-4dba-80b1-83806b0c4ebe}">
+      <Declaration><![CDATA[METHOD AddSeqChild
+VAR_INPUT
+	stSequence: T_Sequence;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Method add a sequence to list
+IF (usiNumOfSeq <= (Base_Const.cMaxNrOfChilds-1)) THEN
+	aListOfSeq[usiNumOfSeq].pChild:= stSequence.pChild;
+	aListOfSeq[usiNumOfSeq].uinGroupRun:= stSequence.uinGroupRun;
+	aListOfSeq[usiNumOfSeq].uinGroupStop:= stSequence.uinGroupStop;
+	aListOfSeq[usiNumOfSeq].intCmdSeqRun:= stSequence.intCmdSeqRun;
+	aListOfSeq[usiNumOfSeq].intStatusSeqRun:= stSequence.intStatusSeqRun;
+	aListOfSeq[usiNumOfSeq].intStatusSeqRun2:= stSequence.intStatusSeqRun2;
+	aListOfSeq[usiNumOfSeq].intCmdSeqStop:= stSequence.intCmdSeqStop;
+	aListOfSeq[usiNumOfSeq].intStatusSeqStop:= stSequence.intStatusSeqStop;
+	// Inc. number of sequence
+	usiNumOfSeq:= usiNumOfSeq+1;
+	// Check if the pointer is valid
+	IF (stSequence.pChild<>0) THEN
+		usiNumOfValidPointerSeqChild:= usiNumOfValidPointerSeqChild+1;
+	END_IF
+END_IF]]></ST>
+      </Implementation>
     </Method>
     <Method Name="sta_STOPBusy" Id="{b4344b3d-9889-41b7-a53d-b3ca5d0bce3a}">
       <Declaration><![CDATA[METHOD PROTECTED sta_STOPBusy : BOOL
@@ -505,7 +769,7 @@ END_VAR
 		END_CASE
 		
 		// Check time out error
-		IF (me.SubStateMachine.udiTimeInState_ms > (SIf_Par^.aListOfStopGrpWaitTime_ms[uinGroupIndex-1] + SIf_MOD.Par^.udiTimeoutStopping_ms)) THEN
+		IF (SIf_MOD.Par^.udiTimeoutStopping_ms <> 0) AND (me.SubStateMachine.udiTimeInState_ms > (SIf_Par^.aListOfStopGrpWaitTime_ms[uinGroupIndex-1] + SIf_MOD.Par^.udiTimeoutStopping_ms)) THEN
 			// SIf_MOD.Alm[6].strText := 'Timeout stop group '; 
 			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,6,uinGroupIndex,ADR(SIf_MOD.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 		END_IF
@@ -531,42 +795,23 @@ END_VAR
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
-    <Method Name="sta_STOP" Id="{44340596-81ec-4934-a2c3-05ad5626426e}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_STOP : BOOL
+    <Property Name="SIf_Par" Id="{b5260abe-a3fb-44c5-b308-7b394f794cb8}">
+      <Declaration><![CDATA[PROPERTY SIf_Par : POINTER TO T_Ctrl_SIf_MOD_Par
 ]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		;	
-		// State Change Condition
-		IF (me.Alarm.eActivAlmClass<>E_AlmClass.STOP) THEN
-			IF (me.intCmd=cCMD_RUN) THEN
-				me.StateMachine.intStateNext :=  cSTA_RUNBusy;
-			END_IF
-		END_IF
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-      <ObjectProperties />
-    </Method>
+      <Set Name="Set" Id="{1ab8c3a9-59cf-4579-8f81-7e3553ee6144}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[SIf_MOD.Par := SIf_Par; ]]></ST>
+        </Implementation>
+      </Set>
+      <Get Name="Get" Id="{fbeb4499-4f6e-48f1-8396-50521ce2dda3}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[SIf_Par:= SIf_MOD.Par; ]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Method Name="FB_init" Id="{ba738ca1-fd3b-440c-bfd2-18e244ab5591}">
       <Declaration><![CDATA[METHOD FB_init : BOOL
 VAR_INPUT
@@ -626,90 +871,43 @@ CIf.SwCfg.bolSimulation := FALSE;
 // No initialization for cfg and par in this base module!
 // Pointer address of the property is not defined at this time]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
-    <Method Name="getCmdState" Id="{12fc8a53-4b7a-4d57-b5d7-3d215ebc1d8b}">
-      <Declaration><![CDATA[METHOD PROTECTED getCmdState : STRING
+    <Method Name="AddIBufferChilds" Id="{bc49a60a-0556-4ce3-b7de-195ad0ea1e2e}">
+      <Declaration><![CDATA[METHOD AddIBufferChilds
 VAR_INPUT
-	intCmdState: INT;
-	bolState: BOOL;
+	pFB_ChildTypeIBuffer: POINTER TO FB_IBuffer;
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
-IF (getCmdState='') THEN // global not defined get local
-	// get string cmd/state string information in runtime
-	IF (bolState=FALSE) THEN
-		// cmd's
-	ELSE
-	
-	// cmd's
-		CASE intCmdState OF	
-			// SUB States
-			cSTA_SUB_INITIALIZED:
-				getCmdState := 'cSTA_SUB_INITIALIZED';
-			cSTA_SUB_SEND_GROUP_CMD:
-				getCmdState := 'cSTA_SUB_SEND_GROUP_CMD';
-			cSTA_SUB_CHECK_GROUP_STATUS:
-				getCmdState := 'cSTA_SUB_CHECK_GROUP_STATUS';
-			cSTA_SUB_WAIT:
-				getCmdState := 'cSTA_SUB_WAIT';
-			cSTA_SUB_FINISHED:
-				getCmdState := 'cSTA_SUB_FINISHED';
-		END_CASE;
-	END_IF
-END_IF]]></ST>
+        <ST><![CDATA[// Method add childs with type of IBuffer to the array
+IF (usiNumOfIBufferChild <= (Base_Const.cMaxNrOfChilds-1)) THEN
+	// Add child controller to list
+	a_IBufferChildCtrl[usiNumOfIBufferChild] := pFB_ChildTypeIBuffer^;
+	// Inc. number of IBuffer childs
+	usiNumOfIBufferChild:= usiNumOfIBufferChild+1;
+END_IF
+
+]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
-    <Method Name="IoInBridge" Id="{95c556ec-c88e-4a00-9f2f-5c4a543adc13}">
-      <Declaration><![CDATA[METHOD PROTECTED IoInBridge : BOOL
+    <Method Name="StateMachine" Id="{c244d7e5-c41f-489f-97da-65b69148df4b}">
+      <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Inputs from global module for general supervision (no physical inputs)
-SIf_In^.bolEmergencyOffOk.map := THIS^.In_bolEmergencyOffOk;
-SIf_In^.bolNoGeneralError.map := THIS^.In_bolNoGeneralError;
+        <ST><![CDATA[SUPER^.StateMachine();
 
-IF (CIf.SwCfg.bolSimulation = FALSE) THEN
-	getInBol(CIf.Job.bolIoForce,ADR(SIf_In^.bolEmergencyOffOk));
-	getInBol(CIf.Job.bolIoForce,ADR(SIf_In^.bolNoGeneralError));
-ELSE
-	//simulation of global IO
-END_IF]]></ST>
+// main statemachine of base controller
+CASE me.StateMachine.intState OF
+	cSTA_RUN: 
+        THIS^.sta_RUN();
+    cSTA_RUNBusy: 
+        THIS^.sta_RUNBusy();
+	cSTA_STOP: 
+        THIS^.sta_STOP();
+    cSTA_STOPBusy: 
+        THIS^.sta_STOPBusy();
+END_CASE;]]></ST>
       </Implementation>
-      <ObjectProperties />
-    </Method>
-    <Method Name="sta_OFF" Id="{3750f796-76b8-4174-8fb8-c3e13e87b7c5}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		;		
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-				
-		// State Change Condition
-		IF (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.Alarm.eActivAlmClass<>E_AlmClass.OFF) THEN
-			IF (me.intCmd=cCMD_RUN) THEN 
-				me.StateMachine.intStateNext := cSTA_RUNBusy;
-			END_IF
-		END_IF
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="checkChildAlmClass" Id="{cbf90ddf-9131-406d-b67f-19452c240e46}">
       <Declaration><![CDATA[METHOD checkChildAlmClass : BOOL
@@ -750,172 +948,23 @@ ELSE
 	SetAllChildAlmClass(E_AlmClass.NONE);
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
-    <Method Name="StateMachine" Id="{c244d7e5-c41f-489f-97da-65b69148df4b}">
-      <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL
+    <Property Name="SIf_In" Id="{d26d3890-71df-445f-a1ed-19dc5bb456a2}">
+      <Declaration><![CDATA[PROPERTY SIf_In : POINTER TO T_Ctrl_SIf_MOD_In
 ]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[SUPER^.StateMachine();
-
-// main statemachine of base controller
-CASE me.StateMachine.intState OF
-	cSTA_RUN: 
-        THIS^.sta_RUN();
-    cSTA_RUNBusy: 
-        THIS^.sta_RUNBusy();
-	cSTA_STOP: 
-        THIS^.sta_STOP();
-    cSTA_STOPBusy: 
-        THIS^.sta_STOPBusy();
-END_CASE;]]></ST>
-      </Implementation>
-      <ObjectProperties />
-    </Method>
-    <Method Name="IoOutBridge" Id="{0547fd7b-a1af-4009-8ecb-2ef72dd56f49}">
-      <Declaration><![CDATA[METHOD PROTECTED IoOutBridge : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
-IF (CIf.SwCfg.bolSimulation = FALSE) THEN
-	// check interlocks to prevent damages
-	IF (CIf.Job.bolIlkOverwrite=FALSE) THEN
-	;
-	END_IF
-END_IF]]></ST>
-      </Implementation>
-      <ObjectProperties />
-    </Method>
-    <Method Name="sta_EOFFBusy" Id="{43926500-8b3f-40d9-9943-c6ef440eaefb}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_EOFFBusy : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		// In case of an emergency, set all childs to off 
-		// Set in cyclic action because of possible errors or manual/auto changes!
-		SUPER^.SetAllChildCmd(BASE_PLC.cCMD_OFF);
-
-		// check if all childs have reached the state
-		IF CheckAllChildState(cSTA_OFF) THEN
-			me.StateMachine.intStateNext := cSTA_EOFF;
-		END_IF
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-      <ObjectProperties />
-    </Method>
-    <Method Name="sta_EOFF" Id="{7a7e2512-7c7d-4cf3-97d1-a6e983988ed7}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_EOFF : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;	
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN		
-		
-		// As long as the EMO is not reseted!
-		IF NOT (SIf_In^.bolEmergencyOffOk.intern) THEN
-			// Clear pending and new commands cyclic to prevent automatic recovery!
-			CIf.Job.intACmd := BASE_PLC.cCMD_DONE;
-			CIf.Job.intMCmd := BASE_PLC.cCMD_DONE;
-		END_IF
-	
-		// State Change Condition
-		IF (SIf_In^.bolEmergencyOffOk.intern) AND (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.intCmd<>BASE_PLC.cCMD_EOFF) AND (me.intCmd<>BASE_PLC.cCMD_DONE) THEN
-			me.StateMachine.intStateNext := cSTA_OFF;
-		END_IF
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-      <ObjectProperties />
-    </Method>
-    <Method Name="AddSeqChild" Id="{a0025313-0b7e-4dba-80b1-83806b0c4ebe}">
-      <Declaration><![CDATA[METHOD AddSeqChild
-VAR_INPUT
-	stSequence: T_Sequence;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// Method add a sequence to list
-IF (usiNumOfSeq <= (Base_Const.cMaxNrOfChilds-1)) THEN
-	aListOfSeq[usiNumOfSeq].pChild:= stSequence.pChild;
-	aListOfSeq[usiNumOfSeq].uinGroupRun:= stSequence.uinGroupRun;
-	aListOfSeq[usiNumOfSeq].uinGroupStop:= stSequence.uinGroupStop;
-	aListOfSeq[usiNumOfSeq].intCmdSeqRun:= stSequence.intCmdSeqRun;
-	aListOfSeq[usiNumOfSeq].intStatusSeqRun:= stSequence.intStatusSeqRun;
-	aListOfSeq[usiNumOfSeq].intStatusSeqRun2:= stSequence.intStatusSeqRun2;
-	aListOfSeq[usiNumOfSeq].intCmdSeqStop:= stSequence.intCmdSeqStop;
-	aListOfSeq[usiNumOfSeq].intStatusSeqStop:= stSequence.intStatusSeqStop;
-	// Inc. number of sequence
-	usiNumOfSeq:= usiNumOfSeq+1;
-	// Check if the pointer is valid
-	IF (stSequence.pChild<>0) THEN
-		usiNumOfValidPointerSeqChild:= usiNumOfValidPointerSeqChild+1;
-	END_IF
-END_IF]]></ST>
-      </Implementation>
-      <ObjectProperties />
-    </Method>
-    <Method Name="checkValidPointer" Id="{7bc44136-2728-423e-a49d-d06c4040b9ac}">
-      <Declaration><![CDATA[METHOD PROTECTED checkValidPointer : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[IF (usiNumOfSeq = usiNumOfValidPointerSeqChild) AND (SIf_Cfg<>0) AND (SIf_Par<>0) AND (SIf_Cur<>0) AND (SIf_In<>0) THEN
-	checkValidPointer:= TRUE;
-ELSE
-	// Invalid child pointer
-	checkValidPointer:= FALSE;	
-	// SIf.Alm[1].strText := 'Invalid pointer'; 
-	pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,1,0,ADR(SIf_MOD.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);	
-END_IF]]></ST>
-      </Implementation>
-      <ObjectProperties />
-    </Method>
-    <Method Name="AddIBufferChilds" Id="{bc49a60a-0556-4ce3-b7de-195ad0ea1e2e}">
-      <Declaration><![CDATA[METHOD AddIBufferChilds
-VAR_INPUT
-	pFB_ChildTypeIBuffer: POINTER TO FB_IBuffer;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// Method add childs with type of IBuffer to the array
-IF (usiNumOfIBufferChild <= (Base_Const.cMaxNrOfChilds-1)) THEN
-	// Add child controller to list
-	a_IBufferChildCtrl[usiNumOfIBufferChild] := pFB_ChildTypeIBuffer^;
-	// Inc. number of IBuffer childs
-	usiNumOfIBufferChild:= usiNumOfIBufferChild+1;
-END_IF
-
-]]></ST>
-      </Implementation>
-      <ObjectProperties />
-    </Method>
+      <Get Name="Get" Id="{3f320967-e01c-4cc5-bd23-c76f74f30200}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[SIf_In:= SIf_MOD.In; ]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{df5e93ad-1f33-4a9c-9d7e-8c01075973b1}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[SIf_MOD.In := SIf_In;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
     <Method Name="sta_ERROR" Id="{ebaa0d20-3483-464b-84fb-8ac6d1d7c3da}">
       <Declaration><![CDATA[METHOD PROTECTED sta_ERROR : BOOL
 ]]></Declaration>
@@ -949,103 +998,22 @@ END_IF
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
-    <Method Name="AddIBufferFullChilds" Id="{7bcb42ec-0ed0-4411-889a-451df2a9d0ed}">
-      <Declaration><![CDATA[METHOD AddIBufferFullChilds
-VAR_INPUT
-	pFB_ChildTypeIBuffer: POINTER TO FB_IBuffer;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// Method add childs with BufferFull information to the array
-IF (usiNumOfIBufferFullChild <= (Base_Const.cMaxNrOfChilds-1)) THEN
-	// Add child controller to list
-	a_IBufferFullChildCtrl[usiNumOfIBufferFullChild] := pFB_ChildTypeIBuffer^;
-
-	// Inc. number of IBufferFull childs
-	usiNumOfIBufferFullChild:= usiNumOfIBufferFullChild+1;
-END_IF
-
-]]></ST>
-      </Implementation>
-      <ObjectProperties />
-    </Method>
-    <Property Name="SIf_Cur" Id="{7c2240cf-17ab-4950-a777-bd60151c9f81}">
-      <Declaration><![CDATA[PROPERTY SIf_Cur : POINTER TO T_Ctrl_SIf_MOD_Cur
-]]></Declaration>
-      <Get Name="Get" Id="{b3d9c14f-7bba-46aa-8d01-2c4134f173fd}">
-        <Declaration><![CDATA[]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[SIf_Cur:= SIf_MOD.Cur; ]]></ST>
-        </Implementation>
-        <ObjectProperties />
-      </Get>
-      <Set Name="Set" Id="{aec5c1a4-65f2-404c-8954-9252443dd039}">
-        <Declaration><![CDATA[]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[SIf_MOD.Cur := SIf_Cur; ]]></ST>
-        </Implementation>
-        <ObjectProperties />
-      </Set>
-      <ObjectProperties />
-    </Property>
-    <Property Name="SIf_Par" Id="{b5260abe-a3fb-44c5-b308-7b394f794cb8}">
-      <Declaration><![CDATA[PROPERTY SIf_Par : POINTER TO T_Ctrl_SIf_MOD_Par
-]]></Declaration>
-      <Get Name="Get" Id="{fbeb4499-4f6e-48f1-8396-50521ce2dda3}">
-        <Declaration><![CDATA[]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[SIf_Par:= SIf_MOD.Par; ]]></ST>
-        </Implementation>
-        <ObjectProperties />
-      </Get>
-      <Set Name="Set" Id="{1ab8c3a9-59cf-4579-8f81-7e3553ee6144}">
-        <Declaration><![CDATA[]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[SIf_MOD.Par := SIf_Par; ]]></ST>
-        </Implementation>
-        <ObjectProperties />
-      </Set>
-      <ObjectProperties />
-    </Property>
     <Property Name="SIf_Cfg" Id="{fb07488b-af83-408e-8562-7c3d8ca56d51}">
       <Declaration><![CDATA[PROPERTY SIf_Cfg : POINTER TO T_Ctrl_SIf_MOD_Cfg
 ]]></Declaration>
-      <Get Name="Get" Id="{75166a48-64be-437e-86b7-4f03b090070a}">
-        <Declaration><![CDATA[]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[SIf_Cfg:= SIf_MOD.Cfg; ]]></ST>
-        </Implementation>
-        <ObjectProperties />
-      </Get>
       <Set Name="Set" Id="{4bdf2cf0-a872-4baa-946c-e48205769e7f}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>
           <ST><![CDATA[SIf_MOD.Cfg := SIf_Cfg;]]></ST>
         </Implementation>
-        <ObjectProperties />
       </Set>
-      <ObjectProperties />
-    </Property>
-    <Property Name="SIf_In" Id="{d26d3890-71df-445f-a1ed-19dc5bb456a2}">
-      <Declaration><![CDATA[PROPERTY SIf_In : POINTER TO T_Ctrl_SIf_MOD_In
-]]></Declaration>
-      <Get Name="Get" Id="{3f320967-e01c-4cc5-bd23-c76f74f30200}">
+      <Get Name="Get" Id="{75166a48-64be-437e-86b7-4f03b090070a}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>
-          <ST><![CDATA[SIf_In:= SIf_MOD.In; ]]></ST>
+          <ST><![CDATA[SIf_Cfg:= SIf_MOD.Cfg; ]]></ST>
         </Implementation>
-        <ObjectProperties />
       </Get>
-      <Set Name="Set" Id="{df5e93ad-1f33-4a9c-9d7e-8c01075973b1}">
-        <Declaration><![CDATA[]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[SIf_MOD.In := SIf_In;]]></ST>
-        </Implementation>
-        <ObjectProperties />
-      </Set>
-      <ObjectProperties />
     </Property>
     <ObjectProperties />
   </POU>
