@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.1.13</ProjectVersion>
+    <ProjectVersion>0.0.1.14</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.1.13 - Changes in timeout handling BaseCtrlModule. Inserted new parameter  udiTimeoutStarting_ms. TO handling can now switched off with value 0.
+    <Description>0.0.1.13 - Added new BaseConcept Lib
+0.0.1.13 - Changes in timeout handling BaseCtrlModule. Inserted new parameter  udiTimeoutStarting_ms. TO handling can now switched off with value 0.
 0.0.1.12 - Added new base_class
 0.0.1.11 - Bugfix in UMC
 0.0.1.10 - SGT added
@@ -557,7 +558,7 @@
     <Folder Include="Version\" />
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_PLC,0.3.4.6,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.4.7,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_EtherCAT,3.3.2.0,Beckhoff Automation GmbH">
