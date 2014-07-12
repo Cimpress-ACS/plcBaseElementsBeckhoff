@@ -1,19 +1,21 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
   <DUT Name="T_Ctrl_SIf_DRV_Cfg" Id="{ce2b772f-6806-43c7-885e-2b1df2756389}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_DRV_Cfg :
 STRUCT
-	/// Type of drive
+	// Type of drive
 	eTyp: E_Typ_DRV;
-	/// Distance per pulse	
+	// Distance per pulse	
 	dinDistPerPulse_um: DINT;
-	/// Has Variable Speed	
+	// Has Variable Speed	
 	bolSpeedVariable: BOOL;
-	/// Has Pulse signal for position and speed calculation
+	// Has Pulse signal for position and speed calculation
 	bolPulseExist: BOOL;
-	/// Number of blocked supervision inputs
+	// Number of blocked supervision inputs
 	usiCountBlockedSupervis: USINT;
-	/// [um] PinDistance
+	// [um] PinDistance
 	dinPinDistance_um: DINT;
+	// Enable Maintenace Switch
+	bolEnableMaintenaceSwitch: BOOL;	
 END_STRUCT
 END_TYPE
 ]]></Declaration>

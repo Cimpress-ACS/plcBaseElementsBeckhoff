@@ -15,9 +15,9 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.1.15</ProjectVersion>
+    <ProjectVersion>0.0.1.16</ProjectVersion>
     <Released>True</Released>
-    <Description>
+    <Description>0.0.1.16 - Add Maintenance Switch to DRV
 0.0.1.15 - Added new BaseConcept Lib V0.3.4.8
 0.0.1.14 - Added new BaseConcept Lib
 0.0.1.13 - Changes in timeout handling BaseCtrlModule. Inserted new parameter  udiTimeoutStarting_ms. TO handling can now switched off with value 0.
@@ -560,9 +560,6 @@
     <Folder Include="Version\" />
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_Elements,0.0.1.15,Vistaprint">
-      <Namespace>Base_Elements</Namespace>
-    </LibraryReference>
     <LibraryReference Include="Base_PLC,0.3.4.8,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
