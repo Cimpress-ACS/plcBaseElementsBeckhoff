@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.24">
+  <DUT Name="E_DCH_Error" Id="{693b422a-fc73-4b04-a80b-f439b311a822}">
+    <Declaration><![CDATA[TYPE E_DCH_Error :
+(
+	None,
+	Unknown,
+	MAX_E_DCH_Error
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.24">
+  <DUT Name="T_ItemBase" Id="{b5a427be-c530-4a2a-8ad0-00efe1ab06b8}">
+    <Declaration><![CDATA[{attribute 'enable_dynamic_creation'}
+//{attribute 'pack_mode' := '1'}
+TYPE T_ItemBase :
+STRUCT
+	// Item Empty
+	bolItemAvailable			: BOOL;
+	
+	// Actual Status of the item.
+	eHealth						: E_ItemHealth 		:= E_ItemHealth.Healthy;
+	
+	// Actual Position
+	uinModuleId					: UINT;
+	uinActualPosition			: UINT;
+	
+	dtStartTimeStamp			: TC2_UTILITIES.TIMESTRUCT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

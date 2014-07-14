@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.24">
+  <DUT Name="E_ItemHealth" Id="{a04bd89a-5f0a-44b6-b745-8ca96b66d496}">
+    <Declaration><![CDATA[TYPE E_ItemHealth :
+(
+	Healthy,							// 0
+	Ovn_Temperature,					// 1
+	Ovn_Time,							// 2
+	Ovn_Lost,							// 3
+	Hpm_Time,							// 4
+	Hpm_Pressure,						// 5
+	Hpm_Temperature,					// 6
+	Hpm_Lost,							// 7
+	Hpm_Unknown,						// 8
+	Failed,								// 9
+	Lost,								// 10	- Item is lost somewhere	
+	MAX_E_ItemHealth
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

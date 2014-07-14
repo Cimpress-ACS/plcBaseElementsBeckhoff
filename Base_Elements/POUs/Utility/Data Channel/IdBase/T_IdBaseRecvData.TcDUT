@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.24">
+  <DUT Name="T_IdBaseRecvData" Id="{aff936a4-2ae8-4f43-8b62-67ad925d4736}">
+    <Declaration><![CDATA[TYPE T_IdBaseRecvData :
+STRUCT
+	fbDataChannel						: FB_IdBaseRecvDch;
+	rDataChannelItem					: T_IdBase_DCH;
+	fbFifo								: FB_DataChannelRecvFifo;
+	rFifoItem							: T_IdBase_DCH;
+	aFifoBuffer							: ARRAY [0..cRECVDATACHANNELBUFFER-1] OF T_IdBase_DCH;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

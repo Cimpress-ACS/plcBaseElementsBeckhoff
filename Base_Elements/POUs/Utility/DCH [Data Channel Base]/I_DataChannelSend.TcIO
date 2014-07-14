@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.24">
+  <Itf Name="I_DataChannelSend" Id="{5539de53-6dc5-487b-bfc7-a1283d83412b}">
+    <Declaration><![CDATA[INTERFACE I_DataChannelSend
+]]></Declaration>
+    <Method Name="InitChannel" Id="{0319d644-2b7d-4b63-a417-d706bff53490}">
+      <Declaration><![CDATA[METHOD InitChannel : BOOL
+VAR_INPUT
+	udiDataSize					: UDINT;
+	pOutputData					: POINTER TO BYTE;
+END_VAR
+]]></Declaration>
+    </Method>
+    <Property Name="Busy" Id="{1bd077a1-38f5-4100-9bf3-c6787a3f187b}">
+      <Declaration><![CDATA[PROPERTY Busy : BOOL]]></Declaration>
+      <Get Name="Get" Id="{6280c2aa-9d85-4fc7-9214-5f2d0ddb2a1f}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Method Name="SendData" Id="{638304de-8262-4ff3-987c-939aefa4a86b}">
+      <Declaration><![CDATA[METHOD SendData : BOOL
+VAR_INPUT
+	udiDataSize				: UDINT;
+	pData					: POINTER TO BYTE;
+END_VAR
+]]></Declaration>
+    </Method>
+    <Property Name="Error" Id="{6f742098-ee49-406f-a697-a6cabe4e3792}">
+      <Declaration><![CDATA[PROPERTY Error : INT]]></Declaration>
+      <Get Name="Get" Id="{13050c71-9f03-4e8f-a528-210f44361c72}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+      <Set Name="Set" Id="{b2fcd1db-361b-45f2-84c7-e00b2521252d}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Set>
+    </Property>
+    <Property Name="DataSize" Id="{bdecb10b-4f0f-45f9-b95b-b08bac46b49f}">
+      <Declaration><![CDATA[PROPERTY DataSize : UDINT]]></Declaration>
+      <Get Name="Get" Id="{529a721d-3f62-4e24-9e54-e53cf5c27ea2}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+      </Get>
+    </Property>
+    <ObjectProperties />
+  </Itf>
+</TcPlcObject>

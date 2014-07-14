@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
   <DUT Name="T_Ctrl_SIf_DRV" Id="{07da16fd-3a67-480c-b261-60d0823538be}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_DRV :
 STRUCT
@@ -13,7 +13,7 @@ STRUCT
 	///io output
 	Out: T_Ctrl_SIf_DRV_Out;
 	///alarm number used in this controller
-	Alm: ARRAY[1..5] OF T_Ctrl_Alm;
+	Alm: ARRAY[1..4] OF T_Ctrl_Alm;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

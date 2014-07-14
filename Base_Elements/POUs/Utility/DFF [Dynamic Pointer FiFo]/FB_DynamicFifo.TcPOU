@@ -1,0 +1,160 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.24">
+  <POU Name="FB_DynamicFifo" Id="{f27d39c1-113a-47a6-9db4-c8ab9e6388da}">
+    <Declaration><![CDATA[FUNCTION_BLOCK PUBLIC FB_DynamicFifo
+VAR
+	// Configuration
+	m_bFreeDataPointer		: BOOL;
+	// Internal Variables
+	m_uinItemCount			: UINT;																	// Actual Count of the elements in the buffer
+	m_pFirstElement			: POINTER TO T_QueueBase;												// Index of the first added element
+	m_pLastElement			: POINTER TO T_QueueBase;												// Index of the last added element
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="Peek" Id="{22b1cd76-9fab-457a-81a4-14d43d3e3f35}">
+      <Declaration><![CDATA[METHOD PUBLIC Peek : POINTER TO BYTE
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Peek := TC3_MEMMAN.NULL;
+
+IF m_uinItemCount > 0 THEN
+	Peek := m_pFirstElement^.pData;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Push" Id="{46c600f8-f5f6-43a7-9d34-1fb8304212fa}">
+      <Declaration><![CDATA[METHOD PUBLIC Push : INT
+VAR_INPUT
+	pData			: POINTER TO BYTE;
+END_VAR
+VAR
+	pItem			: POINTER TO T_QueueBase;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[pItem := __NEW(T_QueueBase);
+pItem^.pData := pData;
+
+IF m_uinItemCount = 0 THEN
+	m_pFirstElement := pItem;
+	m_pLastElement  := pItem;
+	pItem^.pNext := TC3_MEMMAN.NULL;
+	pItem^.pPrevious := TC3_MEMMAN.NULL;
+ELSE
+	m_pLastElement^.pNext:= pItem;
+	pItem^.pPrevious := m_pLastElement;
+	pItem^.pNext := TC3_MEMMAN.NULL;
+	m_pLastElement  := pItem;
+END_IF
+
+m_uinItemCount := m_uinItemCount + 1;
+
+Push := UINT_TO_INT(m_uinItemCount);
+]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="ItemCount" Id="{50880a54-55d5-47ce-b045-6ccdd19244cf}">
+      <Declaration><![CDATA[PROPERTY PUBLIC ItemCount : UINT]]></Declaration>
+      <Get Name="Get" Id="{b4d8c58a-1cb4-437a-aa8b-472da875019b}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[ItemCount := m_uinItemCount;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="FreeDataPointer" Id="{5a102a22-ba95-4608-9694-5bea83568fa7}">
+      <Declaration><![CDATA[PROPERTY PUBLIC FreeDataPointer : BOOL]]></Declaration>
+      <Get Name="Get" Id="{1bd5bdd9-a76c-4cb7-a1ee-db457e0d9223}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[FreeDataPointer := m_bFreeDataPointer;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{c4aabca2-9280-48f7-8221-088e8c03575f}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[m_bFreeDataPointer := FreeDataPointer;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Method Name="ClearFifo" Id="{7028f6c0-5974-47cb-bee4-709a5373c5a6}">
+      <Declaration><![CDATA[METHOD PUBLIC ClearFifo : BOOL
+VAR
+	pItem		: POINTER TO T_QueueBase;
+	pNextItem	: POINTER TO T_QueueBase;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[pItem := m_pFirstElement;
+
+WHILE pItem <> TC3_MEMMAN.NULL DO
+	pNextItem := pItem^.pNext;
+	
+	IF m_bFreeDataPointer THEN
+		__DELETE(pItem^.pData);
+	END_IF
+	
+	__DELETE(pItem);
+	pItem := pNextItem;
+END_WHILE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Pop" Id="{f1903d8e-0a1e-428b-b6d5-81af0b30889d}">
+      <Declaration><![CDATA[METHOD PUBLIC Pop : POINTER TO BYTE
+VAR
+	pItem			: POINTER TO T_QueueBase;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Pop := TC3_MEMMAN.NULL;
+
+IF m_uinItemCount > 0 THEN
+	pItem := m_pFirstElement;
+	
+	m_pFirstElement := m_pFirstElement^.pNext;
+
+	IF m_pFirstElement <> TC3_MEMMAN.NULL THEN
+		m_pFirstElement^.pPrevious := TC3_MEMMAN.NULL;
+	ELSE
+		m_pLastElement := TC3_MEMMAN.NULL;
+	END_IF
+
+	m_uinItemCount := m_uinItemCount - 1;
+
+	Pop := pItem^.pData;
+	__DELETE(pItem);
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <ObjectProperties>
+      <XmlArchive>
+        <Data>
+          <o xml:space="preserve" t="POUImageProperty">
+            <n n="ImageData" />
+            <v n="TransparencyColor">"White"</v>
+            <v n="MakeTransparent">false</v>
+          </o>
+        </Data>
+        <TypeList>
+          <Type n="Boolean">System.Boolean</Type>
+          <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
+          <Type n="String">System.String</Type>
+        </TypeList>
+      </XmlArchive>
+    </ObjectProperties>
+  </POU>
+</TcPlcObject>

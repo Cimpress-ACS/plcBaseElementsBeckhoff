@@ -1,0 +1,150 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.24">
+  <POU Name="FB_DataChannelSendBase" Id="{9523e3a4-20f8-4207-8f1d-72baba0bba8b}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_DataChannelSendBase IMPLEMENTS I_DataChannelSend
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR CONSTANT
+	cMAX_DATACHANNEL_ITEM_SIZE				: UINT := 200;
+	cMAX_RETRY								: INT := 10;
+	cDataState_DONE							: INT := -1;
+	cDataState_Ready						: INT := 1;
+	cDataState_Retry						: INT := -99;
+	cDataState_Error						: INT := -100;
+END_VAR
+VAR
+// Saber Inteface Variables
+// -----------------------------------------------------------------
+	m_uinDataSize				: UDINT;
+//	m_pOutputData				: POINTER TO T_IdBase_DCH;
+	m_iDchConfirm				: INT;	
+
+// Local Variables
+// -----------------------------------------------------------------
+	m_eState					: E_PlcSaberDHCState  := E_PlcSaberDHCState.Init;
+	m_eError					: E_DCH_Error;
+	m_intCountRetry				: INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE m_eState OF
+	E_PlcSaberDHCState.Init:
+		m_eError := E_DCH_Error.None;
+		m_eState := E_PlcSaberDHCState.WaitForJob;
+		m_iDchConfirm := cDataState_DONE;
+		
+	E_PlcSaberDHCState.WaitForJob:
+		;  // SendData is needed to go out of this state
+		
+	E_PlcSaberDHCState.SendData:
+		m_iDchConfirm := cDataState_Ready;
+		m_eState := E_PlcSaberDHCState.Acknowledge;
+		
+	E_PlcSaberDHCState.Acknowledge:
+		CASE m_iDchConfirm OF
+			cDataState_DONE:
+				m_iDchConfirm := cDataState_DONE;
+				m_eState := E_PlcSaberDHCState.WaitForJob;
+			cDataState_Retry:
+				m_eState := E_PlcSaberDHCState.Retry;
+			cDataState_Error:	
+				m_eState := E_PlcSaberDHCState.Error;
+		END_CASE
+		
+	E_PlcSaberDHCState.Retry:
+		IF m_intCountRetry < cMAX_RETRY THEN
+			m_intCountRetry := m_intCountRetry + 1;
+			m_eState := E_PlcSaberDHCState.SendData;
+		ELSE
+			m_eState := E_PlcSaberDHCState.Error;
+		END_IF
+	E_PlcSaberDHCState.Error:
+		m_eError := E_DCH_Error.Unknown;
+		m_eState := E_PlcSaberDHCState.WaitForJob;
+END_CASE]]></ST>
+    </Implementation>
+    <Property Name="Busy" Id="{1b1aeece-0d6d-41a7-badf-d20e3189b79d}">
+      <Declaration><![CDATA[PROPERTY Busy : BOOL
+]]></Declaration>
+      <Get Name="Get" Id="{16a57303-015f-4e30-9e73-8f4dffd85132}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Busy := m_eState <> E_PlcSaberDHCState.WaitForJob;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="DataSize" Id="{2866ceb4-3b84-4c57-aa04-dbe0dcf0d314}">
+      <Declaration><![CDATA[PROPERTY DataSize : UDINT
+]]></Declaration>
+      <Get Name="Get" Id="{50acaabb-06ac-46a2-a262-51fa7e2f4346}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[DataSize := m_uinDataSize;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="SendData" Id="{29948777-29ad-4999-9bb6-e9691e8bf850}">
+      <Declaration><![CDATA[METHOD SendData : BOOL
+VAR_INPUT
+	udiDataSize	: UDINT;
+	pData	: POINTER TO BYTE;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="InitChannel" Id="{8a0e3275-b357-4184-83d8-77f06b709e17}">
+      <Declaration><![CDATA[METHOD InitChannel : BOOL
+VAR_INPUT
+	udiDataSize	: UDINT;
+	pOutputData	: POINTER TO BYTE;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="Error" Id="{d8b58388-fbc8-4d7c-809b-0f59579e1801}">
+      <Declaration><![CDATA[PROPERTY PUBLIC Error : INT]]></Declaration>
+      <Get Name="Get" Id="{c1b618fc-480d-432d-9f00-541daa4feacf}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Error := m_eError;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{cb024371-8a2c-48a4-9179-8c8cdf759d62}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <ObjectProperties>
+      <XmlArchive>
+        <Data>
+          <o xml:space="preserve" t="POUImageProperty">
+            <n n="ImageData" />
+            <v n="TransparencyColor">"White"</v>
+            <v n="MakeTransparent">false</v>
+          </o>
+        </Data>
+        <TypeList>
+          <Type n="Boolean">System.Boolean</Type>
+          <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
+          <Type n="String">System.String</Type>
+        </TypeList>
+      </XmlArchive>
+    </ObjectProperties>
+  </POU>
+</TcPlcObject>

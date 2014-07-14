@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.24">
+  <DUT Name="E_Destination" Id="{68cd0b97-d771-42fd-a06d-0b95e803d339}">
+    <Declaration><![CDATA[TYPE E_Destination :
+(
+	StackerA,
+	StackerB,
+	StackerC,
+	Garbage,
+	MAX_E_Destination
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

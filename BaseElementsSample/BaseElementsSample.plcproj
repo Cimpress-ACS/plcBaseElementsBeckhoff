@@ -60,7 +60,7 @@
     <Folder Include="POUs\Utility Functions\" />
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_Elements,0.0.1.16,Vistaprint">
+    <LibraryReference Include="Base_Elements,0.0.1.15,Vistaprint">
       <Namespace>Base_Elements</Namespace>
     </LibraryReference>
     <LibraryReference Include="Base_PLC,0.3.4.8,Vistaprint">
