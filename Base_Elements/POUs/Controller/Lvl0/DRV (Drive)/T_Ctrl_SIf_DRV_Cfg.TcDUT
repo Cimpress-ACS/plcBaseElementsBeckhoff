@@ -1,5 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_DRV_Cfg" Id="{ce2b772f-6806-43c7-885e-2b1df2756389}">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_Ctrl_SIf_DRV_Cfg" Id="{bce6612a-fe0b-49d8-9e8e-9e023c034430}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_DRV_Cfg :
 STRUCT
 	/// Type of drive
@@ -14,6 +14,8 @@ STRUCT
 	usiCountBlockedSupervis: USINT;
 	/// [um] PinDistance
 	dinPinDistance_um: DINT;
+	/// Enable Maintenace Switch
+	bolEnableMaintenaceSwitch: BOOL;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

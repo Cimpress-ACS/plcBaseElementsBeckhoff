@@ -1,5 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="E_Typ_DRV" Id="{d2ce3fb0-5cb9-4b9a-a8da-a43f08b83d4b}">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="E_Typ_DRV" Id="{e428a6b9-6d5f-44be-983a-f52fb9e97335}">
     <Declaration><![CDATA[TYPE E_Typ_DRV :
 (
 	None := 0,

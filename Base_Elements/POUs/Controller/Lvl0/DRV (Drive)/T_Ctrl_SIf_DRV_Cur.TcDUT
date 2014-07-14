@@ -1,5 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_DRV_Cur" Id="{aadc6204-19c8-4256-ac0c-012b3881bc5f}">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_Ctrl_SIf_DRV_Cur" Id="{b0dc7119-59e8-48da-a345-efe3289e0ff2}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_DRV_Cur :
 STRUCT
 	dinPulseCounter: DINT;

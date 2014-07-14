@@ -1,10 +1,11 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <POU Name="FB_DRV" Id="{0608deb6-6173-4434-9b72-4b6d17e0c080}">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <POU Name="FB_DRV" Id="{a09ebb54-dbb7-4b29-b322-5e52fbbdee8c}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_DRV EXTENDS FB_CtrlBase
 VAR_INPUT
 	In_bolOverload: BOOL;
 	In_bolPulse: BOOL;
 	In_a_bolBlockedSupvervis: ARRAY[1..cMAX_BLOCKED_SUP] OF BOOL;
+	In_bolMaintenanceSwitch: BOOL;
 END_VAR
 VAR_OUTPUT
 	Out_bolSpeed_1: BOOL;
@@ -67,6 +68,8 @@ Version		Date			Author		Comment
 0.00.7		22.10.2013		AVME/MRU	DRV without pulse sensor simulated pulse imroved
 0.00.8      23.10.2013		AVME/DSC    Speed calculation from always to state RUN. cSpeedCalcTime_ms -> 250ms. Shift register array 0..4. Clear buffer in state RUN entry action.
 										Changes for better position interpolation in controllers like MER, DPJ, DHC and JUN.
+0.00.9		09.07.2014		AVME/MRU	Add Maintenance Switch to Drive (Used in Windsor)
+										
 ___________________________________________________________________________________________________*)
 
 
@@ -86,8 +89,8 @@ IF (me.bolActivate) THEN // cyclic call enabled
 END_IF;
 ]]></ST>
     </Implementation>
-    <Method Name="sta_PON" Id="{8f59ca7d-0709-4919-b0e8-04a2966a1c16}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
+    <Method Name="sta_OFF" Id="{114eb374-98a4-4895-bee8-b5e13ddba14f}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
@@ -107,8 +110,10 @@ END_IF;
 		
 		
 		// State Change Condition
-		IF ((me.intCmd=cCMD_OFF) OR (me.intCmd=cCMD_RUN)) THEN
-			me.StateMachine.intStateNext := cSTA_OFFBusy;
+		IF (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.Alarm.eActivAlmClass<>E_AlmClass.OFF) THEN
+			IF (me.intCmd=cCMD_RUN) THEN 
+				me.StateMachine.intStateNext := cSTA_RUNBusy;
+			END_IF
 		END_IF
 	END_IF
 
@@ -123,7 +128,7 @@ END_IF;
       </Implementation>
       <ObjectProperties />
     </Method>
-    <Method Name="getCtrlSIf" Id="{91cfb138-4fec-4a9d-99a6-9fb2a422e959}">
+    <Method Name="getCtrlSIf" Id="{2c38d673-5f6c-40cb-9c9a-af8f5e2ddfe5}">
       <Declaration><![CDATA[METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_DRV
 ]]></Declaration>
       <Implementation>
@@ -131,33 +136,113 @@ END_IF;
       </Implementation>
       <ObjectProperties />
     </Method>
-    <Method Name="sta_ERROR" Id="{1ff4d69b-bc03-4b52-b3f6-e4379a15d6ab}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_ERROR : BOOL
+    <Method Name="Always" Id="{643f16a1-e025-45a8-a890-bb6333befaac}">
+      <Declaration><![CDATA[METHOD PROTECTED Always : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.Always();
+
+IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
+	
+	// Error checks not in OFF and Error States
+	IF (me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) THEN
+
+		IF (SIf.Cfg.bolEnableMaintenaceSwitch AND SIf.In.bolMaintenanceSwitch.intern) THEN
+			// SIf.Alm[4].strText := 'Maintenance Switch is OFF'; 
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,4,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);		
+			me.StateMachine.intStateNext := cSTA_ERROR;		
+		END_IF
+
+		IF SIf.In.bolOverload.intern THEN
+			// SIf.Alm[1].strText := 'Drive overload'; 
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,1,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);		
+			me.StateMachine.intStateNext := cSTA_ERROR;		
+		END_IF
+		
+		// Blocked Supervision control
+		// Sensor detect Pins, if a defined count of pins are brocken, the machine stops
+		FOR intI := 1 TO SIf.Cfg.usiCountBlockedSupervis DO
+			
+			// Simulation
+			// Simulate the Pins in the drive
+			IF (CIf.SwCfg.bolSimulation) THEN
+				IF (a_dintPinDistance[intI] >  SIf.Cfg.dinPinDistance_um) THEN
+					SIf.In.a_bolBlockedSupvervis[intI].intern := TRUE;
+				ELSE
+					SIf.In.a_bolBlockedSupvervis[intI].intern := FALSE;
+				END_IF
+			END_IF
+		
+			// Check if a new pin is arrive, set distance to last pin to '0'
+			IF ((SIf.In.a_bolBlockedSupvervis[intI].intern = TRUE) AND (a_bolREBlockedSupvervis[intI] = FALSE)) THEN
+				a_bolREBlockedSupvervis[intI] := TRUE;
+				a_dintPinDistance[intI] := 0;
+			ELSIF ((SIf.In.a_bolBlockedSupvervis[intI].intern = FALSE) AND (a_bolREBlockedSupvervis[intI] = TRUE)) THEN
+				a_bolREBlockedSupvervis[intI] := FALSE;
+			END_IF
+			// Check distance to last Pin, if to far away, set error
+			IF (a_dintPinDistance[intI] > ((SIf.Par.int_MaxBrokenPins+1) * SIf.Cfg.dinPinDistance_um)) THEN
+				// SIf.Alm[3].strText := 'Drive blocked, Pins are broken'; 
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,3,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+				a_dintPinDistance[intI] := 0;		
+				me.StateMachine.intStateNext := cSTA_ERROR;		
+			ELSE
+				a_dintPinDistance[intI] := a_dintPinDistance[intI] + SIf.Cur.dinPos_um - dinPosOldCycle_um;					
+			END_IF		
+		END_FOR
+		dinPosOldCycle_um := SIf.Cur.dinPos_um;
+	END_IF
+END_IF
+
+// Speed calculation in always function to get correct position everytime, not only in run
+// observe no pulse detected failure case 
+IF (SIf.In.bolPulse.intern AND NOT(bolPulseFlag)) THEN				
+	// calculate CUR
+	SIf.Cur.dinPos_um := SIf.Cur.dinPos_um + SIf.Cfg.dinDistPerPulse_um;
+	SIf.Cur.dinPulseCounter := SIf.Cur.dinPulseCounter + 1;
+		
+	udiPulseTimeoutTimer := 0;
+	bolPulseFlag := TRUE;
+ELSIF (NOT(SIf.In.bolPulse.intern) AND bolPulseFlag) THEN
+	bolPulseFlag := FALSE;
+END_IF
+
+// Always change actions in Base Library
+// ----------------------------------------------------------------------------------
+// overrule error always from base -> no EOFF State!! in EOFF go to OFF
+IF (me.StateMachine.intStateNext = cSTA_EOFFBusy) THEN
+	IF (me.StateMachine.intState=cSTA_OFF) THEN
+		me.StateMachine.intStateNext := cSTA_OFF;
+	ELSE // stay in OFF
+		me.StateMachine.intStateNext := cSTA_OFFBusy;
+	END_IF
+END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="sta_OFFBusy" Id="{6e115bc5-e0d3-49a0-b7c5-189aa0b2fb18}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_OFFBusy : BOOL
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
 // Entry action
-IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-	me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
-	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-	
-	SIf.Out.bolSpeed_1.intern := FALSE;
-	SIf.Out.bolSpeed_2.intern := FALSE;
-	
-END_IF
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
 
 
 //--------------------------------------------------------------------------------------
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 		
-		;
-		
+		SIf.Out.bolSpeed_1.intern := FALSE;
+		SIf.Out.bolSpeed_2.intern := FALSE;
 		
 		// State Change Condition
-		IF (CIf.Job.bolAlmReset = TRUE) THEN
-			me.StateMachine.intStateNext := cSTA_ERRORQuit;
+		IF (TRUE) THEN
+			me.StateMachine.intStateNext := cSTA_OFF;
 		END_IF
 	END_IF
 
@@ -172,7 +257,7 @@ END_IF
       </Implementation>
       <ObjectProperties />
     </Method>
-    <Method Name="sta_RUN" Id="{64ada81c-39e1-49d9-959c-5c981569615d}">
+    <Method Name="sta_RUN" Id="{6f47a8ef-2f39-4884-af88-b47d12b014e6}">
       <Declaration><![CDATA[METHOD PROTECTED sta_RUN : BOOL
 VAR
 	ii: INT;
@@ -275,7 +360,7 @@ END_VAR
       </Implementation>
       <ObjectProperties />
     </Method>
-    <Method Name="FB_init" Id="{1004a4b7-3ead-483f-87d2-30b83c9efb3c}">
+    <Method Name="FB_init" Id="{8628a7bc-058a-47d8-b52f-15ef6e40e799}">
       <Declaration><![CDATA[METHOD FB_init : BOOL
 VAR_INPUT
 	///if TRUE, the retain variables are initialized (warm start / cold start)
@@ -311,7 +396,9 @@ SIf.Alm[1].strText := 'Drive overload';
 SIf.Alm[2].eAlmClass := E_AlmClass.OFF;
 SIf.Alm[2].strText := 'Timeout no pulse detected';
 SIf.Alm[3].eAlmClass := E_AlmClass.OFF;
-SIf.Alm[3].strText := 'Drive blocked, Pins are broken'; 
+SIf.Alm[3].strText := 'Drive blocked, Pins are broken';
+SIf.Alm[4].eAlmClass := E_AlmClass.OFF;
+SIf.Alm[4].strText := 'Maintenance Switch is OFF'; 
 
 //*******************************************************************************
 // initial values
@@ -329,76 +416,28 @@ SIf.Par.int_MaxBrokenPins := 5;
 
 SIf.Cfg.dinDistPerPulse_um := 28400; // 28,4[mm/puls]
 SIf.Cfg.usiCountBlockedSupervis := 0;
-SIf.Cfg.dinPinDistance_um := 305000;]]></ST>
+SIf.Cfg.dinPinDistance_um := 305000;
+SIf.Cfg.bolEnableMaintenaceSwitch := FALSE; // Normaly no Maintenance Switch exist]]></ST>
       </Implementation>
       <ObjectProperties />
     </Method>
-    <Method Name="sta_OFF" Id="{4b7ba383-48b0-44b2-988b-e4722f4ce08f}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
+    <Method Name="StateMachine" Id="{9e54f73c-c5f1-450b-a027-e2c0a4ba8cad}">
+      <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-	END_IF
+        <ST><![CDATA[SUPER^.StateMachine();
 
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		;
-		
-		
-		// State Change Condition
-		IF (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.Alarm.eActivAlmClass<>E_AlmClass.OFF) THEN
-			IF (me.intCmd=cCMD_RUN) THEN 
-				me.StateMachine.intStateNext := cSTA_RUNBusy;
-			END_IF
-		END_IF
-	END_IF
-
-
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
+// main statemachine of base controller
+CASE me.StateMachine.intState OF
+    cSTA_RUNBusy: 
+        THIS^.sta_RUNBusy();
+    cSTA_RUN: 
+        THIS^.sta_RUN();
+END_CASE;]]></ST>
       </Implementation>
       <ObjectProperties />
     </Method>
-    <Method Name="IoInBridge" Id="{fc3c7eba-9b32-487c-aa9b-d2850f15e2d3}">
-      <Declaration><![CDATA[METHOD PROTECTED IoInBridge : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
-SIf.In.bolOverload.map := THIS^.In_bolOverload;
-SIf.In.bolPulse.map := THIS^.In_bolPulse;
-
-FOR intI := 1 TO SIf.Cfg.usiCountBlockedSupervis DO
-	SIf.In.a_bolBlockedSupvervis[intI].map := THIS^.In_a_bolBlockedSupvervis[intI];
-	IF (CIf.SwCfg.bolSimulation = FALSE) THEN
-		getInBol(CIf.Job.bolIoForce,ADR(SIf.In.a_bolBlockedSupvervis[intI]));
-	END_IF
-END_FOR
-
-IF (CIf.SwCfg.bolSimulation = FALSE) THEN
-	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolOverload));
-	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolPulse));
-	//ctrl.In.bol_PosSwitchBasicDefTyp.intern := getInBol(ctrl.ifc.Job.bol_Force ,ADR(ctrl.In.bol_PosSwitchBasicDefTyp);
-ELSE
-	//simulation of global IO
-	SIf.In.bolOverload.intern := FALSE;
-END_IF]]></ST>
-      </Implementation>
-      <ObjectProperties />
-    </Method>
-    <Method Name="SetSpeed" Id="{82444629-d4d9-4f34-8182-4f77cf3ebf50}">
+    <Method Name="SetSpeed" Id="{a56d404a-7ae4-4439-82b0-a2e594cfa9eb}">
       <Declaration><![CDATA[METHOD PRIVATE SetSpeed
 ]]></Declaration>
       <Implementation>
@@ -420,7 +459,114 @@ END_CASE]]></ST>
       </Implementation>
       <ObjectProperties />
     </Method>
-    <Method Name="IoOutBridge" Id="{0221e71e-2a15-458a-93e2-35e413b2b7cb}">
+    <Method Name="IoInBridge" Id="{abf2d6d2-e1ae-4cba-8c33-fac5a09856c0}">
+      <Declaration><![CDATA[METHOD PROTECTED IoInBridge : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
+SIf.In.bolOverload.map := THIS^.In_bolOverload;
+SIf.In.bolPulse.map := THIS^.In_bolPulse;
+SIf.In.bolMaintenanceSwitch.map := THIS^.In_bolMaintenanceSwitch;
+
+FOR intI := 1 TO SIf.Cfg.usiCountBlockedSupervis DO
+	SIf.In.a_bolBlockedSupvervis[intI].map := THIS^.In_a_bolBlockedSupvervis[intI];
+	IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+		getInBol(CIf.Job.bolIoForce,ADR(SIf.In.a_bolBlockedSupvervis[intI]));
+	END_IF
+END_FOR
+
+IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolOverload));
+	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolPulse));
+	//ctrl.In.bol_PosSwitchBasicDefTyp.intern := getInBol(ctrl.ifc.Job.bol_Force ,ADR(ctrl.In.bol_PosSwitchBasicDefTyp);
+	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolMaintenanceSwitch));
+ELSE
+	//simulation of global IO
+	SIf.In.bolOverload.intern := FALSE;
+	SIf.In.bolMaintenanceSwitch.intern := FALSE;
+END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="sta_ERROR" Id="{b6f8afae-ced3-4019-b3bb-384684e21c5c}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_ERROR : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+	me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
+	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	
+	SIf.Out.bolSpeed_1.intern := FALSE;
+	SIf.Out.bolSpeed_2.intern := FALSE;
+	
+END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		
+		
+		// State Change Condition
+		IF (CIf.Job.bolAlmReset = TRUE) THEN
+			me.StateMachine.intStateNext := cSTA_ERRORQuit;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="sta_PON" Id="{baf35169-6ce0-4ca9-8b4e-517e7a3aedfb}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		
+		
+		// State Change Condition
+		IF ((me.intCmd=cCMD_OFF) OR (me.intCmd=cCMD_RUN)) THEN
+			me.StateMachine.intStateNext := cSTA_OFFBusy;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="IoOutBridge" Id="{c273ebae-f621-49b0-bbde-a6a72c865130}">
       <Declaration><![CDATA[METHOD PROTECTED IoOutBridge : BOOL
 VAR
 	bolSwitchValvesOff: BOOL;
@@ -438,137 +584,7 @@ END_IF]]></ST>
       </Implementation>
       <ObjectProperties />
     </Method>
-    <Method Name="StateMachine" Id="{76e61b69-2ddd-40e2-b9cb-c5f6c4d94c13}">
-      <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[SUPER^.StateMachine();
-
-// main statemachine of base controller
-CASE me.StateMachine.intState OF
-    cSTA_RUNBusy: 
-        THIS^.sta_RUNBusy();
-    cSTA_RUN: 
-        THIS^.sta_RUN();
-END_CASE;]]></ST>
-      </Implementation>
-      <ObjectProperties />
-    </Method>
-    <Method Name="sta_OFFBusy" Id="{11125ebf-7865-4f5d-b12f-6fd3709c0874}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_OFFBusy : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		SIf.Out.bolSpeed_1.intern := FALSE;
-		SIf.Out.bolSpeed_2.intern := FALSE;
-		
-		// State Change Condition
-		IF (TRUE) THEN
-			me.StateMachine.intStateNext := cSTA_OFF;
-		END_IF
-	END_IF
-
-
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-      <ObjectProperties />
-    </Method>
-    <Method Name="Always" Id="{31ffb01b-ebb8-4e32-84fc-c32f32b6d000}">
-      <Declaration><![CDATA[METHOD PROTECTED Always : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[SUPER^.Always();
-
-IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
-	
-	// Error checks not in OFF and Error States
-	IF (me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) THEN
-		IF SIf.In.bolOverload.intern THEN
-			// SIf.Alm[1].strText := 'Drive overload'; 
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,1,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);		
-			me.StateMachine.intStateNext := cSTA_ERROR;		
-		END_IF
-		
-		// Blocked Supervision control
-		// Sensor detect Pins, if a defined count of pins are brocken, the machine stops
-		FOR intI := 1 TO SIf.Cfg.usiCountBlockedSupervis DO
-			
-			// Simulation
-			// Simulate the Pins in the drive
-			IF (CIf.SwCfg.bolSimulation) THEN
-				IF (a_dintPinDistance[intI] >  SIf.Cfg.dinPinDistance_um) THEN
-					SIf.In.a_bolBlockedSupvervis[intI].intern := TRUE;
-				ELSE
-					SIf.In.a_bolBlockedSupvervis[intI].intern := FALSE;
-				END_IF
-			END_IF
-		
-			// Check if a new pin is arrive, set distance to last pin to '0'
-			IF ((SIf.In.a_bolBlockedSupvervis[intI].intern = TRUE) AND (a_bolREBlockedSupvervis[intI] = FALSE)) THEN
-				a_bolREBlockedSupvervis[intI] := TRUE;
-				a_dintPinDistance[intI] := 0;
-			ELSIF ((SIf.In.a_bolBlockedSupvervis[intI].intern = FALSE) AND (a_bolREBlockedSupvervis[intI] = TRUE)) THEN
-				a_bolREBlockedSupvervis[intI] := FALSE;
-			END_IF
-			// Check distance to last Pin, if to far away, set error
-			IF (a_dintPinDistance[intI] > ((SIf.Par.int_MaxBrokenPins+1) * SIf.Cfg.dinPinDistance_um)) THEN
-				// SIf.Alm[3].strText := 'Drive blocked, Pins are broken'; 
-				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,3,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-				a_dintPinDistance[intI] := 0;		
-				me.StateMachine.intStateNext := cSTA_ERROR;		
-			ELSE
-				a_dintPinDistance[intI] := a_dintPinDistance[intI] + SIf.Cur.dinPos_um - dinPosOldCycle_um;					
-			END_IF		
-		END_FOR
-		dinPosOldCycle_um := SIf.Cur.dinPos_um;
-	END_IF
-END_IF
-
-// Speed calculation in always function to get correct position everytime, not only in run
-// observe no pulse detected failure case 
-IF (SIf.In.bolPulse.intern AND NOT(bolPulseFlag)) THEN				
-	// calculate CUR
-	SIf.Cur.dinPos_um := SIf.Cur.dinPos_um + SIf.Cfg.dinDistPerPulse_um;
-	SIf.Cur.dinPulseCounter := SIf.Cur.dinPulseCounter + 1;
-		
-	udiPulseTimeoutTimer := 0;
-	bolPulseFlag := TRUE;
-ELSIF (NOT(SIf.In.bolPulse.intern) AND bolPulseFlag) THEN
-	bolPulseFlag := FALSE;
-END_IF
-
-// Always change actions in Base Library
-// ----------------------------------------------------------------------------------
-// overrule error always from base -> no EOFF State!! in EOFF go to OFF
-IF (me.StateMachine.intStateNext = cSTA_EOFFBusy) THEN
-	IF (me.StateMachine.intState=cSTA_OFF) THEN
-		me.StateMachine.intStateNext := cSTA_OFF;
-	ELSE // stay in OFF
-		me.StateMachine.intStateNext := cSTA_OFFBusy;
-	END_IF
-END_IF]]></ST>
-      </Implementation>
-      <ObjectProperties />
-    </Method>
-    <Method Name="sta_RUNBusy" Id="{8c43ed54-7544-4f2a-ad61-b63a111170ba}">
+    <Method Name="sta_RUNBusy" Id="{e0541a79-ec22-49f9-be02-61c7af714a1d}">
       <Declaration><![CDATA[METHOD PROTECTED sta_RUNBusy : BOOL
 ]]></Declaration>
       <Implementation>
