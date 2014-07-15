@@ -98,7 +98,7 @@ IF (NOT bolPlcStartupDone) AND (g_uinStartProzess>=(uinTaskNbr-1)) THEN
 	// *********************************************************
 	// Barcode reader example
 	// *********************************************************
-	(* 
+	
 	// Barcode reader, element Controller in this Task, Driver in fastest Task class
 	fbBCC_1.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.BCC_1); // init and entry fb_instance in global fb pointer array
 	fbBCC_1.pBCD_SIf_In := g_pFB_BCD^.getSIf();
@@ -106,7 +106,7 @@ IF (NOT bolPlcStartupDone) AND (g_uinStartProzess>=(uinTaskNbr-1)) THEN
 	// configuration	
 	pTmpSIf_BCC^.Cfg.strSensorIPAdr := '192.168.70.28';
 	pTmpSIf_BCC^.Cfg.udiSensorPort := 2111;
-	*)
+	
 
 	// *********************************************************
 	// ADS client example
@@ -212,7 +212,7 @@ IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone AND (g_uinStartProzess
 	fbDRV_1();
 	fbVLV_1();
 	
-	// fbBCC_1();   // Barcode reader example
+	fbBCC_1();   // Barcode reader example
 	fbACL_1();		// ADS client example
 		
 	fbECD_1(); // EtherCAT Diagnostic

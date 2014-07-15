@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.1.17</ProjectVersion>
+    <ProjectVersion>0.0.1.18</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.1.17 - DRV Main Switch added
+    <Description>0.0.1.18 - FB_BCC RP-208 - Implement sensor signal input for triggering a barcode scan
+0.0.1.17 - DRV Main Switch added
 0.0.1.16 - Added the Generic DataChannels
 0.0.1.15 - Added new BaseConcept Lib V0.3.4.8
 0.0.1.14 - Added new BaseConcept Lib
@@ -617,6 +618,7 @@
     <Folder Include="POUs\Controller\Lvl0\" />
     <Folder Include="POUs\Controller\Lvl0\BCC %28Barcode controller%29\" />
     <Folder Include="POUs\Controller\Lvl0\CYL %28Cylinder%29" />
+    <Folder Include="POUs\Controller\Lvl0\DRV %28Drive%29" />
     <Folder Include="POUs\Controller\Lvl0\ECD %28EtherCAT Diagnostic%29" />
     <Folder Include="POUs\Controller\Lvl0\SGT %28Signal Tower%29\" />
     <Folder Include="POUs\Controller\Lvl0\VLV %28Valve controller%29\" />
@@ -684,20 +686,6 @@
     <SubObject Include="FB_ACL.sta_PONBusy" />
     <SubObject Include="FB_ACL.sta_RUN" />
     <SubObject Include="FB_ACL.sta_RUNBusy" />
-    <SubObject Include="FB_BCC.Always" />
-    <SubObject Include="FB_BCC.FB_init" />
-    <SubObject Include="FB_BCC.getCmdState" />
-    <SubObject Include="FB_BCC.getCtrlSIf" />
-    <SubObject Include="FB_BCC.IoInBridge" />
-    <SubObject Include="FB_BCC.IoOutBridge" />
-    <SubObject Include="FB_BCC.StateMachine" />
-    <SubObject Include="FB_BCC.sta_ERROR" />
-    <SubObject Include="FB_BCC.sta_OFF" />
-    <SubObject Include="FB_BCC.sta_OFFBusy" />
-    <SubObject Include="FB_BCC.sta_PON" />
-    <SubObject Include="FB_BCC.sta_PONBusy" />
-    <SubObject Include="FB_BCC.sta_READ" />
-    <SubObject Include="FB_BCC.sta_READBusy" />
     <SubObject Include="FB_BCD.CheckSensorError" />
     <SubObject Include="FB_BCD.CtrlInit" />
     <SubObject Include="FB_BCD.CycleEndDuty" />
