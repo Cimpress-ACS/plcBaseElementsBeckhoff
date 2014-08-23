@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.1.18</ProjectVersion>
+    <ProjectVersion>0.0.1.19</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.1.18 - FB_BCC RP-208 - Implement sensor signal input for triggering a barcode scan
+    <Description>0.0.1.19 - Added newest EtherCat Library version
+0.0.1.18 - FB_BCC RP-208 - Implement sensor signal input for triggering a barcode scan
 0.0.1.17 - DRV Main Switch added
 0.0.1.16 - Added the Generic DataChannels
 0.0.1.15 - Added new BaseConcept Lib V0.3.4.8
@@ -643,7 +644,7 @@
     <LibraryReference Include="Base_PLC,0.3.4.8,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Tc2_EtherCAT,3.3.2.0,Beckhoff Automation GmbH">
+    <LibraryReference Include="Tc2_EtherCAT,3.3.3.0,Beckhoff Automation GmbH">
       <Namespace>Tc2_EtherCAT</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_SerialCom,3.3.2.0,Beckhoff Automation GmbH">
