@@ -1,4 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <POU Name="FB_BCC" Id="{396a746e-b732-4a4d-aa1a-011e619664ce}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_BCC EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -46,8 +47,10 @@ Version		Date			Author		Comment
 									   Controller is now equipped with a further option to execute a scan by checking a sensor signal input.
 ___________________________________________________________________________________________________*)
 
+SUPER^();
 
-IF (me.bolActivate) AND (pBCD_SIf_In<>0) THEN // cyclic call enabled
+(*
+IF (me.bolActivate) THEN // cyclic call enabled
 	IF (CIf.Info.bolInitDone=FALSE) THEN // first cycle -> init
 		CtrlInit();
 		CIf.Info.bolInitDone := TRUE;
@@ -59,10 +62,9 @@ IF (me.bolActivate) AND (pBCD_SIf_In<>0) THEN // cyclic call enabled
 		StateMachine();
 		
 		CycleEndDuty();
-	
 	END_IF
 END_IF;
-]]></ST>
+*)]]></ST>
     </Implementation>
     <Method Name="FB_init" Id="{1d160bf5-2e77-45fb-a445-2dd92df012d9}">
       <Declaration><![CDATA[METHOD FB_init : BOOL

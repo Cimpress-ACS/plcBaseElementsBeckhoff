@@ -1,4 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <POU Name="FB_DRV" Id="{a09ebb54-dbb7-4b29-b322-5e52fbbdee8c}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_DRV EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -73,6 +74,9 @@ Version		Date			Author		Comment
 ___________________________________________________________________________________________________*)
 
 
+SUPER^();
+
+(*
 IF (me.bolActivate) THEN // cyclic call enabled
 	IF (CIf.Info.bolInitDone=FALSE) THEN // first cycle -> init
 		CtrlInit();
@@ -87,7 +91,7 @@ IF (me.bolActivate) THEN // cyclic call enabled
 		CycleEndDuty();
 	END_IF
 END_IF;
-]]></ST>
+*)]]></ST>
     </Implementation>
     <Method Name="sta_OFF" Id="{114eb374-98a4-4895-bee8-b5e13ddba14f}">
       <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
@@ -126,7 +130,6 @@ END_IF;
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="getCtrlSIf" Id="{2c38d673-5f6c-40cb-9c9a-af8f5e2ddfe5}">
       <Declaration><![CDATA[METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_DRV
@@ -134,7 +137,6 @@ END_IF;
       <Implementation>
         <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="Always" Id="{643f16a1-e025-45a8-a890-bb6333befaac}">
       <Declaration><![CDATA[METHOD PROTECTED Always : BOOL
@@ -218,7 +220,6 @@ IF (me.StateMachine.intStateNext = cSTA_EOFFBusy) THEN
 	END_IF
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_OFFBusy" Id="{6e115bc5-e0d3-49a0-b7c5-189aa0b2fb18}">
       <Declaration><![CDATA[METHOD PROTECTED sta_OFFBusy : BOOL
@@ -255,7 +256,6 @@ END_IF]]></ST>
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_RUN" Id="{6f47a8ef-2f39-4884-af88-b47d12b014e6}">
       <Declaration><![CDATA[METHOD PROTECTED sta_RUN : BOOL
@@ -358,7 +358,6 @@ END_VAR
 		SIf.Cur.dinSpeed_um_s := 0;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="FB_init" Id="{8628a7bc-058a-47d8-b52f-15ef6e40e799}">
       <Declaration><![CDATA[METHOD FB_init : BOOL
@@ -419,7 +418,6 @@ SIf.Cfg.usiCountBlockedSupervis := 0;
 SIf.Cfg.dinPinDistance_um := 305000;
 SIf.Cfg.bolEnableMaintenaceSwitch := FALSE; // Normaly no Maintenance Switch exist]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="StateMachine" Id="{9e54f73c-c5f1-450b-a027-e2c0a4ba8cad}">
       <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL
@@ -435,7 +433,6 @@ CASE me.StateMachine.intState OF
         THIS^.sta_RUN();
 END_CASE;]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="SetSpeed" Id="{a56d404a-7ae4-4439-82b0-a2e594cfa9eb}">
       <Declaration><![CDATA[METHOD PRIVATE SetSpeed
@@ -457,7 +454,6 @@ CASE SIf.Par.usi_speedLevel OF
 		SIf.Out.bolSpeed_2.intern := FALSE;
 END_CASE]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="IoInBridge" Id="{abf2d6d2-e1ae-4cba-8c33-fac5a09856c0}">
       <Declaration><![CDATA[METHOD PROTECTED IoInBridge : BOOL
@@ -486,7 +482,6 @@ ELSE
 	SIf.In.bolMaintenanceSwitch.intern := FALSE;
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_ERROR" Id="{b6f8afae-ced3-4019-b3bb-384684e21c5c}">
       <Declaration><![CDATA[METHOD PROTECTED sta_ERROR : BOOL
@@ -527,7 +522,6 @@ END_IF
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_PON" Id="{baf35169-6ce0-4ca9-8b4e-517e7a3aedfb}">
       <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
@@ -564,7 +558,6 @@ END_IF
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="IoOutBridge" Id="{c273ebae-f621-49b0-bbde-a6a72c865130}">
       <Declaration><![CDATA[METHOD PROTECTED IoOutBridge : BOOL
@@ -582,7 +575,6 @@ IF (CIf.SwCfg.bolSimulation = FALSE) THEN
 	THIS^.Out_bolSpeed_2 := SIf.Out.bolSpeed_2.map;
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_RUNBusy" Id="{e0541a79-ec22-49f9-be02-61c7af714a1d}">
       <Declaration><![CDATA[METHOD PROTECTED sta_RUNBusy : BOOL
@@ -622,7 +614,6 @@ END_IF]]></ST>
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <ObjectProperties />
   </POU>

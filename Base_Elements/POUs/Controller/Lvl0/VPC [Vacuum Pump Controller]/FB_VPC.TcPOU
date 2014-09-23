@@ -1,4 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <POU Name="FB_VPC" Id="{13511828-5fa3-4db9-8a62-883d17247bf0}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_VPC EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -33,6 +34,9 @@ Version		Date			Author		Comment
 ___________________________________________________________________________________________________*)
 
 
+SUPER^();
+
+(*
 IF (me.bolActivate) THEN // cyclic call enabled
 	IF (CIf.Info.bolInitDone=FALSE) THEN // first cycle -> init
 		CtrlInit();
@@ -47,8 +51,89 @@ IF (me.bolActivate) THEN // cyclic call enabled
 		CycleEndDuty();
 	END_IF
 END_IF;
-]]></ST>
+*)]]></ST>
     </Implementation>
+    <Method Name="sta_RUNBusy" Id="{1597373b-6e96-49e1-bdbf-9fa98235040c}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_RUNBusy : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		SIf.Out.bolVacuumPumpOn.intern := TRUE;
+
+		fbSimulationTimer.IN := FALSE;
+		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiSimVacuumPumpOnTime_ms);
+		fbSimulationTimer(); // set time/reset timer
+		fbSimulationTimer.IN := TRUE; // start timer
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			fbSimulationTimer(); // simulation time
+			IF (fbSimulationTimer.Q) THEN
+				SIf.In.bolPumpOn.intern := TRUE;
+				SIf.In.bolVacuumOk.intern := TRUE;
+			END_IF
+		END_IF
+
+		IF ((SIf.In.bolVacuumOk.intern) OR (NOT SIf.Cfg.VacuumPumpFeedback)) AND ((SIf.In.bolVacuumOk.intern) OR (NOT SIf.Cfg.VacuumSensorAvailable)) THEN
+			me.StateMachine.intStateNext := VPC_CmdState.cSTA_VPC_StabilizeBusy;
+		END_IF;		
+		
+		IF (me.StateMachine.udiTimeInState_ms > SIf.Par.udiVacuumPumpTime_ms) THEN
+			IF (NOT SIf.In.bolPumpOn.intern) AND (SIf.Cfg.VacuumPumpFeedback) THEN
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_VPC.VacuumPumpOnTimeout),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			END_IF;
+
+			IF ((NOT SIf.In.bolVacuumOk.intern) AND (SIf.Cfg.VacuumSensorAvailable)) THEN
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_VPC.VacuumFailure),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			END_IF;	
+
+			me.StateMachine.intStateNext :=  cSTA_ERROR;
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="IoOutBridge" Id="{3b060d29-e9cf-457f-8c49-0301ccd0cca5}">
+      <Declaration><![CDATA[METHOD PROTECTED IoOutBridge : BOOL
+VAR
+	bolSwitchValvesOff: BOOL;
+END_VAR
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
+IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+	setOutBol(CIf.Job.bolIoForce ,ADR(SIf.Out.bolVacuumPumpOn));
+
+	THIS^.Out_bolVaccumPumpOn := SIf.Out.bolVacuumPumpOn.map;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getCtrlSIf" Id="{3f73b4c8-fe1a-4e64-b16a-7e0063e5c6aa}">
+      <Declaration><![CDATA[METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_VPC
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="FB_init" Id="{49182cc1-4f51-4fb4-9202-ff24f518710e}">
       <Declaration><![CDATA[METHOD FB_init : BOOL
 VAR_INPUT
@@ -130,159 +215,8 @@ IF (((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.Alarm.eActivAlmClass=E_Alm
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="getCmdState" Id="{703f6dd4-8675-4294-8b3d-2f6ff473bc8c}">
-      <Declaration><![CDATA[METHOD PROTECTED getCmdState : STRING
-
-VAR_INPUT
-	intCmdState: INT;
-	bolState: BOOL;
-END_VAR]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
-
-IF (getCmdState='') THEN // global not defined get local
-	// get string cmd/state string information in runtime
-	IF (bolState=FALSE) THEN
-		;// Comands's
-	ELSE
-		// States's
-		CASE intCmdState OF
-			VPC_CmdState.cSTA_VPC_StabilizeBusy: 
-				getCmdState := 'cSTA_StabilizeBusy';
-		END_CASE;
-	END_IF
-END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="getCtrlSIf" Id="{3f73b4c8-fe1a-4e64-b16a-7e0063e5c6aa}">
-      <Declaration><![CDATA[METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_VPC
-
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="IoInBridge" Id="{e901586d-7f23-48a3-af3c-72b64ab38fc4}">
-      <Declaration><![CDATA[METHOD PROTECTED IoInBridge : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
-SIf.In.bolVacuumOk.map := THIS^.In_bolVacuumOk;
-SIf.In.bolPumpOn.map := THIS^.In_bolPumpOk;
-
-IF (CIf.SwCfg.bolSimulation = FALSE) THEN
-	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolVacuumOk));
-	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolPumpOn));
-ELSE
-	//simulation of global IO
-END_IF
-]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="IoOutBridge" Id="{3b060d29-e9cf-457f-8c49-0301ccd0cca5}">
-      <Declaration><![CDATA[METHOD PROTECTED IoOutBridge : BOOL
-VAR
-	bolSwitchValvesOff: BOOL;
-END_VAR
-
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
-IF (CIf.SwCfg.bolSimulation = FALSE) THEN
-	setOutBol(CIf.Job.bolIoForce ,ADR(SIf.Out.bolVacuumPumpOn));
-
-	THIS^.Out_bolVaccumPumpOn := SIf.Out.bolVacuumPumpOn.map;
-END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_ERROR" Id="{cdcdfbea-0d76-4965-a714-0ee8fc61cf6a}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_ERROR : BOOL
-
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		;
-		
-		
-		// State Change Condition
-		IF (CIf.Job.bolAlmReset = TRUE) THEN
-			me.StateMachine.intStateNext := cSTA_ERRORQuit;
-		END_IF
-	END_IF
-
-
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_ERRORQuit" Id="{fbdec985-78a5-46c9-a569-cae78f6ce0ca}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_ERRORQuit : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		;
-		// evtl. wait time if reset of device is necessary and then decide to go to states or ERROR state
-		IF (CIf.Job.bolAlmReset = TRUE) THEN
-			CIf.Job.eMe_ActivAlmClass := E_AlmClass.NONE; // reset feedback channel for parent
-			CIf.Job.bolAlmReset := FALSE;
-		END_IF
-		
-		// State Change Condition
-		IF (CIf.Job.bolAlmReset = FALSE) THEN
-			IF (me.StateMachine.intStateHistory<=cSTA_PON) THEN
-				me.StateMachine.intStateNext := cSTA_PONBusy;
-			ELSIF(me.intCmd=cCMD_OFF) THEN
-				me.StateMachine.intStateNext := cSTA_OFFBusy;
-			ELSIF(me.intCmd=cCMD_STOP) THEN
-				me.StateMachine.intStateNext := cSTA_STOPBusy;
-			ELSIF(me.intCmd=BASE_PLC.cCMD_RUN) THEN
-				me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
-			END_IF
-		END_IF
-	END_IF
-
-
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_PON" Id="{cd944ca7-9f97-4fb3-b4a2-4d1ad61c9f19}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
+    <Method Name="sta_StabilizeVacuum" Id="{56e99b8a-45db-4a94-b998-af0d9227c626}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_StabilizeVacuum : BOOL
 VAR_INPUT
 END_VAR
 ]]></Declaration>
@@ -292,17 +226,28 @@ END_VAR
 // Entry action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
 	END_IF
 
 
 //--------------------------------------------------------------------------------------
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		;
+		// State Change Condition
+		
+		IF (me.StateMachine.udiTimeInState_ms > SIf.Par.udiVacuumStabilizationTime_ms) THEN
+			me.StateMachine.intStateNext :=  BASE_PLC.cSTA_RUN;
+		END_IF;	
+
+		IF (NOT SIf.In.bolPumpOn.intern) AND (SIf.Cfg.VacuumPumpFeedback) THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_VPC.VacuumPumpOnTimeout),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext :=  BASE_PLC.cSTA_ERROR;
+		END_IF;
+
+		IF ((NOT SIf.In.bolVacuumOk.intern) AND (SIf.Cfg.VacuumSensorAvailable)) THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_VPC.VacuumFailure),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext :=  BASE_PLC.cSTA_ERROR;
+		END_IF;	
 	END_IF
-
-
 
 
 //--------------------------------------------------------------------------------------
@@ -380,61 +325,28 @@ END_VAR
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_RUNBusy" Id="{1597373b-6e96-49e1-bdbf-9fa98235040c}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_RUNBusy : BOOL
+    <Method Name="getCmdState" Id="{703f6dd4-8675-4294-8b3d-2f6ff473bc8c}">
+      <Declaration><![CDATA[METHOD PROTECTED getCmdState : STRING
+
 VAR_INPUT
-END_VAR
-]]></Declaration>
+	intCmdState: INT;
+	bolState: BOOL;
+END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		SIf.Out.bolVacuumPumpOn.intern := TRUE;
+        <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
 
-		fbSimulationTimer.IN := FALSE;
-		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiSimVacuumPumpOnTime_ms);
-		fbSimulationTimer(); // set time/reset timer
-		fbSimulationTimer.IN := TRUE; // start timer
+IF (getCmdState='') THEN // global not defined get local
+	// get string cmd/state string information in runtime
+	IF (bolState=FALSE) THEN
+		;// Comands's
+	ELSE
+		// States's
+		CASE intCmdState OF
+			VPC_CmdState.cSTA_VPC_StabilizeBusy: 
+				getCmdState := 'cSTA_StabilizeBusy';
+		END_CASE;
 	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		// Simulation
-		IF (CIf.SwCfg.bolSimulation) THEN
-			fbSimulationTimer(); // simulation time
-			IF (fbSimulationTimer.Q) THEN
-				SIf.In.bolPumpOn.intern := TRUE;
-				SIf.In.bolVacuumOk.intern := TRUE;
-			END_IF
-		END_IF
-
-		IF ((SIf.In.bolVacuumOk.intern) OR (NOT SIf.Cfg.VacuumPumpFeedback)) AND ((SIf.In.bolVacuumOk.intern) OR (NOT SIf.Cfg.VacuumSensorAvailable)) THEN
-			me.StateMachine.intStateNext := VPC_CmdState.cSTA_VPC_StabilizeBusy;
-		END_IF;		
-		
-		IF (me.StateMachine.udiTimeInState_ms > SIf.Par.udiVacuumPumpTime_ms) THEN
-			IF (NOT SIf.In.bolPumpOn.intern) AND (SIf.Cfg.VacuumPumpFeedback) THEN
-				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_VPC.VacuumPumpOnTimeout),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-			END_IF;
-
-			IF ((NOT SIf.In.bolVacuumOk.intern) AND (SIf.Cfg.VacuumSensorAvailable)) THEN
-				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_VPC.VacuumFailure),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-			END_IF;	
-
-			me.StateMachine.intStateNext :=  cSTA_ERROR;
-		END_IF
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
+END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_RUN" Id="{814d30da-f6f2-44a3-8f69-fbdc9cbd5a0a}">
@@ -474,8 +386,8 @@ END_VAR
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_StabilizeVacuum" Id="{56e99b8a-45db-4a94-b998-af0d9227c626}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_StabilizeVacuum : BOOL
+    <Method Name="sta_PON" Id="{cd944ca7-9f97-4fb3-b4a2-4d1ad61c9f19}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
 VAR_INPUT
 END_VAR
 ]]></Declaration>
@@ -485,28 +397,17 @@ END_VAR
 // Entry action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
 	END_IF
 
 
 //--------------------------------------------------------------------------------------
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		// State Change Condition
-		
-		IF (me.StateMachine.udiTimeInState_ms > SIf.Par.udiVacuumStabilizationTime_ms) THEN
-			me.StateMachine.intStateNext :=  BASE_PLC.cSTA_RUN;
-		END_IF;	
-
-		IF (NOT SIf.In.bolPumpOn.intern) AND (SIf.Cfg.VacuumPumpFeedback) THEN
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_VPC.VacuumPumpOnTimeout),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-			me.StateMachine.intStateNext :=  BASE_PLC.cSTA_ERROR;
-		END_IF;
-
-		IF ((NOT SIf.In.bolVacuumOk.intern) AND (SIf.Cfg.VacuumSensorAvailable)) THEN
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_VPC.VacuumFailure),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-			me.StateMachine.intStateNext :=  BASE_PLC.cSTA_ERROR;
-		END_IF;	
+		;
 	END_IF
+
+
 
 
 //--------------------------------------------------------------------------------------
@@ -514,6 +415,61 @@ END_VAR
 	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 		;
 	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_ERROR" Id="{cdcdfbea-0d76-4965-a714-0ee8fc61cf6a}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_ERROR : BOOL
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		
+		
+		// State Change Condition
+		IF (CIf.Job.bolAlmReset = TRUE) THEN
+			me.StateMachine.intStateNext := cSTA_ERRORQuit;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="IoInBridge" Id="{e901586d-7f23-48a3-af3c-72b64ab38fc4}">
+      <Declaration><![CDATA[METHOD PROTECTED IoInBridge : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
+SIf.In.bolVacuumOk.map := THIS^.In_bolVacuumOk;
+SIf.In.bolPumpOn.map := THIS^.In_bolPumpOk;
+
+IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolVacuumOk));
+	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolPumpOn));
+ELSE
+	//simulation of global IO
+END_IF
+]]></ST>
       </Implementation>
     </Method>
     <Method Name="StateMachine" Id="{fb3e697c-bec3-4662-ad64-257ff20479d8}">
@@ -534,19 +490,69 @@ CASE me.StateMachine.intState OF
 END_CASE;]]></ST>
       </Implementation>
     </Method>
-    <ObjectProperties>﻿<XmlArchive>
-  <Data>
-    <o xml:space="preserve" t="POUImageProperty">
-      <n n="ImageData" />
-      <v n="TransparencyColor">"White"</v>
-      <v n="MakeTransparent">false</v>
-    </o>
-  </Data>
-  <TypeList>
-    <Type n="Boolean">System.Boolean</Type>
-    <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
-    <Type n="String">System.String</Type>
-  </TypeList>
-</XmlArchive></ObjectProperties>
+    <Method Name="sta_ERRORQuit" Id="{fbdec985-78a5-46c9-a569-cae78f6ce0ca}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_ERRORQuit : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		// evtl. wait time if reset of device is necessary and then decide to go to states or ERROR state
+		IF (CIf.Job.bolAlmReset = TRUE) THEN
+			CIf.Job.eMe_ActivAlmClass := E_AlmClass.NONE; // reset feedback channel for parent
+			CIf.Job.bolAlmReset := FALSE;
+		END_IF
+		
+		// State Change Condition
+		IF (CIf.Job.bolAlmReset = FALSE) THEN
+			IF (me.StateMachine.intStateHistory<=cSTA_PON) THEN
+				me.StateMachine.intStateNext := cSTA_PONBusy;
+			ELSIF(me.intCmd=cCMD_OFF) THEN
+				me.StateMachine.intStateNext := cSTA_OFFBusy;
+			ELSIF(me.intCmd=cCMD_STOP) THEN
+				me.StateMachine.intStateNext := cSTA_STOPBusy;
+			ELSIF(me.intCmd=BASE_PLC.cCMD_RUN) THEN
+				me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
+			END_IF
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <ObjectProperties>
+      <XmlArchive>
+        <Data>
+          <o xml:space="preserve" t="POUImageProperty">
+            <n n="ImageData" />
+            <v n="TransparencyColor">"White"</v>
+            <v n="MakeTransparent">false</v>
+          </o>
+        </Data>
+        <TypeList>
+          <Type n="Boolean">System.Boolean</Type>
+          <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
+          <Type n="String">System.String</Type>
+        </TypeList>
+      </XmlArchive>
+    </ObjectProperties>
   </POU>
 </TcPlcObject>

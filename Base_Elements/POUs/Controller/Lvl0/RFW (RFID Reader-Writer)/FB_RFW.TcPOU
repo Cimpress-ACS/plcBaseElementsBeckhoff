@@ -1,4 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <POU Name="FB_RFW" Id="{6f3444f8-fe94-4d15-ac48-af337cfd9399}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_RFW EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -83,7 +84,10 @@ Version		Date			Author		Comment
 ___________________________________________________________________________________________________*)
 
 
-IF (me.bolActivate) AND (pRFD_SIf <>0) THEN // cyclic call enabled
+SUPER^();
+
+(*
+IF (me.bolActivate) THEN // cyclic call enabled
 	IF (CIf.Info.bolInitDone=FALSE) THEN // first cycle -> init
 		CtrlInit();
 		CIf.Info.bolInitDone := TRUE;
@@ -97,7 +101,7 @@ IF (me.bolActivate) AND (pRFD_SIf <>0) THEN // cyclic call enabled
 		CycleEndDuty();
 	END_IF
 END_IF;
-]]></ST>
+*)]]></ST>
     </Implementation>
     <Method Name="Always" Id="{01fa4158-8869-42d7-a043-3b03868c50b5}">
       <Declaration><![CDATA[METHOD PROTECTED Always : BOOL

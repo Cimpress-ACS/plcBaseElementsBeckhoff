@@ -1,4 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <POU Name="FB_SGT" Id="{3e38ff1c-8932-4771-aa3a-87f55e3483ce}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_SGT EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -82,7 +83,9 @@ Version		Date			Author		Comment
 
 ___________________________________________________________________________________________________*)
 
+SUPER^();
 
+(*
 IF (me.bolActivate) THEN // cyclic call enabled
 	IF (CIf.Info.bolInitDone=FALSE) THEN // first cycle -> init
 		CtrlInit();
@@ -97,6 +100,7 @@ IF (me.bolActivate) THEN // cyclic call enabled
 		CycleEndDuty();
 	END_IF
 END_IF;
+*)
 ]]></ST>
     </Implementation>
     <Method Name="StateMachine" Id="{071e78d1-35ef-48f4-aa56-3babb01ae9b2}">
@@ -113,7 +117,6 @@ CASE me.StateMachine.intState OF
 		THIS^.sta_RUNBusy();
 END_CASE;]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="getCmdState" Id="{11488f8c-fb9a-4a89-875a-9b9e9ea32d8b}">
       <Declaration><![CDATA[METHOD PROTECTED getCmdState : STRING
@@ -152,7 +155,6 @@ IF (getCmdState='') THEN // global not defined get local
 	END_IF
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="Always" Id="{16a4f14f-8c70-47c3-aefd-a640fa4d18e2}">
       <Declaration><![CDATA[METHOD PROTECTED Always : BOOL
@@ -184,7 +186,6 @@ IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 	;
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="getCtrlSIf" Id="{1f52b74c-ab5f-4872-8160-08d2ca48b0f8}">
       <Declaration><![CDATA[METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_SGT
@@ -192,7 +193,6 @@ END_IF]]></ST>
       <Implementation>
         <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="FB_init" Id="{2c1d78e1-d2ba-44f1-b62f-82ce282d2a3c}">
       <Declaration><![CDATA[METHOD FB_init : BOOL
@@ -240,7 +240,6 @@ SIf.Par.udiBeepOnTime_ms := 250;
 SIf.Par.udiBeepOffTime_ms := 2000;
 SIf.Par.udiLampTestTime_ms := 500;]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_RUNBusy" Id="{4599e496-dbed-46f2-881a-5717ff0ba1d1}">
       <Declaration><![CDATA[METHOD PROTECTED sta_RUNBusy : BOOL
@@ -273,7 +272,6 @@ SIf.Par.udiLampTestTime_ms := 500;]]></ST>
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_PON" Id="{4d78f065-c5de-4fbb-b74e-f27f17ab7875}">
       <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
@@ -306,7 +304,6 @@ SIf.Par.udiLampTestTime_ms := 500;]]></ST>
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_OFF" Id="{611bf975-a4e4-4abc-9b49-b98753cbb3c2}">
       <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
@@ -344,7 +341,6 @@ SIf.Par.udiLampTestTime_ms := 500;]]></ST>
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_RUN" Id="{860d867e-aded-4dc3-b96a-6c7237c7f688}">
       <Declaration><![CDATA[METHOD PROTECTED sta_RUN : BOOL
@@ -421,7 +417,6 @@ SIf.Par.udiLampTestTime_ms := 500;]]></ST>
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="setLampOutput" Id="{b2eced1b-5f5c-41c2-9a66-6cdd9f3f979d}">
       <Declaration><![CDATA[METHOD setLampOutput : BOOL
@@ -461,7 +456,6 @@ ELSE
 	setLampOutput:= FALSE;
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="IoOutBridge" Id="{d7e11bf8-8223-4355-8ad1-e44891247a41}">
       <Declaration><![CDATA[METHOD PROTECTED IoOutBridge : BOOL
@@ -483,7 +477,6 @@ IF (CIf.SwCfg.bolSimulation = FALSE) THEN
 	THIS^.Out_bolBeep := SIf.Out.bolBeep.map;
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_OFFBusy" Id="{df7cc5fc-37c4-45d7-b614-d169e6e63f44}">
       <Declaration><![CDATA[METHOD PROTECTED sta_OFFBusy : BOOL
@@ -520,7 +513,6 @@ END_IF]]></ST>
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="setBeepOutput" Id="{e59c31d2-688b-43f4-bfd2-9d7a3cbe5aee}">
       <Declaration><![CDATA[METHOD setBeepOutput : BOOL
@@ -550,7 +542,6 @@ ELSE
 	setBeepOutput:= FALSE;
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_PONBusy" Id="{eb33caa0-1f4b-402c-8167-358cefcc0764}">
       <Declaration><![CDATA[METHOD PROTECTED sta_PONBusy : BOOL
@@ -635,7 +626,6 @@ END_IF]]></ST>
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <ObjectProperties />
   </POU>

@@ -1,4 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <POU Name="FB_CtrlModule" Id="{93bcbc09-e224-4f3b-9fe5-ea80da832953}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_CtrlModule EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -89,18 +90,11 @@ ________________________________________________________________________________
 
 
 IF (me.bolActivate) AND (SIf_MOD.Cur<>0) AND (SIf_MOD.Cfg<>0) AND (SIf_MOD.Par<>0) AND (SIf_MOD.In<>0) THEN // cyclic call enabled
-	IF (CIf.Info.bolInitDone=FALSE) THEN // first cycle -> init
-		CtrlInit();
-		CIf.Info.bolInitDone := TRUE;
-	ELSE
+		FirstCycleInit();
 		CycleStartDuty();
-
 		Always();
-		
 		StateMachine();
-		
 		CycleEndDuty();
-	END_IF
 END_IF;
 ]]></ST>
     </Implementation>
@@ -521,7 +515,7 @@ END_VAR
       </Implementation>
     </Method>
     <Method Name="CtrlInit" Id="{7a0ac12c-cff4-4e9e-8849-3ec85fb70fac}">
-      <Declaration><![CDATA[METHOD PROTECTED CtrlInit : BOOL
+      <Declaration><![CDATA[METHOD PUBLIC CtrlInit : BOOL
 VAR
 	ii: INT;
 END_VAR
