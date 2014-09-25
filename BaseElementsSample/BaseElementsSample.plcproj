@@ -27,6 +27,9 @@
     <Compile Include="DUTs\GVLs\Io.TcGVL">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="DUTs\T_HashInfo.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\Program\MiddlePRG_1.TcPOU">
       <SubType>Code</SubType>
     </Compile>
@@ -56,6 +59,7 @@
     <Folder Include="POUs\Controller\Lvl1" />
     <Folder Include="POUs\Controller\Driver" />
     <Folder Include="POUs\Controller\Lvl3" />
+    <Folder Include="POUs\Controller\Utilities" />
     <Folder Include="POUs\Program\" />
     <Folder Include="POUs\Utility Functions\" />
   </ItemGroup>
@@ -86,6 +90,9 @@
     </LibraryReference>
     <LibraryReference Include="Tc3_Interfaces,3.3.0.0,Beckhoff Automation GmbH">
       <Namespace>Tc3_Interfaces</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Tc3_MemMan,3.3.1.0,Beckhoff Automation GmbH">
+      <Namespace>Tc3_MemMan</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc3_Module,3.3.5.0,Beckhoff Automation GmbH">
       <Namespace>Tc3_Module</Namespace>

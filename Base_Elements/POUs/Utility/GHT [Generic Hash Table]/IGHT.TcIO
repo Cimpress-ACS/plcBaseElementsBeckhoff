@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <Itf Name="IGHT" Id="{ff3fbdcc-8014-423b-b59a-aa9000d5a9b8}">
+    <Declaration><![CDATA[INTERFACE IGHT
+]]></Declaration>
+    <Property Name="Count" Id="{24850bbc-fbd3-4f01-8cdc-4af8de1733ca}">
+      <Declaration><![CDATA[PROPERTY Count : UINT]]></Declaration>
+      <Get Name="Get" Id="{fbc5ee8c-8ae8-4be8-9676-c7bf65c4ac90}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Method Name="AddItem" Id="{40276ea0-50bf-485c-a32b-b132c2f5b36a}">
+      <Declaration><![CDATA[METHOD AddItem : BOOL
+VAR_INPUT
+	uliKey	: ULINT;
+	pData	: POINTER TO BYTE;
+END_VAR
+]]></Declaration>
+    </Method>
+    <Method Name="Initialize" Id="{c15db715-4cb8-4f0b-9982-10b156d900dc}">
+      <Declaration><![CDATA[METHOD Initialize : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+    </Method>
+    <Method Name="Lookup" Id="{edf1dae8-86fa-46e9-9c74-b751a58b71f4}">
+      <Declaration><![CDATA[METHOD Lookup : POINTER TO BYTE
+VAR_INPUT
+	uliKey			: ULINT;
+	bolRemove		: BOOL;
+END_VAR
+]]></Declaration>
+    </Method>
+    <Method Name="Clear" Id="{f9580e23-fa9e-47a7-88bd-16531b37e2c1}">
+      <Declaration><![CDATA[METHOD Clear : BOOL
+VAR_INPUT
+	bolFreePointer		: BOOL;
+END_VAR
+]]></Declaration>
+    </Method>
+    <ObjectProperties />
+  </Itf>
+</TcPlcObject>

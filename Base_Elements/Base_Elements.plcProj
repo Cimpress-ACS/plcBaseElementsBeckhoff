@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.1.20</ProjectVersion>
+    <ProjectVersion>0.0.1.21</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.1.20 - Added newest BasePLC, addapted main component controll
+    <Description>0.0.1.21 - Added GHT (10Digit Key compatible Hash)
+0.0.1.20 - Added newest BasePLC, addapted main component controll
 0.0.1.19 - Added newest EtherCat Library version
 0.0.1.18 - FB_BCC RP-208 - Implement sensor signal input for triggering a barcode scan
 0.0.1.17 - DRV Main Switch added
@@ -582,6 +583,15 @@
     <Compile Include="POUs\Utility\DFF [Dynamic Pointer FiFo]\FB_DynamicFifo.TcPOU">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\Utility\GHT [Generic Hash Table]\FB_GHT.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\GHT [Generic Hash Table]\IGHT.TcIO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\GHT [Generic Hash Table]\T_GHTHashTableBuffer.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\Utility\ItemBase\E_Destination.TcDUT">
       <SubType>Code</SubType>
     </Compile>
@@ -639,6 +649,7 @@
     <Folder Include="POUs\Utility\DCH [Data Channel Base]\" />
     <Folder Include="POUs\Utility\DFF [Dynamic Pointer FiFo]\" />
     <Folder Include="POUs\Utility\ItemBase" />
+    <Folder Include="POUs\Utility\GHT [Generic Hash Table]" />
     <Folder Include="Version\" />
   </ItemGroup>
   <ItemGroup>

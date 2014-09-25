@@ -1,4 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <POU Name="FastPRG_1" Id="{b624d175-54f8-4f4a-ae3e-53272a249758}">
     <Declaration><![CDATA[PROGRAM FastPRG_1
 VAR
@@ -11,6 +12,13 @@ VAR
 	fbRFD_12: FB_RFD;
 	// Barcode driver
 	fbBCD_1: FB_BCD;
+	
+	fbHashTable : FB_GHT;
+	uliBarcodeIn	: ULINT := 0;
+	uliBarcodeOut	: ULINT := 0;
+
+	rHashInfo	: T_HashInfo;
+	pHashInfo	: POINTER TO T_HashInfo;	
 
 END_VAR
 ]]></Declaration>
@@ -49,6 +57,8 @@ IF (NOT bolPlcStartupDone) THEN
 
 	g_pFB_BCD := ADR(fbBCD_1);
 	g_uinStartProzess:=1; // For StartUp order
+
+	fbHashTable.Initialize();
 END_IF
 // -----------------------------------------------------------------------------------------------
 
@@ -86,6 +96,19 @@ IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone AND (g_uinStartProzess
 	//fbRFD_12();
 	fbBCD_1();
 	
+	IF uliBarcodeIn <> 0 THEN
+		pHashInfo := __NEW(T_HashInfo);
+		pHashInfo^.strBarcode := ULINT_TO_STRING(uliBarcodeIn);
+		fbHashTable.AddItem(uliBarcodeIn, pHashInfo);
+		uliBarcodeIn := 0;
+	END_IF
+	
+	IF uliBarcodeOut <> 0 THEN
+		pHashInfo := fbHashTable.Lookup(uliBarcodeOut, TRUE);
+		MEMCPY(ADR(rHashInfo), pHashInfo, SIZEOF(T_HashInfo));
+		__DELETE(pHashInfo);
+		uliBarcodeOut := 0;
+	END_IF
 END_IF
 // -----------------------------------------------------------------------------------------------]]></ST>
     </Implementation>
