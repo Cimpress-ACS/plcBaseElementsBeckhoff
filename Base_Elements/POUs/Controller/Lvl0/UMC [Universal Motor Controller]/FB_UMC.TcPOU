@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.24">
   <POU Name="FB_UMC" Id="{95b426bb-96dc-4ca4-9df1-b53c93e4707b}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_UMC EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -50,6 +50,7 @@ Version		Date			Author		Comment
 0.00.1		09.07.2013		PC			Start history
 0.00.2		04.02.2014		AVM/MRU		Simulation mode
 										cCMD_LEFT / cCMD_RIGHT added in FB_init / getCmdState
+0.00.3		02.10.201		AVM/MRU		SingleAnswer in Always added
 
 ___________________________________________________________________________________________________*)
 
@@ -185,6 +186,15 @@ SIf.Cur.uinSpeedLimit := SIf.Cfg.uinMaxSpeed * SIf.Cfg.uinLC11_100 / 100;
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[//SUPER^.Always();
+
+IF (me.bolChangeBackToAUTO=TRUE) THEN // switch mode to automatic switch off controller
+	me.StateMachine.intStateNext := cSTA_OFFBusy;
+	me.bolChangeBackToAUTO := FALSE;
+END_IF
+
+IF (CIf.SwCfg.bolExist=FALSE) THEN // hardware of controller does not exist
+	me.StateMachine.intStateNext := cSTA_SINGLE_ANSWER;
+END_IF
 
 // ----------------------------------------------------------------------------------
 // Simulation
