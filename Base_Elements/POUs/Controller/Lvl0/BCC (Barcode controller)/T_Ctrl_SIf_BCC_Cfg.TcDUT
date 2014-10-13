@@ -1,11 +1,13 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
-  <DUT Name="T_Ctrl_SIf_BCC_Cfg" Id="{e6b2d766-2352-4cf7-87d3-b7711c7442aa}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_BCC_Cfg" Id="{473428e2-3fbb-4665-9e6f-162c4d684a75}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_BCC_Cfg :
 STRUCT
 	/// IP Adress of the sensor (PLC = Client, Sensor = Server)
 	strSensorIPAdr: STRING(15) := '';
 	/// Port number of the sensor
 	udiSensorPort: UDINT := 0;
+	iSensorType: E_BCD_Type;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

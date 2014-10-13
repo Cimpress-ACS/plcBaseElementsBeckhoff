@@ -1,10 +1,12 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
-  <DUT Name="T_BCD_Cfg" Id="{57d7e07a-f1e0-4059-a1ae-039c96c3405f}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_BCD_Cfg" Id="{37b09b9e-cfaa-4ba9-8938-94338fb31ddc}">
     <Declaration><![CDATA[TYPE T_BCD_Cfg :
 STRUCT
 	bolSimulation: BOOL;
 	strSensorIPAdr: STRING(15) := '';
 	udiSensorPort: UDINT := 0;
+	iSensorType: E_BCD_Type;
 	/// Barcode is also sending diagnostics data
 	bolResponseIncludingDiagnostics			: BOOL;
 END_STRUCT

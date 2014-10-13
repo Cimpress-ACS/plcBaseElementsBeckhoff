@@ -1,9 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_Ctrl_SIf_BCC_Out" Id="{6e32bf7f-e190-43f1-ac70-b679fa613f60}">
-    <Declaration><![CDATA[TYPE T_Ctrl_SIf_BCC_Out :
-STRUCT
-END_STRUCT
+  <DUT Name="E_BCD_Type" Id="{e09ccd63-f483-4fe8-b94c-89d1c6678298}">
+    <Declaration><![CDATA[TYPE E_BCD_Type :
+(
+	None := 0,
+	SICK,
+	KEYENCE
+);
 END_TYPE
 ]]></Declaration>
     <ObjectProperties />
