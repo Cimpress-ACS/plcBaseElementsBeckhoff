@@ -1,4 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <POU Name="FB_BCD" Id="{e10d19a6-f43b-4e58-8ffb-fa806f0eb2f4}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_BCD
 VAR
@@ -74,7 +75,11 @@ Version		Date			Author		Comment
 										CMD_READ_BARCODE 	1014 		// Command enable the sensor gate for X-TIME ("duration" setting of sensor object trigger)
 																		// Sensor try to detect a barcode.
 0.00.3		27.01.2014		AVME/DSC    Added new method "CheckSensorError" to set "bolSensorError" in case if sensor answer with SOPAS error																					 							
-		
+0.00.4		24.10.2014		HLV/MAH		driver can be used for Sick or Keyence scanner configured by SIf.Cfg.iSensorType := E_BCD_Type.xxxx
+										the port of Keyence scanner must be always 9004
+										if Keyence scanner is used, FB_SocketCloseAll must be called in main PRG (see MiddlePRG in BaseElementsSample)
+
+	
 ___________________________________________________________________________________________________*)
 
 

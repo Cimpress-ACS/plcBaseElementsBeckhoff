@@ -1,4 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <POU Name="MiddlePRG_1" Id="{d0b780f9-d9b7-47f3-8805-851f8ce5d376}">
     <Declaration><![CDATA[PROGRAM MiddlePRG_1
 VAR
@@ -37,6 +38,9 @@ VAR
 	fbSGT_1: 		FB_SGT;		// Signal tower	
 	pDRV_CIf:		POINTER TO Base_PLC.T_Ctrl_CIf; // Used for Signal tower example
 	pDRV_SIf:		POINTER TO Base_Elements.T_Ctrl_SIf_DRV; // Used for Signal tower example
+	
+	// close all Ethernet sockets
+	fbSocketCloseAll : FB_SocketCloseAll;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -64,6 +68,7 @@ Version		Date			Author		Comment
 0.00.7		05.02.2014		AVME/DSC	Insert ADS client example
 0.00.8		06.03.2014		AVME/DSC	Insert FB_VLV example
 0.00.9		17.06.2014		AVME/MRU	SGT example added
+0.00.10		24.10.2014		HLV/MAH		close all sockets on PLC init
 
 ___________________________________________________________________________________________________*)
 
@@ -106,8 +111,12 @@ IF (NOT bolPlcStartupDone) AND (g_uinStartProzess>=(uinTaskNbr-1)) THEN
 	// configuration	
 	pTmpSIf_BCC^.Cfg.strSensorIPAdr := '192.168.70.28';
 	pTmpSIf_BCC^.Cfg.udiSensorPort := 2111;
-	
-
+	pTmpSIf_BCC^.Cfg.iSensorType := E_BCD_Type.SICK;
+	(*
+	pTmpSIf_BCC^.Cfg.strSensorIPAdr := '192.168.1.103';
+	pTmpSIf_BCC^.Cfg.udiSensorPort := 9004;
+	pTmpSIf_BCC^.Cfg.iSensorType := E_BCD_Type.KEYENCE;
+	*)
 	// *********************************************************
 	// ADS client example
 	// *********************************************************
@@ -161,6 +170,8 @@ IF (NOT bolPlcStartupDone) AND (g_uinStartProzess>=(uinTaskNbr-1)) THEN
 	fbDRV_1.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.DRV_1); // init and entry fb_instance in global fb pointer array
 	fbVLV_1.iniAllCtrlArrays(ADR(g_a_pCtrlInst),ADR(g_a_pCtrlCIf),E_CtrlId.VLV_1); // init and entry fb_instance in global fb pointer array	
 	
+	// set command to close all socket connections
+	fbSocketCloseAll.bExecute := TRUE;
 	
 	bolPlcStartupDone := TRUE;	
 	g_uinStartProzess := g_uinStartProzess + 1; // For StartUp order
@@ -189,8 +200,14 @@ END_IF
 // Start PLC code initialization
 // -----------------------------------------------------------------------------------------------
 IF NOT bolInitDone AND bolPlcStartupDone AND bolHostInitDone AND (g_uinStartProzess>=(uinTaskNbr-1)+20) THEN
-		
-	bolInitDone := TRUE;
+	
+	// call FB to close all socket connections
+	fbSocketCloseAll();
+	fbSocketCloseAll.bExecute := FALSE;
+
+	IF fbSocketCloseAll.bBusy = FALSE THEN
+		bolInitDone := TRUE;
+	END_IF
 	g_uinStartProzess := g_uinStartProzess + 1; // For StartUp order
 END_IF
 // -----------------------------------------------------------------------------------------------
@@ -259,19 +276,21 @@ IF (bolInitDone AND bolPlcStartupDone AND bolHostInitDone AND (g_uinStartProzess
 END_IF
 // -----------------------------------------------------------------------------------------------]]></ST>
     </Implementation>
-    <ObjectProperties>﻿<XmlArchive>
-  <Data>
-    <o xml:space="preserve" t="POUImageProperty">
-      <n n="ImageData" />
-      <v n="TransparencyColor">"White"</v>
-      <v n="MakeTransparent">false</v>
-    </o>
-  </Data>
-  <TypeList>
-    <Type n="Boolean">System.Boolean</Type>
-    <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
-    <Type n="String">System.String</Type>
-  </TypeList>
-</XmlArchive></ObjectProperties>
+    <ObjectProperties>
+      <XmlArchive>
+        <Data>
+          <o xml:space="preserve" t="POUImageProperty">
+            <n n="ImageData" />
+            <v n="TransparencyColor">"White"</v>
+            <v n="MakeTransparent">false</v>
+          </o>
+        </Data>
+        <TypeList>
+          <Type n="Boolean">System.Boolean</Type>
+          <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
+          <Type n="String">System.String</Type>
+        </TypeList>
+      </XmlArchive>
+    </ObjectProperties>
   </POU>
 </TcPlcObject>
