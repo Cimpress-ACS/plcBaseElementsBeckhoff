@@ -89,12 +89,8 @@ Version		Date			Author		Comment
 ___________________________________________________________________________________________________*)
 
 
-IF (me.bolActivate) AND (SIf_MOD.Cur<>0) AND (SIf_MOD.Cfg<>0) AND (SIf_MOD.Par<>0) AND (SIf_MOD.In<>0) THEN // cyclic call enabled
-		FirstCycleInit();
-		CycleStartDuty();
-		Always();
-		StateMachine();
-		CycleEndDuty();
+IF (SIf_MOD.Cur<>0) AND (SIf_MOD.Cfg<>0) AND (SIf_MOD.Par<>0) AND (SIf_MOD.In<>0) THEN // cyclic call enabled
+	SUPER^();
 END_IF;
 ]]></ST>
     </Implementation>

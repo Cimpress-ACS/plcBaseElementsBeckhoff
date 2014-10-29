@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.1.24</ProjectVersion>
+    <ProjectVersion>0.0.1.25</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.1.24 - Update to TwinCat 4016.5
+    <Description>0.0.1.25 - Update to BasePLC V0.3.5.2
+0.0.1.24 - Update to TwinCat 4016.5
 0.0.1.23 - Added Keyence Barcode driver
 0.0.1.22 - FB_UMC Always SingleAnswer 
 0.0.1.21 - Added GHT (10Digit Key compatible Hash)
@@ -659,7 +660,7 @@
     <Folder Include="Version\" />
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_PLC,0.3.5.0,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.5.2,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_EtherCAT,3.3.3.0,Beckhoff Automation GmbH">
