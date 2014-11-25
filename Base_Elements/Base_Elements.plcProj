@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.1.26</ProjectVersion>
+    <ProjectVersion>0.0.1.27</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.1.26 - Update to BasePLC V0.3.5.3 + Compiled with 3.1 4016.6
+    <Description>0.0.1.27 - Update to FB_CtrlModule
+0.0.1.26 - Update to BasePLC V0.3.5.3 + Compiled with 3.1 4016.6
 0.0.1.25 - Update to BasePLC V0.3.5.2
 0.0.1.24 - Update to TwinCat 4016.5
 0.0.1.23 - Added Keyence Barcode driver
@@ -516,6 +517,9 @@
     <Compile Include="POUs\Controller\Lvl0\VPC [Vacuum Pump Controller]\VPC_CmdState.TcGVL">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\Controller\Lvl3\BaseCtrlModule\E_ALM_MOD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\Controller\Lvl3\BaseCtrlModule\FB_CtrlModule.TcPOU">
       <SubType>Code</SubType>
     </Compile>
@@ -535,6 +539,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Controller\Lvl3\BaseCtrlModule\T_Ctrl_SIf_MOD_In.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl3\BaseCtrlModule\T_Ctrl_SIf_MOD_Out.TcDUT">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Controller\Lvl3\BaseCtrlModule\T_Ctrl_SIf_MOD_Par.TcDUT">
@@ -661,7 +668,7 @@
     <Folder Include="Version\" />
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_PLC,0.3.5.3,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.5.4,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_EtherCAT,3.3.3.0,Beckhoff Automation GmbH">

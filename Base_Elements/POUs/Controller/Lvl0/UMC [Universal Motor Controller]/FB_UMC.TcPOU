@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.24">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <POU Name="FB_UMC" Id="{95b426bb-96dc-4ca4-9df1-b53c93e4707b}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_UMC EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -137,15 +137,13 @@ SIf.Out.uinSpeedSetpoint.intern 	:= 0;
     <Method Name="sta_PON" Id="{2311706f-676b-4db4-9141-5b41e21fa6e7}">
       <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
 VAR_INPUT
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
 // Entry action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
 	END_IF
 
 
@@ -154,8 +152,6 @@ END_VAR
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 		;
 	END_IF
-
-
 
 
 //--------------------------------------------------------------------------------------
@@ -182,8 +178,7 @@ SIf.Cur.uinSpeedLimit := SIf.Cfg.uinMaxSpeed * SIf.Cfg.uinLC11_100 / 100;
       </Implementation>
     </Method>
     <Method Name="Always" Id="{47fa4c02-141a-44a5-9bd0-72272f1d4112}">
-      <Declaration><![CDATA[METHOD PROTECTED Always : BOOL
-]]></Declaration>
+      <Declaration><![CDATA[METHOD PROTECTED Always : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[//SUPER^.Always();
 
@@ -194,6 +189,13 @@ END_IF
 
 IF (CIf.SwCfg.bolExist=FALSE) THEN // hardware of controller does not exist
 	me.StateMachine.intStateNext := cSTA_SINGLE_ANSWER;
+ELSE
+    IF (((me.StateMachine.intState=cSTA_INITIALIZED) OR (me.intCmd=cCMD_PON)) 
+        AND (me.StateMachine.intState<>cSTA_PONBusy) AND (me.StateMachine.intState<>cSTA_PON)
+        AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) 
+        AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)) THEN // switch after startup to PONBusy
+        me.StateMachine.intStateNext := cSTA_PONBusy;
+    END_IF
 END_IF
 
 // ----------------------------------------------------------------------------------
@@ -206,6 +208,14 @@ END_IF
 // ----------------------------------------------------------------------------------
 // Conditions Always
 IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
+	
+	IF (((me.StateMachine.intState=cSTA_INITIALIZED) OR (me.intCmd=cCMD_PON))
+		AND (me.StateMachine.intState<>cSTA_PONBusy) AND (me.StateMachine.intState<>cSTA_PON)
+		AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit)
+		AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)) THEN
+		me.StateMachine.intStateNext := cSTA_PONBusy;
+	END_IF
+
 	IF (((me.Alarm.eActivAlmClass=E_AlmClass.OFF) OR (me.intCmd=cCMD_OFF))
 			AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit)
 			AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)
@@ -215,10 +225,6 @@ IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 		me.StateMachine.intStateNext := cSTA_OFFBusy;	
 	END_IF
 
-	//-------------------------------------------------------------------------------
-	// Monitoring of inputs from Safety PLC (no physical inputs)
-	//-------------------------------------------------------------------------------
-	// Emergency Off
 	IF ((SIf.In.bolEmoOk.intern = FALSE) AND (me.StateMachine.intState <> cSTA_EOFF) 
 		AND (me.StateMachine.intState <> BASE_PLC.cSTA_EOFFBusy)
 		AND (me.StateMachine.intState <> BASE_PLC.cSTA_ERROR) 
@@ -227,9 +233,9 @@ IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 		AND (me.StateMachine.intState<>BASE_PLC.cSTA_INITIALIZED)
 		AND (me.StateMachine.intState <> BASE_PLC.cSTA_ERRORQuit)) THEN
 		me.StateMachine.intStateNext := cSTA_EOFFBusy;				
-	END_IF	
-END_IF
-]]></ST>
+	END_IF
+	
+END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_ERRORQuit" Id="{4ff591d5-1166-4edf-964c-9bb76285ccb4}">
@@ -281,8 +287,7 @@ END_IF
     <Method Name="sta_EOFF" Id="{517d1816-ab01-4702-9554-90bf346088dc}">
       <Declaration><![CDATA[METHOD PROTECTED sta_EOFF : BOOL
 VAR_INPUT
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
@@ -296,7 +301,11 @@ END_VAR
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN		
 		// As long as the EMO is not reseted!
 		IF SIf.In.bolEmoOk.intern THEN
-			me.StateMachine.intStateNext := BASE_PLC.cSTA_OFFBusy;			
+			IF me.StateMachine.intStateHistory=cSTA_PONBusy OR me.StateMachine.intStateHistory=cSTA_PON THEN
+				me.StateMachine.intStateNext := BASE_PLC.cSTA_PONBusy;
+			ELSE
+				me.StateMachine.intStateNext := BASE_PLC.cSTA_OFFBusy;
+			END_IF
 		ELSE
 			IF me.intCmd <> BASE_PLC.cCMD_OFF THEN
 				// Clear pending and new commands cyclic to prevent automatic recovery!	
@@ -625,14 +634,15 @@ END_VAR
     <Method Name="sta_EOFFbusy" Id="{a0e681a9-b1a0-4235-80d7-2d11be64d287}">
       <Declaration><![CDATA[METHOD PROTECTED sta_EOFFbusy : BOOL
 VAR_INPUT
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
 // Entry action
 IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+	me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle;
 	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	
 	cmd_MotorOff();
 END_IF
 
@@ -660,8 +670,7 @@ END_VAR
 VAR
 	iIdx		: UINT;
 	iLength		: UINT;	
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
 // to manually change in new FUB implementation!!!
@@ -696,7 +705,8 @@ ELSE
 END_IF
 
 // set name of class/typ
-CIf.Info.strType := 'FB_UMC'; 
+CIf.Info.strType := 'FB_UMC';
+CIf.Info.strFullName := 'Universal Motor Controller';
 
 // set alarm class
 SIf.Alm[E_ALM_UMC.MotorOnTimeout].eAlmClass := Base_PLC.E_AlmClass.TSTOP;

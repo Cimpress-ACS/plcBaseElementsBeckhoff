@@ -71,8 +71,7 @@ VAR_INPUT
 END_VAR
 VAR
 	ii: UINT;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
 // to manually change in new FUB implementation!!!
@@ -97,7 +96,8 @@ CIf.Job.aCmdList[ii].strName := 'Extend';
 CIf.Job.aCmdList[ii].bolAvailable := TRUE;
 
 // set name of class/typ
-CIf.Info.strType := 'FB_CYL'; 
+CIf.Info.strType := 'FB_CYL';
+CIf.Info.strFullName := 'Cylinder';
 
 // set alarm class
 SIf.Alm[E_ALM_CYL.SensorRetractAlwaysOn].eAlmClass := E_AlmClass.TSTOP;

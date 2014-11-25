@@ -801,8 +801,7 @@ VAR_INPUT
 	bInitRetains: BOOL;
 	///if TRUE, the instance afterwards gets moved into the copy code (online change)
 	bInCopyCode: BOOL;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// Communication Settings
 SIf.stCfg.strSensorIPAdr := '192.168.1.103';  //'192.168.0.10'; 

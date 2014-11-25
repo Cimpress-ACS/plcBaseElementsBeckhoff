@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="E_ALM_MOD" Id="{c067e919-ea45-40f1-8d34-d07e98384c3e}">
+    <Declaration><![CDATA[TYPE E_ALM_MOD :
+(
+	InvalidPointer := 1,
+	CommunicationError := 2,
+	EmergencyOff := 3,
+	TimeoutStartGroup := 4,
+	TimeoutStopGroup := 5,
+	NextModuleNotReady := 6,
+	MAX_E_ALM_MOD
+) UDINT;
+END_TYPE]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

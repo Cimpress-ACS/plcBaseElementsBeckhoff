@@ -143,8 +143,7 @@ END_VAR
 VAR
 	iIdx		: UINT;
 	iLength		: UINT;	
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
 // to manually change in new FUB implementation!!!
@@ -166,7 +165,8 @@ ELSE
 END_IF
 
 // set name of class/typ
-CIf.Info.strType := 'FB_VPC'; 
+CIf.Info.strType := 'FB_VPC';
+CIf.Info.strFullName := 'Vacuum Pump Controller';
 
 // set alarm class
 SIf.Alm[E_ALM_VPC.VacuumPumpOnTimeout].eAlmClass := E_AlmClass.TSTOP;

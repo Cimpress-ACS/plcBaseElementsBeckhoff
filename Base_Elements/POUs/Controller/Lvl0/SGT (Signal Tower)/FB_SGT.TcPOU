@@ -204,8 +204,7 @@ VAR_INPUT
 END_VAR
 VAR
 	ii: UINT;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
 // to manually change in new FUB implementation!!!
@@ -218,7 +217,8 @@ FOR ii:= 0 TO (SIZEOF(CIf.Job.aCmdList)/SIZEOF(CIf.Job.aCmdList[0])-1) BY 1 DO
 END_FOR
 
 // set name of class/typ
-CIf.Info.strType := 'FB_SGT'; 
+CIf.Info.strType := 'FB_SGT';
+CIf.Info.strFullName := 'Signal Tower';
 
 // set alarm class
 SIf.Alm[E_ALM_SGT.Dummy].eAlmClass := E_AlmClass.INFO;

@@ -1,12 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_Ctrl_SIf_MOD_In" Id="{310febbc-0c4d-4259-8c32-cba0e4a2b496}">
-    <Declaration><![CDATA[TYPE T_Ctrl_SIf_MOD_In :
+  <DUT Name="T_Ctrl_SIf_MOD_Out" Id="{08e402dd-7973-47f5-b63b-307e53430d30}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_MOD_Out :
 STRUCT
 	/// Ready Signal
 	bolReady: BASE_PLC.T_Ctrl_IoBool;
-	/// Emo Ok
-	bolEmoOk: BASE_PLC.T_Ctrl_IoBool;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

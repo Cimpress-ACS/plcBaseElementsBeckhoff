@@ -1144,8 +1144,7 @@ END_VAR
 VAR
 	udiTaskCnt: UDINT;
 	ii: UINT;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
 // to manually change in new FUB implementation!!!
@@ -1162,7 +1161,8 @@ CIf.Job.aCmdList[ii].bolAvailable := TRUE;
 ii := ii +1;
 
 // set name of class/typ
-CIf.Info.strType := 'FB_ECD'; 
+CIf.Info.strType := 'FB_ECD';
+CIf.Info.strFullName := 'EtherCAT Diagnostic';
 
 // set alarm class
 SIf.Alm[E_ALM_ECD.ADS_ComError].eAlmClass := E_AlmClass.INFO;

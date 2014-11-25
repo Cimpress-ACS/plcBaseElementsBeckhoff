@@ -1,4 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <POU Name="FB_PRS" Id="{aeafdf67-0807-49ec-867e-efc4e7f4565f}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_PRS EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -48,54 +49,41 @@ IF (me.bolActivate) THEN // cyclic call enabled
 END_IF;
 ]]></ST>
     </Implementation>
-    <Method Name="FB_init" Id="{73f31e8d-fb51-45d6-9df0-947166317f1a}">
-      <Declaration><![CDATA[METHOD FB_init : BOOL
+    <Method Name="sta_ABSENT" Id="{017309f2-ae52-4b50-9af0-9e8dd18cf9c2}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_ABSENT : BOOL
 VAR_INPUT
-	bInitRetains : BOOL; // if TRUE, the retain variables are initialized (warm start / cold start)
-	bInCopyCode : BOOL;  // if TRUE, the instance afterwards gets moved into the copy code (online change)
-END_VAR
-VAR
-	iIdx		: UINT;
-	iLength		: UINT;	
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
-// to manually change in new FUB implementation!!!
-// define valid commands for this controller
-iLength := SIZEOF(CIf.Job.aCmdList)/SIZEOF(CIf.Job.aCmdList[0]);
-iIdx := 0;
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		THIS^.Out_bolPresent := FALSE;
+	END_IF
 
-WHILE (iIdx < iLength) AND (CIf.Job.aCmdList[iIdx].intCmd <> cCMD_INITIALIZED) DO
-	iIdx := iIdx + 1; 
-END_WHILE
 
-IF (iIdx < iLength) THEN
-// Add configuration of own comands	
-	;
-ELSE
-	// Error if the aCmdList Array is to small
-END_IF
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		IF CIf.SwCfg.bolSimulation THEN
+			IF SIf.Par.bolSimHangerAvailable THEN
+				me.StateMachine.intStateNext := PRS_CmdState.cSTA_PRESENTBusy;
+			END_IF
+		ELSE
+			IF SIf.In.bolPresent.intern  THEN
+				me.StateMachine.intStateNext := PRS_CmdState.cSTA_PRESENTBusy;
+			END_IF;		
+		END_IF
+	END_IF
 
-// set name of class/typ
-CIf.Info.strType := 'FB_PRS'; 
 
-// set alarm class
-
-//*******************************************************************************
-// initial values
-//*******************************************************************************
-
-// software configuration
-CIf.SwCfg.bolExist := TRUE;
-CIf.SwCfg.bolEnable := TRUE;
-CIf.SwCfg.bolSimulation :=  FALSE;
-
-// parameter
-SIf.Par.bolSimHangerAvailable := FALSE;
-SIf.Par.udiDebounceAbsentTime_ms := 100;
-SIf.Par.udiDebouncePresentTime_ms := 1500;
-]]></ST>
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="Always" Id="{17810348-9e67-41c6-ac6b-9041a301c450}">
@@ -119,6 +107,116 @@ IF (((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.Alarm.eActivAlmClass=E_Alm
 		(me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_OFFBusy)) THEN
 	// alarm evt EOFF, OFF or cmd off
 	me.StateMachine.intStateNext := cSTA_OFFBusy;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_PRESENT" Id="{3c26f44e-fe8b-4506-b5c2-e2a421c8563c}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_PRESENT : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		THIS^.Out_bolPresent := TRUE;
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		IF CIf.SwCfg.bolSimulation THEN
+			IF NOT SIf.Par.bolSimHangerAvailable THEN
+				me.StateMachine.intStateNext := PRS_CmdState.cSTA_ABSENTBusy;
+			END_IF
+		ELSE
+			IF NOT SIf.In.bolPresent.intern  THEN
+				me.StateMachine.intStateNext := PRS_CmdState.cSTA_ABSENTBusy;
+			END_IF;		
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getCtrlSIf" Id="{3ca6b299-6b6f-4ce8-a3cf-18fa887f9f7e}">
+      <Declaration><![CDATA[METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_PRS
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="FB_init" Id="{73f31e8d-fb51-45d6-9df0-947166317f1a}">
+      <Declaration><![CDATA[METHOD FB_init : BOOL
+VAR_INPUT
+	bInitRetains : BOOL; // if TRUE, the retain variables are initialized (warm start / cold start)
+	bInCopyCode : BOOL;  // if TRUE, the instance afterwards gets moved into the copy code (online change)
+END_VAR
+VAR
+	iIdx		: UINT;
+	iLength		: UINT;	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
+// to manually change in new FUB implementation!!!
+// define valid commands for this controller
+iLength := SIZEOF(CIf.Job.aCmdList)/SIZEOF(CIf.Job.aCmdList[0]);
+iIdx := 0;
+
+WHILE (iIdx < iLength) AND (CIf.Job.aCmdList[iIdx].intCmd <> cCMD_INITIALIZED) DO
+	iIdx := iIdx + 1; 
+END_WHILE
+
+IF (iIdx < iLength) THEN
+// Add configuration of own comands	
+	;
+ELSE
+	// Error if the aCmdList Array is to small
+END_IF
+
+// set name of class/typ
+CIf.Info.strType := 'FB_PRS';
+CIf.Info.strFullName := 'Present Sensor';
+
+// set alarm class
+
+//*******************************************************************************
+// initial values
+//*******************************************************************************
+
+// software configuration
+CIf.SwCfg.bolExist := TRUE;
+CIf.SwCfg.bolEnable := TRUE;
+CIf.SwCfg.bolSimulation :=  FALSE;
+
+// parameter
+SIf.Par.bolSimHangerAvailable := FALSE;
+SIf.Par.udiDebounceAbsentTime_ms := 100;
+SIf.Par.udiDebouncePresentTime_ms := 1500;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="IoInBridge" Id="{7ea5bf5c-0957-4a4d-8441-e4216229bc14}">
+      <Declaration><![CDATA[METHOD PROTECTED IoInBridge : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
+SIf.In.bolPresent.map := THIS^.In_bolPresent;
+
+IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolPresent));
+ELSE
+	//simulation of global IO
 END_IF
 ]]></ST>
       </Implementation>
@@ -151,76 +249,6 @@ IF (getCmdState='') THEN // global not defined get local
 		END_CASE;
 	END_IF
 END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="getCtrlSIf" Id="{3ca6b299-6b6f-4ce8-a3cf-18fa887f9f7e}">
-      <Declaration><![CDATA[METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_PRS
-
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="IoInBridge" Id="{7ea5bf5c-0957-4a4d-8441-e4216229bc14}">
-      <Declaration><![CDATA[METHOD PROTECTED IoInBridge : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
-SIf.In.bolPresent.map := THIS^.In_bolPresent;
-
-IF (CIf.SwCfg.bolSimulation = FALSE) THEN
-	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolPresent));
-ELSE
-	//simulation of global IO
-END_IF
-]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="IoOutBridge" Id="{eb341fd2-5bb2-48e6-b4a1-987adb4bfd58}">
-      <Declaration><![CDATA[METHOD PROTECTED IoOutBridge : BOOL
-VAR
-	bolSwitchValvesOff: BOOL;
-END_VAR
-
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
-IF (CIf.SwCfg.bolSimulation = FALSE) THEN
-//	setOutBol(CIf.Job.bolIoForce ,ADR(SIf.Out.bolClose));
-	;
-//	THIS^.Out_bolClose := SIf.Out.bolClose.map;
-END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_PON" Id="{b1832c3a-93a7-49ad-a53a-a1db5ddc9f45}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
-VAR_INPUT
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateNext := PRS_CmdState.cSTA_ABSENTBusy;
-	END_IF
-
-
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_PRESENTBusy" Id="{967597d0-8097-47f0-8cfd-120413b47678}">
@@ -263,8 +291,8 @@ END_VAR
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_PRESENT" Id="{3c26f44e-fe8b-4506-b5c2-e2a421c8563c}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_PRESENT : BOOL
+    <Method Name="sta_PON" Id="{b1832c3a-93a7-49ad-a53a-a1db5ddc9f45}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
 VAR_INPUT
 END_VAR
 ]]></Declaration>
@@ -274,23 +302,17 @@ END_VAR
 // Entry action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		THIS^.Out_bolPresent := TRUE;
+		
 	END_IF
 
 
 //--------------------------------------------------------------------------------------
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		IF CIf.SwCfg.bolSimulation THEN
-			IF NOT SIf.Par.bolSimHangerAvailable THEN
-				me.StateMachine.intStateNext := PRS_CmdState.cSTA_ABSENTBusy;
-			END_IF
-		ELSE
-			IF NOT SIf.In.bolPresent.intern  THEN
-				me.StateMachine.intStateNext := PRS_CmdState.cSTA_ABSENTBusy;
-			END_IF;		
-		END_IF
+		me.StateMachine.intStateNext := PRS_CmdState.cSTA_ABSENTBusy;
 	END_IF
+
+
 
 
 //--------------------------------------------------------------------------------------
@@ -300,6 +322,25 @@ END_VAR
 	END_IF]]></ST>
       </Implementation>
     </Method>
+    <Property Name="CtrlSIf" Id="{bad87dab-0290-4991-8b8f-499f9f9969ab}">
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_CTRL_SIf_PRS]]></Declaration>
+      <Set Name="Set" Id="{3ea7f306-7678-41d7-8699-086d0d4e3160}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Set>
+      <Get Name="Get" Id="{52553f5f-9a95-4914-ba15-e9b5ac5ef4f6}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Method Name="StateMachine" Id="{d64e6797-444e-4a5f-b98c-25172482e23d}">
       <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL
 
@@ -318,6 +359,22 @@ CASE me.StateMachine.intState OF
     PRS_CmdState.cSTA_PRESENTBusy: 
         THIS^.sta_PRESENTBusy();
 END_CASE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="IoOutBridge" Id="{eb341fd2-5bb2-48e6-b4a1-987adb4bfd58}">
+      <Declaration><![CDATA[METHOD PROTECTED IoOutBridge : BOOL
+VAR
+	bolSwitchValvesOff: BOOL;
+END_VAR
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
+IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+//	setOutBol(CIf.Job.bolIoForce ,ADR(SIf.Out.bolClose));
+	;
+//	THIS^.Out_bolClose := SIf.Out.bolClose.map;
+END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_ABSENTBusy" Id="{efb3a22a-30f0-40c7-9c56-eae1962f8220}">
@@ -360,75 +417,21 @@ END_VAR
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_ABSENT" Id="{017309f2-ae52-4b50-9af0-9e8dd18cf9c2}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_ABSENT : BOOL
-VAR_INPUT
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		THIS^.Out_bolPresent := FALSE;
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		IF CIf.SwCfg.bolSimulation THEN
-			IF SIf.Par.bolSimHangerAvailable THEN
-				me.StateMachine.intStateNext := PRS_CmdState.cSTA_PRESENTBusy;
-			END_IF
-		ELSE
-			IF SIf.In.bolPresent.intern  THEN
-				me.StateMachine.intStateNext := PRS_CmdState.cSTA_PRESENTBusy;
-			END_IF;		
-		END_IF
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Property Name="CtrlSIf" Id="{bad87dab-0290-4991-8b8f-499f9f9969ab}">
-      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_CTRL_SIf_PRS]]></Declaration>
-      <Get Name="Get" Id="{52553f5f-9a95-4914-ba15-e9b5ac5ef4f6}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
-        </Implementation>
-      </Get>
-      <Set Name="Set" Id="{3ea7f306-7678-41d7-8699-086d0d4e3160}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[]]></ST>
-        </Implementation>
-      </Set>
-    </Property>
-    <ObjectProperties>﻿<XmlArchive>
-  <Data>
-    <o xml:space="preserve" t="POUImageProperty">
-      <n n="ImageData" />
-      <v n="TransparencyColor">"White"</v>
-      <v n="MakeTransparent">false</v>
-    </o>
-  </Data>
-  <TypeList>
-    <Type n="Boolean">System.Boolean</Type>
-    <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
-    <Type n="String">System.String</Type>
-  </TypeList>
-</XmlArchive></ObjectProperties>
+    <ObjectProperties>
+      <XmlArchive>
+        <Data>
+          <o xml:space="preserve" t="POUImageProperty">
+            <n n="ImageData" />
+            <v n="TransparencyColor">"White"</v>
+            <v n="MakeTransparent">false</v>
+          </o>
+        </Data>
+        <TypeList>
+          <Type n="Boolean">System.Boolean</Type>
+          <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
+          <Type n="String">System.String</Type>
+        </TypeList>
+      </XmlArchive>
+    </ObjectProperties>
   </POU>
 </TcPlcObject>

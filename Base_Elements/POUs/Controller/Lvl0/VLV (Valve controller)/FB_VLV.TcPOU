@@ -508,8 +508,7 @@ VAR_INPUT
 END_VAR
 VAR
 	ii: UINT;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
 // to manually change in new FUB implementation!!!
@@ -530,7 +529,8 @@ CIf.Job.aCmdList[ii].strName := 'Close';
 CIf.Job.aCmdList[ii].bolAvailable := TRUE;
 
 // set name of class/typ
-CIf.Info.strType := 'FB_VLV'; 
+CIf.Info.strType := 'FB_VLV';
+CIf.Info.strFullName := 'Valve Controller';
 
 // set alarm class
 SIf.Alm[E_ALM_VLV.SensorOpenAlwaysOn].eAlmClass := E_AlmClass.TSTOP;

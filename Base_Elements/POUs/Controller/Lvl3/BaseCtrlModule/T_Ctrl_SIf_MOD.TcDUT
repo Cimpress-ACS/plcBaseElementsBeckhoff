@@ -1,4 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <DUT Name="T_Ctrl_SIf_MOD" Id="{5f13d4a1-2520-48bb-ad85-26e06ea52c4f}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_MOD :
 STRUCT
@@ -10,11 +11,12 @@ STRUCT
 	Cur: POINTER TO T_Ctrl_SIf_MOD_Cur;
 	/// io input
 	In: POINTER TO T_Ctrl_SIf_MOD_In;
+	/// io output
+	Out: POINTER TO T_Ctrl_SIf_MOD_Out;
 	/// alarm number used in this controller
-	Alm: ARRAY[1..6] OF T_Ctrl_Alm;
+	Alm: ARRAY[1..MAX_E_ALM_MOD] OF T_Ctrl_Alm;
 END_STRUCT
-END_TYPE
-]]></Declaration>
+END_TYPE]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>

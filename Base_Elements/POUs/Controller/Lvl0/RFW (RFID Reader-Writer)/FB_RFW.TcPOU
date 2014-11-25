@@ -311,8 +311,7 @@ END_VAR
 VAR
 	udiTaskCnt: UDINT;
 	ii: UINT;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
 // to manually change in new FUB implementation!!!
@@ -340,7 +339,8 @@ CIf.Job.aCmdList[ii].strName := 'Run';
 CIf.Job.aCmdList[ii].bolAvailable := TRUE;
 
 // set name of class/typ
-CIf.Info.strType := 'FB_RFID'; 
+CIf.Info.strType := 'FB_RFID';
+CIf.Info.strFullName := 'RFID Reader-Writer';
 
 // set alarm class
 SIf.Alm[1].eAlmClass := E_AlmClass.TSTOP;

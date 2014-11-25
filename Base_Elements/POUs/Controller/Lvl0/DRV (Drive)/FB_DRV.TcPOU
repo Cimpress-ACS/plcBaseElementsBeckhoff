@@ -369,8 +369,7 @@ VAR_INPUT
 END_VAR
 VAR
 	ii: UINT;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
 // to manually change in new FUB implementation!!!
@@ -387,7 +386,8 @@ CIf.Job.aCmdList[ii].bolAvailable := TRUE;
 ii := ii +1;
 
 // set name of class/typ
-CIf.Info.strType := 'FB_DRV'; 
+CIf.Info.strType := 'FB_DRV';
+CIf.Info.strFullName := 'Drive';
 
 // set alarm class
 SIf.Alm[1].eAlmClass := E_AlmClass.OFF;
