@@ -671,7 +671,7 @@ IF (CIf.SwCfg.bolSimulation = FALSE) THEN
 ELSE
 	//simulation of global IO
 	SIf_In^.bolReady.intern	:= TRUE;
-	SIf_In^.bolEmoOk.intern	:= FALSE;
+	SIf_In^.bolEmoOk.intern	:= TRUE;
 END_IF]]></ST>
       </Implementation>
     </Method>

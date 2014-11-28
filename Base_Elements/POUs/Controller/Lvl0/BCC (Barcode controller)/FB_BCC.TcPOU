@@ -3,7 +3,7 @@
   <POU Name="FB_BCC" Id="{fbf2011b-2107-46f8-95d3-825b753a2c4c}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_BCC EXTENDS FB_CtrlBase
 VAR_INPUT
-	In_bolSensorTrigScan AT %I* : BOOL;
+	In_bolSensorTrigScan: BOOL;
 	pBCD_SIf_In: POINTER TO T_BCD;
 END_VAR
 VAR
