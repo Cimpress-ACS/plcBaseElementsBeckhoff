@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.1.28</ProjectVersion>
+    <ProjectVersion>0.0.1.29</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.1.28 	- Changed BCC Input definition
+    <Description>0.0.1.29 - New Ready Signal behaviour for Modules
+0.0.1.28 - Changed BCC Input definition
 	- EMO Simulation of the module controller
 0.0.1.27 - Update to FB_CtrlModule
 0.0.1.26 - Update to BasePLC V0.3.5.3 + Compiled with 3.1 4016.6

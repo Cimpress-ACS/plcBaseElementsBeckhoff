@@ -8,7 +8,8 @@
 	EmergencyOff := 3,
 	TimeoutStartGroup := 4,
 	TimeoutStopGroup := 5,
-	NextModuleNotReady := 6,
+	NextModuleNotReadyWarning := 6,
+	NextModuleNotReadyStop := 7,
 	MAX_E_ALM_MOD
 ) UDINT;
 END_TYPE]]></Declaration>
