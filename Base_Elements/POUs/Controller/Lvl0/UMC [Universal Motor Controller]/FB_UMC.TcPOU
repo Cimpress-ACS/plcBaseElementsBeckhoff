@@ -22,6 +22,11 @@ VAR
 	Out_unControl		: U_UMC_Lenze_Control;
 	arTurnDirection		: ARRAY[0..MAX_E_TURN_DIRECTION] OF BOOL;
 	fbPulse				: TC2_STANDARD.TP;
+	/// EtherCAT slave diagnostics via CoE
+	fbEcCoESdoRead_ErrorText: FB_EcCoESdoRead;
+	sErrorText: STRING(80);
+	sNetId: T_AmsNetId;
+	bSdoRead: BOOL;
 END_VAR
 VAR CONSTANT
 	cLEFT				: BOOL := TRUE;
@@ -50,7 +55,8 @@ Version		Date			Author		Comment
 0.00.1		09.07.2013		PC			Start history
 0.00.2		04.02.2014		AVM/MRU		Simulation mode
 										cCMD_LEFT / cCMD_RIGHT added in FB_init / getCmdState
-0.00.3		02.10.201		AVM/MRU		SingleAnswer in Always added
+0.00.3		02.10.2014		AVM/MRU		SingleAnswer in Always added
+0.00.4		05.12.2014		HLV/MAH		Motor status information text from CoE added
 
 ___________________________________________________________________________________________________*)
 
@@ -547,6 +553,8 @@ GetMotorStatus := UINT_TO_INT(uinMotorStatus);]]></ST>
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 		SIf.Cur.uinMotorResetCnt := 0;
 		cmd_MotorOff();
+		
+		bSdoRead := TRUE;
 	END_IF
 
 
@@ -554,8 +562,24 @@ GetMotorStatus := UINT_TO_INT(uinMotorStatus);]]></ST>
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 		
-		;
+		sNetId := F_CreateAmsNetId(In_strNetId);
+		fbEcCoESdoRead_ErrorText(sNetId := sNetId,
+								 nSlaveAddr := WORD_TO_UINT(In_uintPort),
+								 nSubIndex := 3,
+								 nIndex := 16#5F59,
+								 pDstBuf := ADR(sErrorText),
+								 cbBufLen := 70,
+								 bExecute := bSdoRead,
+								 tTimeout := T#500MS);
+								 
+		IF bSdoRead AND NOT fbEcCoESdoRead_ErrorText.bBusy THEN
+			bSdoRead := FALSE;
+		END_IF
 		
+		IF F_toUCase(sErrorText) <> 'NO ERROR' THEN
+			SIf.Alm[E_ALM_UMC.MotorStatusInformation].strText := sErrorText;
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_UMC.MotorStatusInformation),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+		END_IF
 		
 		// State Change Condition
 		IF (CIf.Job.bolAlmReset = TRUE) THEN
@@ -723,6 +747,7 @@ SIf.Alm[E_ALM_UMC.DirectionParameterOverflow].eAlmClass := Base_PLC.E_AlmClass.T
 SIf.Alm[E_ALM_UMC.DirectionParameterOverflow].strText := 'Direction Parameter Overflow';
 SIf.Alm[E_ALM_UMC.SpeedOverLimit].eAlmClass := Base_PLC.E_AlmClass.WARNING;
 SIf.Alm[E_ALM_UMC.SpeedOverLimit].strText := 'Motor Setpoint over the limit';
+SIf.Alm[E_ALM_UMC.MotorStatusInformation].eAlmClass := Base_PLC.E_AlmClass.INFO;
 
 //*******************************************************************************
 // initial values
