@@ -15,9 +15,12 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.1.30</ProjectVersion>
+    <ProjectVersion>0.0.1.31</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.1.30 - Motor status information text added
+    <Description>0.0.1.31 	- Upgraded to TC 3.1 4016.12
+	- Upgraded all libraries to newest version
+	- Added newest BasePLC
+0.0.1.30 - Motor status information text added
 0.0.1.29 - New Ready Signal behaviour for Modules
 0.0.1.28 - Changed BCC Input definition
 	- EMO Simulation of the module controller
@@ -672,7 +675,7 @@
     <Folder Include="Version\" />
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_PLC,0.3.5.4,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.5.5,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_EtherCAT,3.3.3.0,Beckhoff Automation GmbH">
@@ -684,13 +687,13 @@
     <LibraryReference Include="Tc2_Standard,3.3.0.0,Beckhoff Automation GmbH">
       <Namespace>Tc2_Standard</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Tc2_System,3.3.8.0,Beckhoff Automation GmbH">
+    <LibraryReference Include="Tc2_System,3.3.8.1,Beckhoff Automation GmbH">
       <Namespace>Tc2_System</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_TcpIp,3.3.2.0,Beckhoff Automation GmbH">
       <Namespace>Tc2_TcpIp</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Tc2_Utilities,3.3.7.0,Beckhoff Automation GmbH">
+    <LibraryReference Include="Tc2_Utilities,3.3.8.0,Beckhoff Automation GmbH">
       <Namespace>Tc2_Utilities</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc3_Interfaces,3.3.0.0,Beckhoff Automation GmbH">
@@ -699,7 +702,7 @@
     <LibraryReference Include="Tc3_MemMan,3.3.1.0,Beckhoff Automation GmbH">
       <Namespace>Tc3_MemMan</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Tc3_Module,3.3.5.0,Beckhoff Automation GmbH">
+    <LibraryReference Include="Tc3_Module,3.3.6.0,Beckhoff Automation GmbH">
       <Namespace>Tc3_Module</Namespace>
     </LibraryReference>
   </ItemGroup>
