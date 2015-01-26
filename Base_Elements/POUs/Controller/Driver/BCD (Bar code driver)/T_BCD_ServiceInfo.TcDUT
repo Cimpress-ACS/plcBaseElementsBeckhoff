@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_BCD_ServiceInfo" Id="{570cde91-c82a-486f-93dc-a29da6374e3a}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_BCD_ServiceInfo" Id="{932bdba5-41cd-40cd-99de-cc9439f52f80}">
     <Declaration><![CDATA[TYPE T_BCD_ServiceInfo :
 STRUCT
 	strLastUsername: STRING(25);

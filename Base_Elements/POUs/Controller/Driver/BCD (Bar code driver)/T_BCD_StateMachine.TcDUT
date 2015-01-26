@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_BCD_StateMachine" Id="{d1847ffa-4426-40b4-a17f-020ca9a6f591}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_BCD_StateMachine" Id="{fb09af41-742f-464f-a012-e48229615a1b}">
     <Declaration><![CDATA[TYPE T_BCD_StateMachine :
 STRUCT
 	/// actual state

@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_Ctrl_SIf_BCC_Cur" Id="{6b13c69f-a681-4310-b9f9-0f24b57837f6}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_Ctrl_SIf_BCC_Cur" Id="{3089c57f-7394-40dd-91b3-823144314dc5}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_BCC_Cur :
 STRUCT
 	/// Sensor connected

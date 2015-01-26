@@ -1,12 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_Ctrl_SIf_BCC_In" Id="{117071cf-3b49-48a6-acef-9b826336b3ea}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_Ctrl_SIf_BCC_In" Id="{f44e5a34-fe00-4e41-a15c-4ccb5dd28b80}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_BCC_In :
 STRUCT
-	// Sensor input for triggering a new barcode scan 
+	/// Sensor input for triggering a new barcode scan 
 	bolSensorTrigScan: BASE_PLC.T_Ctrl_IoBool;
 END_STRUCT
-END_TYPE]]></Declaration>
+END_TYPE
+]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>

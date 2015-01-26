@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_BCD_TxStructure" Id="{76d94535-b978-4030-b768-06522da3d248}">
+    <Declaration><![CDATA[TYPE T_BCD_TxStructure :
+STRUCT
+	/// Actual message size
+	intMessageSize			: UINT;
+	/// Tx data buffer
+	aTxData					: ARRAY[0..300] OF BYTE;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

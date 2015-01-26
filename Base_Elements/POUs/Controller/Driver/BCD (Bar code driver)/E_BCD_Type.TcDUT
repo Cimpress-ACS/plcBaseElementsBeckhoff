@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="E_BCD_Type" Id="{e09ccd63-f483-4fe8-b94c-89d1c6678298}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="E_BCD_Type" Id="{2c07d06e-e910-44fe-a4e8-69b111a759ce}">
     <Declaration><![CDATA[TYPE E_BCD_Type :
 (
 	None := 0,

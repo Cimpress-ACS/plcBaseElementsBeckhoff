@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_BCC_Data" Id="{f21c101e-abbf-43c9-a484-7c89709a9b20}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_BCC_Data" Id="{7b6952b0-c9e4-4bf2-b978-3c89340349e9}">
     <Declaration><![CDATA[TYPE T_BCC_Data :
 STRUCT
 	uliBarCode: ULINT;

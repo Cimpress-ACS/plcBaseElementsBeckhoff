@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <POU Name="FB_BCD" Id="{e10d19a6-f43b-4e58-8ffb-fa806f0eb2f4}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <POU Name="FB_BCD" Id="{9b52d7b0-8644-4655-8f02-ec7e053d1595}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_BCD
 VAR
 	bolInitDone: BOOL;
@@ -17,8 +17,9 @@ VAR
 	fbReceive: FB_SocketReceive;
 	/// Rx data buffer
 	aRxData: ARRAY[0..300] OF BYTE;
-	/// Tx data buffer
-	aTxData: ARRAY[0..300] OF BYTE;
+	/// Tx data
+	rTxData				: T_BCD_TxStructure;
+
 	intTxState: INT;
 	bolExecuteSend: BOOL;
 	/// counter for sended frames 
@@ -29,7 +30,7 @@ VAR
 	udiReceivedBytes: UDINT;
 	strReceivedMessage: STRING(255);
 	iStringLength: INT;
-	// bar code reader type
+	/// bar code reader type
 	iReaderType: E_BCD_Type;
 END_VAR
 VAR CONSTANT
@@ -98,8 +99,209 @@ IF (bolActivate) THEN // cyclic call enabled
 	
 END_IF;]]></ST>
     </Implementation>
-    <Method Name="CycleEndDuty" Id="{12406380-8c14-426d-9faa-a15d98e0f399}">
-      <Declaration><![CDATA[METHOD PROTECTED CycleEndDuty : BOOL
+    <Method Name="sta_ConnectSocketBusy" Id="{1ad3cc92-44b3-41f8-8ba2-1e11181ec2a9}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_ConnectSocketBusy'}
+METHOD PROTECTED sta_ConnectSocketBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+		stStateMachine.intStateHistory := stStateMachine.intStateLastCycle;
+		stStateMachine.intStateLastCycle := stStateMachine.intState;
+			
+		// Initialize and connect socket
+		fbClientConnection.nMode := CONNECT_MODE_ENABLEDBG; 			// not used
+		fbClientConnection.sRemoteHost := SIf.stCfg.strSensorIPAdr;
+		fbClientConnection.nRemotePort := SIf.stCfg.udiSensorPort;
+		fbClientConnection.tReconnect := SIf.stPar.tTOConnection;
+		fbClientConnection.bEnable:= TRUE;
+
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+		
+	
+		// State Change Condition
+
+		// Check about FUB error	
+		IF (fbClientConnection.bError = TRUE) OR (fbClientConnection.nErrId <> 0) THEN
+			SIf.stErr.bolErrorActive := TRUE;	
+			SIf.stErr.bolSocketError := TRUE;
+			SIf.stErr.udiErrorID := fbClientConnection.nErrId;
+			stStateMachine.intStateNext := cBCD_STA_Error;
+		END_IF
+	
+		// Wait for socket handle ID	
+		IF (fbClientConnection.hSocket.handle <> 0) AND (fbClientConnection.eState = eSOCKET_CONNECTED) THEN
+			stStateMachine.intStateNext := cBCD_STA_WaitForJob;
+		END_IF
+
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		SIf.intCmd := cBCD_CMD_DONE;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CycleStartDuty" Id="{322a3606-8adb-415b-a8c0-2d06fa66396c}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'CycleStartDuty'}
+METHOD PROTECTED CycleStartDuty : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// ----------------------------------------------------------------------------------
+// cyclic actions outside of statemachine
+
+// Simulation active
+IF (SIf.stCfg.bolSimulation) THEN
+	;
+ELSE
+	;
+END_IF
+
+// Cyclic call of the client connection
+fbClientConnection();
+// Cyclic call of method "HandleRxData"
+THIS^.HandleRxData();
+
+// Generate socket connected status info
+IF (fbClientConnection.eState = eSOCKET_CONNECTED) THEN
+	SIf.stStatus.bolSocketConnected:= TRUE;
+ELSE
+	SIf.stStatus.bolSocketConnected:= FALSE;	
+	SIf.stStatus.bolComChecked:= FALSE;
+END_IF
+
+// Command close socket can be executed all the time.
+// Used for error recovery in case if parent controller has an error.
+IF (SIf.intCmd=cBCD_CMD_CLOSE_SOCKET) THEN	
+	stStateMachine.intStateNext := cBCD_STA_CloseSocketBusy;
+END_IF
+			
+SIf.strCmd := THIS^.getCmdState(intCmdState:=SIf.intCmd,bolState:=FALSE);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="PrepareReadMsg" Id="{3d4dade1-2577-4970-9e9b-2f8226f80caf}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'PrepareReadMsg'}
+METHOD PRIVATE PrepareReadMsg
+VAR
+	uinI: UINT;
+	strCharacter: STRING(1);
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Delete last message
+strReceivedMessage:= '';
+
+// Loop over receive buffer
+FOR uinI:= 0 TO SIZEOF(aRxData)-1 DO	
+	// Start of text?
+	IF (aRxData[uinI] = cSTX) THEN
+		;
+	// End of text?
+	ELSIF (aRxData[uinI] = cETX) THEN
+		EXIT;
+	ELSE
+		// Convert ASCII to string
+		strCharacter:= F_ToCHR(aRxData[uinI]);
+		strReceivedMessage:= CONCAT(strReceivedMessage,strCharacter);			
+	END_IF
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_SocketClosed" Id="{434f1ca1-1c54-45bf-96b7-273daaa6f39e}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_SocketClosed'}
+METHOD PROTECTED sta_SocketClosed : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+		stStateMachine.intStateLastCycle := stStateMachine.intState;
+		;
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+
+		// State Change Condition
+		IF (SIf.intCmd=cBCD_CMD_CONNECT_SOCKET) THEN
+			stStateMachine.intStateNext := cBCD_STA_ConnectSocketBusy;
+		END_IF
+		
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_CloseSocketBusy" Id="{5d499f6a-81ba-4ae4-9b9a-1876c9564350}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_CloseSocketBusy'}
+METHOD PROTECTED sta_CloseSocketBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+		stStateMachine.intStateHistory := stStateMachine.intStateLastCycle;
+		stStateMachine.intStateLastCycle := stStateMachine.intState;
+		
+		// Reset pending commands			
+		bolExecuteSend:= FALSE;
+		bolExecuteRead:= FALSE;
+		// Reset Rx/Tx states
+		intRxState:= cRxIdle;
+		intTxState:= cTxIdle;
+		// Close socket
+		fbClientConnection.bEnable:= FALSE;
+
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+		
+	
+		// State Change Condition
+
+		// Check about FUB error	
+		IF (fbClientConnection.bError = TRUE) OR (fbClientConnection.nErrId <> 0) THEN
+			SIf.stErr.bolErrorActive := TRUE;	
+			SIf.stErr.bolSocketError := TRUE;
+			SIf.stErr.udiErrorID := fbClientConnection.nErrId;
+			stStateMachine.intStateNext := cBCD_STA_Error;
+		END_IF
+	
+		// Wait until socket is closed	
+		IF (fbClientConnection.eState = eSOCKET_CLOSED) THEN
+			stStateMachine.intStateNext := cBCD_STA_WaitForJob;
+		ELSIF  (SIf.stErr.bolErrorActive= TRUE) THEN 
+			stStateMachine.intStateNext := cBCD_STA_Error;		
+		END_IF
+	
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		SIf.intCmd := cBCD_CMD_DONE;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CycleEndDuty" Id="{6991b51e-f6c1-4114-833e-5ce5a16ba432}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'CycleEndDuty'}
+METHOD PROTECTED CycleEndDuty : BOOL
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[SIf.strState := THIS^.getCmdState(intCmdState:=stStateMachine.intState,bolState:=TRUE);
@@ -116,8 +318,376 @@ END_IF
 THIS^.HandleTxData();]]></ST>
       </Implementation>
     </Method>
-    <Method Name="PrepareBarCodeData" Id="{19675825-30e9-42a7-b980-9af133e2a667}">
-      <Declaration><![CDATA[METHOD PRIVATE PrepareBarCodeData
+    <Method Name="HandleRxData" Id="{74c0ff1a-cafe-4771-9bc8-4f903dd97345}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'HandleRxData'}
+METHOD PRIVATE HandleRxData
+VAR
+	uinI: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// GET/FETCH RX DATA
+CASE intRxState OF
+	
+	// wait for read command
+	cRxIdle:
+		IF (bolExecuteRead=TRUE) AND (fbClientConnection.eState = eSOCKET_CONNECTED)THEN	
+
+			// clear rx buffer
+			FOR uinI:= 0 TO SIZEOF(aRxData)-1 DO
+				aRxData[uinI]:= 16#00;
+			END_FOR
+			// Delete last message
+			strReceivedMessage:= '';
+			udiReceivedBytes := 0;
+								
+			// receive frame			
+			fbReceive( bExecute := FALSE );
+			fbReceive( 	sSrvNetId	:= '',
+						hSocket		:= fbClientConnection.hSocket,
+						cbLen		:= SIZEOF(aRxData),
+						pDest		:= ADR(aRxData),
+						bExecute	:= TRUE,
+						tTimeout	:= SIf.stPar.tTOReceive);
+			intRxState := cRxBusy;		
+		END_IF
+		
+	// wait until receive not busy
+	cRxBusy:
+		fbReceive( bExecute := FALSE );
+		IF NOT fbReceive.bBusy THEN
+			IF NOT fbReceive.bError THEN
+				IF (fbReceive.nRecBytes > 0) THEN (* some bytes received *)
+					udiReceivedBytes := fbReceive.nRecBytes;
+					intRxState := cRxConv; // convert received message
+				ELSE
+					// Try to read again
+					intRxState := cRxIdle;
+				END_IF	
+			// Error	
+			ELSE
+				IF (SIf.stErr.bolErrorActive = FALSE) THEN
+					SIf.stErr.bolErrorActive := TRUE;	
+					SIf.stErr.udiErrorID := fbReceive.nErrId;	
+					// Try to close the socket. Needs reconnect for socket after an error!	
+					stStateMachine.intStateNext := cBCD_STA_CloseSocketBusy;	
+				END_IF	
+			END_IF			
+		END_IF
+			
+	// convert received message to string
+	cRxConv: 
+		THIS^.PrepareReadMsg();
+		THIS^.CheckSensorError(); // Error response: [STX]sFA <x>[ETX]    	
+		bolExecuteRead:= FALSE; // Read done and data converted to string format
+		intRxState := cRxIdle;
+		
+END_CASE
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_Error" Id="{82b7a404-d88f-4473-ba9c-3069496ba777}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_Error'}
+METHOD PROTECTED sta_Error : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+		stStateMachine.intStateHistory := stStateMachine.intStateLastCycle;
+		stStateMachine.intStateLastCycle := stStateMachine.intState;
+		
+		// Reset pending commands			
+		bolExecuteSend:= FALSE;
+		bolExecuteRead:= FALSE;
+		// Reset Rx/Tx states
+		intRxState:= cRxIdle;
+		intTxState:= cTxIdle;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+			
+		// State Change Condition
+		IF (SIf.stErr.bolErrAck = TRUE) THEN
+			// Reset all active errors
+			SIf.stErr.bolErrorActive := FALSE;
+			SIf.stErr.bolSocketError := FALSE;
+			SIf.stErr.bolSensorError := FALSE;
+			SIf.stErr.udiErrorID := 0;
+			SIf.stErr.bolErrAck := FALSE;
+			// Needs reconnect for socket after an error!		
+			stStateMachine.intStateNext := cBCD_STA_CloseSocketBusy;		
+		END_IF
+		
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="StateMachine" Id="{85bf2f8e-a78a-43fa-bbb7-de6999e2d4bc}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'StateMachine'}
+METHOD PROTECTED StateMachine : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// main statemachine
+CASE stStateMachine.intState OF	
+	cBCD_STA_WaitForJob:
+   		THIS^.sta_WaitForJob();
+	cBCD_STA_ConnectSocketBusy: 
+        THIS^.sta_ConnectSocketBusy();	
+	cBCD_STA_CloseSocketBusy: 
+        THIS^.sta_CloseSocketBusy();		
+	cBCD_STA_SocketClosed: 
+        THIS^.sta_SocketClosed();	
+	cBCD_STA_ComTestBusy:
+	    THIS^.sta_ComTestBusy();
+	cBCD_STA_ReadCodeBusy:
+	    THIS^.sta_ReadCodeBusy();
+    cBCD_STA_Error: 
+        THIS^.sta_Error();
+END_CASE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getSIf" Id="{86fc9feb-45c7-4163-830f-c53ee419e66f}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'getSIf'}
+METHOD getSIf : POINTER TO T_BCD
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getSIf := ADR(SIf);]]></ST>
+      </Implementation>
+    </Method>
+    <Action Name="ClearTxBuffer" Id="{8c46fc43-76b4-4f74-95d3-37737a30e53c}">
+      <Implementation>
+        <ST><![CDATA[Tc2_System.MEMSET(ADR(rTxData.aTxData),16#00,SIZEOF(rTxData.aTxData));
+]]></ST>
+      </Implementation>
+    </Action>
+    <Method Name="getCmdState" Id="{8fb68db1-6cc4-4222-a9c4-8c5478851770}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'getCmdState'}
+METHOD PROTECTED getCmdState : STRING
+VAR_INPUT
+	intCmdState: INT;
+	bolState: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// get string cmd/state string information in runtime
+IF (bolState=FALSE) THEN
+	
+// cmd's
+	CASE intCmdState OF
+		cBCD_CMD_DONE: 
+			getCmdState := 'cBCD_CMD_DONE';
+		cBCD_CMD_CONNECT_SOCKET: 
+			getCmdState := 'cBCD_CMD_CONNECT_SOCKET';
+		cBCD_CMD_CLOSE_SOCKET: 
+			getCmdState := 'cBCD_CMD_CLOSE_SOCKET';
+		cBCD_CMD_READ_BARCODE: 
+			getCmdState := 'cBCD_CMD_READ_BARCODE';		
+		cBCD_CMD_COM_TEST: 
+			getCmdState := 'cBCD_CMD_COM_TEST';			
+	END_CASE;
+ELSE
+
+// state's
+	CASE intCmdState OF
+		cBCD_STA_WaitForJob: 
+			getCmdState := 'cBCD_STA_WaitForJob';
+		cBCD_STA_ConnectSocketBusy: 
+			getCmdState := 'cBCD_STA_ConnectSocketBusy';
+		cBCD_STA_CloseSocketBusy: 
+			getCmdState := 'cBCD_STA_CloseSocketBusy';
+		cBCD_STA_SocketClosed: 
+			getCmdState := 'cBCD_STA_SocketClosed';	
+		cBCD_STA_ReadCodeBusy: 
+			getCmdState := 'cBCD_STA_ReadCodeBusy';	
+		cBCD_STA_ComTestBusy:
+			getCmdState := 'cBCD_STA_ComTestBusy';	
+		cBCD_STA_Error: 
+			getCmdState := 'cBCD_STA_Error';
+	END_CASE;
+	
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="HandleTxData" Id="{98cf61cd-8d55-4d42-a889-0dcddf7e415e}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'HandleTxData'}
+METHOD PRIVATE HandleTxData
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// HANDLE TX DATA
+CASE intTxState OF
+	
+	// wait for send command (ready for send)
+	cTxIdle:
+		IF (bolExecuteSend) AND (fbClientConnection.eState = eSOCKET_CONNECTED)THEN									
+			// send frame
+			fbSend( bExecute := FALSE );
+			fbSend(	sSrvNetID 	:= '',
+					hSocket		:= fbClientConnection.hSocket,
+					cbLen		:= rTxData.intMessageSize,
+					pSrc		:= ADR(rTxData.aTxData),					// pointer to the frame data
+					bExecute	:= TRUE,
+					tTimeout 	:= SIf.stPar.tTOSend);
+	
+			intTxState := cTxBusy;							
+		END_IF
+		
+	// wait until send not busy
+	cTxBusy:
+		fbSend( bExecute := FALSE );
+		IF NOT (fbSend.bBusy) THEN
+			intTxState := cTxIdle;
+			// Check about FUB error	
+			IF (fbSend.bError = TRUE) THEN
+				IF (SIf.stErr.bolErrorActive = FALSE) THEN
+					SIf.stErr.bolErrorActive := TRUE;	
+					SIf.stErr.udiErrorID := fbSend.nErrId;	
+					// Try to close the socket. Needs reconnect for socket after an error!	
+					stStateMachine.intStateNext := cBCD_STA_CloseSocketBusy;	
+				END_IF				
+			// no error
+			ELSE
+				udiNSend := udiNSend + 1; // increment the number of send frames
+				bolExecuteSend:= FALSE;
+			END_IF
+		END_IF
+		
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_ComTestBusy" Id="{99a1b8ab-8b22-441c-8645-6eb1864c1e85}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_ComTestBusy'}
+METHOD PROTECTED sta_ComTestBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+		stStateMachine.intStateHistory := stStateMachine.intStateLastCycle;
+		stStateMachine.intStateLastCycle := stStateMachine.intState;
+
+		// Clear data
+		SIf.stData.stDevInfo.strComTestResult:='';
+		SIf.stStatus.bolComChecked:=FALSE;
+	
+		// Init sub state machine
+		stSubStateMachine.intState := cBCD_SUB_Send;
+		stSubStateMachine.intStateNext := cBCD_SUB_Send;	
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+			
+		// sub state machine for reading the bar code	
+		CASE stSubStateMachine.intState OF
+
+			cBCD_SUB_Send:
+				// Check Tx state idle
+				IF (intTxState = cTxIdle) THEN
+					CASE SIf.stCfg.iSensorType OF
+						E_BCD_Type.SICK:
+							THIS^.PrepareSendMsg('sRI0'); // Call SOPAS command "sRI0"
+							
+						E_BCD_Type.KEYENCE:
+							THIS^.PrepareSendMsg('BCLR'); // clear send buffer
+					END_CASE
+					bolExecuteSend:= TRUE;
+					stSubStateMachine.intState := cBCD_SUB_Wait;
+				END_IF
+		
+			cBCD_SUB_Wait:
+				// Wait until executed -> flag set back to false by method handle TxData
+				IF (bolExecuteSend=FALSE)THEN
+					stSubStateMachine.intState := cBCD_SUB_Read;
+				END_IF
+				
+			cBCD_SUB_Read:
+				// Check Rx state idle
+				IF (intRxState = cRxIdle) THEN
+					bolExecuteRead:= TRUE;
+					stSubStateMachine.intState := cBCD_SUB_CheckAnswer;
+				END_IF
+			
+			cBCD_SUB_CheckAnswer:
+				// Wait until executed -> flag set back to false by method handle RxData
+				IF (bolExecuteRead=FALSE)THEN				
+					// Check about corresponding answer for the command	
+					CASE SIf.stCfg.iSensorType OF
+						E_BCD_Type.SICK:					
+							IF (TC2_STANDARD.FIND(strReceivedMessage,'sRA') <> 0) THEN
+								SIf.stData.stDevInfo.strComTestResult:=strReceivedMessage;
+								SIf.stStatus.bolComChecked:=TRUE;
+							END_IF
+						
+						E_BCD_Type.KEYENCE:
+							IF (TC2_STANDARD.FIND(strReceivedMessage,'OK,BCLR') <> 0) THEN
+								SIf.stData.stDevInfo.strComTestResult:=strReceivedMessage;
+								SIf.stStatus.bolComChecked:=TRUE;
+							END_IF
+					END_CASE
+					stSubStateMachine.intState := cBCD_SUB_Done;
+				END_IF
+			
+			cBCD_SUB_Done:
+				; // job executed
+			
+		END_CASE
+		
+		 // job executed
+		IF (stSubStateMachine.intState = cBCD_SUB_Done) THEN
+			stStateMachine.intStateNext := cBCD_STA_WaitForJob;	
+		END_IF
+	
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		SIf.intCmd := cBCD_CMD_DONE;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="FB_init" Id="{b6d626b0-4836-4bae-8d83-6e5cf1aff188}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'FB_init'}
+METHOD FB_init : BOOL
+VAR_INPUT
+	///if TRUE, the retain variables are initialized (warm start / cold start)
+	bInitRetains: BOOL;
+	///if TRUE, the instance afterwards gets moved into the copy code (online change)
+	bInCopyCode: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Communication Settings
+SIf.stCfg.strSensorIPAdr := '192.168.1.103';  //'192.168.0.10'; 
+SIf.stCfg.udiSensorPort := 9004;
+SIf.stCfg.bolResponseIncludingDiagnostics := FALSE;
+SIf.stCfg.iSensorType := E_BCD_Type.KEYENCE;
+
+// Parameter
+SIf.stPar.tTOConnection := T#50S;
+SIf.stPar.tTOReceive := T#5S;
+SIf.stPar.tTOSend := T#5S;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="PrepareBarCodeData" Id="{d5e1ae75-4f39-477a-a1bb-21f1080191ae}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'PrepareBarCodeData'}
+METHOD PRIVATE PrepareBarCodeData
 VAR
 	intI: INT;
 	intStartIndex: INT;
@@ -167,149 +737,80 @@ FOR intI:=intStartIndex TO LEN(strReceivedMessage)-intStartIndex DO
 END_FOR]]></ST>
       </Implementation>
     </Method>
-    <Method Name="getCmdState" Id="{22b58c85-83ae-42b2-8536-cf9e7c69ae89}">
-      <Declaration><![CDATA[METHOD PROTECTED getCmdState : STRING
-VAR_INPUT
-	intCmdState: INT;
-	bolState: BOOL;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// get string cmd/state string information in runtime
-IF (bolState=FALSE) THEN
-	
-// cmd's
-	CASE intCmdState OF
-		cBCD_CMD_DONE: 
-			getCmdState := 'cBCD_CMD_DONE';
-		cBCD_CMD_CONNECT_SOCKET: 
-			getCmdState := 'cBCD_CMD_CONNECT_SOCKET';
-		cBCD_CMD_CLOSE_SOCKET: 
-			getCmdState := 'cBCD_CMD_CLOSE_SOCKET';
-		cBCD_CMD_READ_BARCODE: 
-			getCmdState := 'cBCD_CMD_READ_BARCODE';		
-		cBCD_CMD_COM_TEST: 
-			getCmdState := 'cBCD_CMD_COM_TEST';			
-	END_CASE;
-ELSE
-
-// state's
-	CASE intCmdState OF
-		cBCD_STA_WaitForJob: 
-			getCmdState := 'cBCD_STA_WaitForJob';
-		cBCD_STA_ConnectSocketBusy: 
-			getCmdState := 'cBCD_STA_ConnectSocketBusy';
-		cBCD_STA_CloseSocketBusy: 
-			getCmdState := 'cBCD_STA_CloseSocketBusy';
-		cBCD_STA_SocketClosed: 
-			getCmdState := 'cBCD_STA_SocketClosed';	
-		cBCD_STA_ReadCodeBusy: 
-			getCmdState := 'cBCD_STA_ReadCodeBusy';	
-		cBCD_STA_ComTestBusy:
-			getCmdState := 'cBCD_STA_ComTestBusy';	
-		cBCD_STA_Error: 
-			getCmdState := 'cBCD_STA_Error';
-	END_CASE;
-	
-END_IF
-
-]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="CtrlInit" Id="{29aa5152-fe89-455b-9fb8-8c4db81de3d1}">
-      <Declaration><![CDATA[METHOD PROTECTED CtrlInit : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// one time first cyclic call
-// The socket is closed
-stStateMachine.intStateNext := cBCD_STA_SocketClosed;]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_ConnectSocketBusy" Id="{3c9ade34-59a7-4850-a483-f5ee80a4fc15}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_ConnectSocketBusy : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
-		stStateMachine.intStateHistory := stStateMachine.intStateLastCycle;
-		stStateMachine.intStateLastCycle := stStateMachine.intState;
-			
-		// Initialize and connect socket
-		fbClientConnection.nMode := 0; 			// not used
-		fbClientConnection.sRemoteHost := SIf.stCfg.strSensorIPAdr;
-		fbClientConnection.nRemotePort := SIf.stCfg.udiSensorPort;
-		fbClientConnection.tReconnect := SIf.stPar.tTOConnection;
-		fbClientConnection.bEnable:= TRUE;
-
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
-		
-	
-		// State Change Condition
-
-		// Check about FUB error	
-		IF (fbClientConnection.bError = TRUE) OR (fbClientConnection.nErrId <> 0) THEN
-			SIf.stErr.bolErrorActive := TRUE;	
-			SIf.stErr.bolSocketError := TRUE;
-			SIf.stErr.udiErrorID := fbClientConnection.nErrId;
-			stStateMachine.intStateNext := cBCD_STA_Error;
-		END_IF
-	
-		// Wait for socket handle ID	
-		IF (fbClientConnection.hSocket.handle <> 0) AND (fbClientConnection.eState = eSOCKET_CONNECTED) THEN
-			stStateMachine.intStateNext := cBCD_STA_WaitForJob;
-		END_IF
-
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
-		SIf.intCmd := cBCD_CMD_DONE;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="PrepareReadMsg" Id="{434889fe-fb05-438f-abb6-47ea2290a42c}">
-      <Declaration><![CDATA[METHOD PRIVATE PrepareReadMsg
+    <Method Name="CheckSensorError" Id="{e2fa62b7-d503-4d82-902e-027602ebecdc}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'CheckSensorError'}
+METHOD PRIVATE CheckSensorError
 VAR
-	uinI: UINT;
-	strCharacter: STRING(1);
+	strErrorID: STRING(3);
+	bytErrorID: BYTE;
+	cbData: UDINT;
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Delete last message
-strReceivedMessage:= '';
+        <ST><![CDATA[(*--------------------------------------------------------------------------
+IF an error occurs the Sopas command is answered with:
+[STX]sFA <x>[ETX] as an error response
 
-// Loop over receive buffer
-FOR uinI:= 0 TO SIZEOF(aRxData)-1 DO	
-	// Start of text?
-	IF (aRxData[uinI] = cSTX) THEN
-		;
-	// End of text?
-	ELSIF (aRxData[uinI] = cETX) THEN
-		EXIT;
-	ELSE
-		// Convert ASCII to string
-		strCharacter:= F_ToCHR(aRxData[uinI]);
-		strReceivedMessage:= CONCAT(strReceivedMessage,strCharacter);			
-	END_IF
-END_FOR]]></ST>
+	Error list: <x> can have following values:
+	1:	Access denied
+	2:	Unknown Index
+	3:	Unknown Index
+	4:	Wrong Condition
+	5:	Invalid Data
+	6:	Unknown Error
+	7:	Too Many Parameter
+	8:	Parameter Missing
+	9: 	Wrong Parameter
+	A:	No Write Access
+	B:	Unknown Command
+	C:	Unknown Command
+	D:	Server Busy
+	E:	Textstring Too Long
+	F:	Unknown Event
+	10:	Too many Parameter
+	11: Invalid Character
+	12.	No Message
+	13:	No Answer
+	14:	Internal Error
+	15:	HubAddress: wrong
+	16:	HubAddress: error
+	17:	HubAddress: error
+
+---------------------------------------------------------------------------*)
+
+// If received message is an error response from sensor: [STX]sFA <x>[ETX]    				
+IF (TC2_STANDARD.FIND(strReceivedMessage,'sFA') <> 0) THEN
+	
+	// Get error number
+	strErrorID := Mid(strReceivedMessage,LEN(strReceivedMessage)-1,5);
+	cbData := HEXSTR_TO_DATA( strErrorID, ADR(bytErrorID), SIZEOF(bytErrorID));
+
+	// No interpretation of the error number, only set SensorError with error number info 
+	(*
+	CASE bytErrorID OF
+		16#1: 
+		16#2:
+		16#3:	
+		16#A:			
+		16#B,16#C:
+	END_CASE
+	*)
+	
+	IF (SIf.stErr.bolErrorActive = FALSE) THEN
+		SIf.stErr.bolErrorActive:= TRUE;	
+		SIf.stErr.bolSensorError:= TRUE; 
+		SIf.stErr.udiErrorID := bytErrorID;	
+		// Try to close the socket. Needs reconnect for socket after an error!	
+		stStateMachine.intStateNext := cBCD_STA_CloseSocketBusy;	
+	END_IF	
+
+END_IF
+	]]></ST>
       </Implementation>
     </Method>
-    <Method Name="getSIf" Id="{443e494b-1354-4c70-a8bf-acb9f6845d4c}">
-      <Declaration><![CDATA[METHOD getSIf : POINTER TO T_BCD
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[getSIf := ADR(SIf);]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_ReadCodeBusy" Id="{5a0cb0b2-b60e-4c83-93a8-58c1be603d33}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_ReadCodeBusy : BOOL
+    <Method Name="sta_ReadCodeBusy" Id="{e54c24e3-afec-45d9-9a45-a1bd55bc6eb2}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_ReadCodeBusy'}
+METHOD PROTECTED sta_ReadCodeBusy : BOOL
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
@@ -452,53 +953,41 @@ END_FOR]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="HandleTxData" Id="{6c1fd1ef-493c-4973-bfab-52bf42129e94}">
-      <Declaration><![CDATA[METHOD PRIVATE HandleTxData
+    <Method Name="PrepareSendMsg" Id="{e67cfade-0958-4a28-abdc-00b43b64367e}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'PrepareSendMsg'}
+METHOD PRIVATE PrepareSendMsg
+VAR_INPUT
+	strMsg: STRING;
+END_VAR
+VAR
+	intI: UINT;
+	strCharacter: STRING(1);
+END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// HANDLE TX DATA
-CASE intTxState OF
-	
-	// wait for send command (ready for send)
-	cTxIdle:
-		IF (bolExecuteSend) AND (fbClientConnection.eState = eSOCKET_CONNECTED)THEN									
-			// send frame
-			fbSend( bExecute := FALSE );
-			fbSend(	sSrvNetID 	:= '',
-					hSocket		:= fbClientConnection.hSocket,
-					cbLen		:= SIZEOF(aTxData),
-					pSrc		:= ADR(aTxData),					// pointer to the frame data
-					bExecute	:= TRUE,
-					tTimeout 	:= SIf.stPar.tTOSend);
-	
-			intTxState := cTxBusy;							
-		END_IF
-		
-	// wait until send not busy
-	cTxBusy:
-		fbSend( bExecute := FALSE );
-		IF NOT (fbSend.bBusy) THEN
-			intTxState := cTxIdle;
-			// Check about FUB error	
-			IF (fbSend.bError = TRUE) THEN
-				IF (SIf.stErr.bolErrorActive = FALSE) THEN
-					SIf.stErr.bolErrorActive := TRUE;	
-					SIf.stErr.udiErrorID := fbSend.nErrId;	
-					// Try to close the socket. Needs reconnect for socket after an error!	
-					stStateMachine.intStateNext := cBCD_STA_CloseSocketBusy;	
-				END_IF				
-			// no error
-			ELSE
-				udiNSend := udiNSend + 1; // increment the number of send frames
-				bolExecuteSend:= FALSE;
-			END_IF
-		END_IF
-		
-END_CASE]]></ST>
+        <ST><![CDATA[// Clear send buffer
+ClearTxBuffer();
+
+// STX - start of telegramm
+rTxData.aTxData[0]:= cSTX;
+
+// Loop over message string and convert to ASCII
+FOR intI:= 1 TO INT_TO_UINT(LEN(strMsg)) DO
+	// Get char
+	strCharacter:= MID(strMsg,1,UINT_TO_INT(intI));
+	// Convert to ASCII
+	rTxData.aTxData[intI]:= F_ToASC(strCharacter);
+END_FOR
+
+// ETX - end of telegramm
+rTxData.aTxData[intI]:= cETX;
+
+rTxData.intMessageSize := intI + 1;]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_WaitForJob" Id="{6ee46b56-e135-4bac-80f7-ce43932afc7f}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_WaitForJob : BOOL
+    <Method Name="sta_WaitForJob" Id="{e79427c7-26eb-403f-9f44-c99aabec868f}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_WaitForJob'}
+METHOD PROTECTED sta_WaitForJob : BOOL
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
@@ -534,475 +1023,14 @@ END_CASE]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="HandleRxData" Id="{70e69a46-c57b-4f59-9d59-e1e8b81fc3c4}">
-      <Declaration><![CDATA[METHOD PRIVATE HandleRxData
-VAR
-	uinI: UINT;
-END_VAR
+    <Method Name="CtrlInit" Id="{fab64fc1-06ea-49cf-b0b0-ae06254ffffc}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'CtrlInit'}
+METHOD PROTECTED CtrlInit : BOOL
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// GET/FETCH RX DATA
-CASE intRxState OF
-	
-	// wait for read command
-	cRxIdle:
-		IF (bolExecuteRead=TRUE) AND (fbClientConnection.eState = eSOCKET_CONNECTED)THEN	
-
-			// clear rx buffer
-			FOR uinI:= 0 TO SIZEOF(aRxData)-1 DO
-				aRxData[uinI]:= 16#00;
-			END_FOR
-			// Delete last message
-			strReceivedMessage:= '';
-			udiReceivedBytes := 0;
-								
-			// receive frame			
-			fbReceive( bExecute := FALSE );
-			fbReceive( 	sSrvNetId	:= '',
-						hSocket		:= fbClientConnection.hSocket,
-						cbLen		:= SIZEOF(aRxData),
-						pDest		:= ADR(aRxData),
-						bExecute	:= TRUE,
-						tTimeout	:= SIf.stPar.tTOReceive);
-			intRxState := cRxBusy;		
-		END_IF
-		
-	// wait until receive not busy
-	cRxBusy:
-		fbReceive( bExecute := FALSE );
-		IF NOT fbReceive.bBusy THEN
-			IF NOT fbReceive.bError THEN
-				IF (fbReceive.nRecBytes > 0) THEN (* some bytes received *)
-					udiReceivedBytes := fbReceive.nRecBytes;
-					intRxState := cRxConv; // convert received message
-				ELSE
-					// Try to read again
-					intRxState := cRxIdle;
-				END_IF	
-			// Error	
-			ELSE
-				IF (SIf.stErr.bolErrorActive = FALSE) THEN
-					SIf.stErr.bolErrorActive := TRUE;	
-					SIf.stErr.udiErrorID := fbReceive.nErrId;	
-					// Try to close the socket. Needs reconnect for socket after an error!	
-					stStateMachine.intStateNext := cBCD_STA_CloseSocketBusy;	
-				END_IF	
-			END_IF			
-		END_IF
-			
-	// convert received message to string
-	cRxConv: 
-		THIS^.PrepareReadMsg();
-		THIS^.CheckSensorError(); // Error response: [STX]sFA <x>[ETX]    	
-		bolExecuteRead:= FALSE; // Read done and data converted to string format
-		intRxState := cRxIdle;
-		
-END_CASE
-]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_Error" Id="{92af9710-31e4-4ae0-baf1-11f7843d0f19}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_Error : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
-		stStateMachine.intStateHistory := stStateMachine.intStateLastCycle;
-		stStateMachine.intStateLastCycle := stStateMachine.intState;
-		
-		// Reset pending commands			
-		bolExecuteSend:= FALSE;
-		bolExecuteRead:= FALSE;
-		// Reset Rx/Tx states
-		intRxState:= cRxIdle;
-		intTxState:= cTxIdle;
-		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
-			
-		// State Change Condition
-		IF (SIf.stErr.bolErrAck = TRUE) THEN
-			// Reset all active errors
-			SIf.stErr.bolErrorActive := FALSE;
-			SIf.stErr.bolSocketError := FALSE;
-			SIf.stErr.bolSensorError := FALSE;
-			SIf.stErr.udiErrorID := 0;
-			SIf.stErr.bolErrAck := FALSE;
-			// Needs reconnect for socket after an error!		
-			stStateMachine.intStateNext := cBCD_STA_CloseSocketBusy;		
-		END_IF
-		
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_ComTestBusy" Id="{9cc21030-e666-4552-a69b-4319c8a14e5d}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_ComTestBusy : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
-		stStateMachine.intStateHistory := stStateMachine.intStateLastCycle;
-		stStateMachine.intStateLastCycle := stStateMachine.intState;
-
-		// Clear data
-		SIf.stData.stDevInfo.strComTestResult:='';
-		SIf.stStatus.bolComChecked:=FALSE;
-	
-		// Init sub state machine
-		stSubStateMachine.intState := cBCD_SUB_Send;
-		stSubStateMachine.intStateNext := cBCD_SUB_Send;	
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
-			
-		// sub state machine for reading the bar code	
-		CASE stSubStateMachine.intState OF
-
-			cBCD_SUB_Send:
-				// Check Tx state idle
-				IF (intTxState = cTxIdle) THEN
-					CASE SIf.stCfg.iSensorType OF
-						E_BCD_Type.SICK:
-							THIS^.PrepareSendMsg('sRI0'); // Call SOPAS command "sRI0"
-							
-						E_BCD_Type.KEYENCE:
-							THIS^.PrepareSendMsg('BCLR'); // clear send buffer
-					END_CASE
-					bolExecuteSend:= TRUE;
-					stSubStateMachine.intState := cBCD_SUB_Wait;
-				END_IF
-		
-			cBCD_SUB_Wait:
-				// Wait until executed -> flag set back to false by method handle TxData
-				IF (bolExecuteSend=FALSE)THEN
-					stSubStateMachine.intState := cBCD_SUB_Read;
-				END_IF
-				
-			cBCD_SUB_Read:
-				// Check Rx state idle
-				IF (intRxState = cRxIdle) THEN
-					bolExecuteRead:= TRUE;
-					stSubStateMachine.intState := cBCD_SUB_CheckAnswer;
-				END_IF
-			
-			cBCD_SUB_CheckAnswer:
-				// Wait until executed -> flag set back to false by method handle RxData
-				IF (bolExecuteRead=FALSE)THEN				
-					// Check about corresponding answer for the command	
-					CASE SIf.stCfg.iSensorType OF
-						E_BCD_Type.SICK:					
-							IF (TC2_STANDARD.FIND(strReceivedMessage,'sRA') <> 0) THEN
-								SIf.stData.stDevInfo.strComTestResult:=strReceivedMessage;
-								SIf.stStatus.bolComChecked:=TRUE;
-							END_IF
-						
-						E_BCD_Type.KEYENCE:
-							IF (TC2_STANDARD.FIND(strReceivedMessage,'OK,BCLR') <> 0) THEN
-								SIf.stData.stDevInfo.strComTestResult:=strReceivedMessage;
-								SIf.stStatus.bolComChecked:=TRUE;
-							END_IF
-					END_CASE
-					stSubStateMachine.intState := cBCD_SUB_Done;
-				END_IF
-			
-			cBCD_SUB_Done:
-				; // job executed
-			
-		END_CASE
-		
-		 // job executed
-		IF (stSubStateMachine.intState = cBCD_SUB_Done) THEN
-			stStateMachine.intStateNext := cBCD_STA_WaitForJob;	
-		END_IF
-	
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
-		SIf.intCmd := cBCD_CMD_DONE;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="StateMachine" Id="{a35023f8-b9e2-411b-ac78-986d49368de3}">
-      <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[
-// main statemachine
-CASE stStateMachine.intState OF	
-	cBCD_STA_WaitForJob:
-   		THIS^.sta_WaitForJob();
-	cBCD_STA_ConnectSocketBusy: 
-        THIS^.sta_ConnectSocketBusy();	
-	cBCD_STA_CloseSocketBusy: 
-        THIS^.sta_CloseSocketBusy();		
-	cBCD_STA_SocketClosed: 
-        THIS^.sta_SocketClosed();	
-	cBCD_STA_ComTestBusy:
-	    THIS^.sta_ComTestBusy();
-	cBCD_STA_ReadCodeBusy:
-	    THIS^.sta_ReadCodeBusy();
-    cBCD_STA_Error: 
-        THIS^.sta_Error();
-END_CASE;]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_SocketClosed" Id="{b19049b8-316a-41f7-ae34-e4d893a2fbd3}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_SocketClosed : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
-		stStateMachine.intStateLastCycle := stStateMachine.intState;
-		;
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
-
-		// State Change Condition
-		IF (SIf.intCmd=cBCD_CMD_CONNECT_SOCKET) THEN
-			stStateMachine.intStateNext := cBCD_STA_ConnectSocketBusy;
-		END_IF
-		
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="FB_init" Id="{bc0d9ed2-2d9f-4706-9711-f054b30862df}">
-      <Declaration><![CDATA[METHOD FB_init : BOOL
-VAR_INPUT
-	///if TRUE, the retain variables are initialized (warm start / cold start)
-	bInitRetains: BOOL;
-	///if TRUE, the instance afterwards gets moved into the copy code (online change)
-	bInCopyCode: BOOL;
-END_VAR]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// Communication Settings
-SIf.stCfg.strSensorIPAdr := '192.168.1.103';  //'192.168.0.10'; 
-SIf.stCfg.udiSensorPort := 9004;
-SIf.stCfg.bolResponseIncludingDiagnostics := FALSE;
-SIf.stCfg.iSensorType := E_BCD_Type.KEYENCE;
-
-// Parameter
-SIf.stPar.tTOConnection := T#50S;
-SIf.stPar.tTOReceive := T#5S;
-SIf.stPar.tTOSend := T#5S;]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="CheckSensorError" Id="{e0332d72-edfd-42a6-bc89-563b77b7e0f9}">
-      <Declaration><![CDATA[METHOD PRIVATE CheckSensorError
-VAR
-	strErrorID: STRING(3);
-	bytErrorID: BYTE;
-	cbData: UDINT;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[(*--------------------------------------------------------------------------
-IF an error occurs the Sopas command is answered with:
-[STX]sFA <x>[ETX] as an error response
-
-	Error list: <x> can have following values:
-	1:	Access denied
-	2:	Unknown Index
-	3:	Unknown Index
-	4:	Wrong Condition
-	5:	Invalid Data
-	6:	Unknown Error
-	7:	Too Many Parameter
-	8:	Parameter Missing
-	9: 	Wrong Parameter
-	A:	No Write Access
-	B:	Unknown Command
-	C:	Unknown Command
-	D:	Server Busy
-	E:	Textstring Too Long
-	F:	Unknown Event
-	10:	Too many Parameter
-	11: Invalid Character
-	12.	No Message
-	13:	No Answer
-	14:	Internal Error
-	15:	HubAddress: wrong
-	16:	HubAddress: error
-	17:	HubAddress: error
-
----------------------------------------------------------------------------*)
-
-// If received message is an error response from sensor: [STX]sFA <x>[ETX]    				
-IF (TC2_STANDARD.FIND(strReceivedMessage,'sFA') <> 0) THEN
-	
-	// Get error number
-	strErrorID := Mid(strReceivedMessage,LEN(strReceivedMessage)-1,5);
-	cbData := HEXSTR_TO_DATA( strErrorID, ADR(bytErrorID), SIZEOF(bytErrorID));
-
-	// No interpretation of the error number, only set SensorError with error number info 
-	(*
-	CASE bytErrorID OF
-		16#1: 
-		16#2:
-		16#3:	
-		16#A:			
-		16#B,16#C:
-	END_CASE
-	*)
-	
-	IF (SIf.stErr.bolErrorActive = FALSE) THEN
-		SIf.stErr.bolErrorActive:= TRUE;	
-		SIf.stErr.bolSensorError:= TRUE; 
-		SIf.stErr.udiErrorID := bytErrorID;	
-		// Try to close the socket. Needs reconnect for socket after an error!	
-		stStateMachine.intStateNext := cBCD_STA_CloseSocketBusy;	
-	END_IF	
-
-END_IF
-	]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_CloseSocketBusy" Id="{e184df36-95cf-40b5-8f4d-01ceb8ed5c22}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_CloseSocketBusy : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
-		stStateMachine.intStateHistory := stStateMachine.intStateLastCycle;
-		stStateMachine.intStateLastCycle := stStateMachine.intState;
-		
-		// Reset pending commands			
-		bolExecuteSend:= FALSE;
-		bolExecuteRead:= FALSE;
-		// Reset Rx/Tx states
-		intRxState:= cRxIdle;
-		intTxState:= cTxIdle;
-		// Close socket
-		fbClientConnection.bEnable:= FALSE;
-
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
-		
-	
-		// State Change Condition
-
-		// Check about FUB error	
-		IF (fbClientConnection.bError = TRUE) OR (fbClientConnection.nErrId <> 0) THEN
-			SIf.stErr.bolErrorActive := TRUE;	
-			SIf.stErr.bolSocketError := TRUE;
-			SIf.stErr.udiErrorID := fbClientConnection.nErrId;
-			stStateMachine.intStateNext := cBCD_STA_Error;
-		END_IF
-	
-		// Wait until socket is closed	
-		IF (fbClientConnection.eState = eSOCKET_CLOSED) THEN
-			stStateMachine.intStateNext := cBCD_STA_WaitForJob;
-		ELSIF  (SIf.stErr.bolErrorActive= TRUE) THEN 
-			stStateMachine.intStateNext := cBCD_STA_Error;		
-		END_IF
-	
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
-		SIf.intCmd := cBCD_CMD_DONE;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="PrepareSendMsg" Id="{f231e3b2-b153-4f68-871e-d363daf29edf}">
-      <Declaration><![CDATA[METHOD PRIVATE PrepareSendMsg
-VAR_INPUT
-	strMsg: STRING;
-END_VAR
-VAR
-	intI: UINT;
-	strCharacter: STRING(1);
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// Clear send buffer
-FOR intI:= 0 TO SIZEOF(aTxData)-1 DO
-	aTxData[intI]:= 16#00;
-END_FOR
-
-// STX - start of telegramm
-aTxData[0]:= cSTX;
-
-// Loop over message string and convert to ASCII
-FOR intI:= 1 TO INT_TO_UINT(LEN(strMsg)) DO
-	// Get char
-	strCharacter:= MID(strMsg,1,UINT_TO_INT(intI));
-	// Convert to ASCII
-	aTxData[intI]:= F_ToASC(strCharacter);
-END_FOR
-
-// ETX - end of telegramm
-aTxData[intI]:= cETX;]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="CycleStartDuty" Id="{fb0279f0-658b-43e5-a55f-5d2b9654e681}">
-      <Declaration><![CDATA[METHOD PROTECTED CycleStartDuty : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// ----------------------------------------------------------------------------------
-// cyclic actions outside of statemachine
-
-// Simulation active
-IF (SIf.stCfg.bolSimulation) THEN
-	;
-ELSE
-	;
-END_IF
-
-// Cyclic call of the client connection
-fbClientConnection();
-// Cyclic call of method "HandleRxData"
-THIS^.HandleRxData();
-
-// Generate socket connected status info
-IF (fbClientConnection.eState = eSOCKET_CONNECTED) THEN
-	SIf.stStatus.bolSocketConnected:= TRUE;
-ELSE
-	SIf.stStatus.bolSocketConnected:= FALSE;	
-	SIf.stStatus.bolComChecked:= FALSE;
-END_IF
-
-// Command close socket can be executed all the time.
-// Used for error recovery in case if parent controller has an error.
-IF (SIf.intCmd=cBCD_CMD_CLOSE_SOCKET) THEN	
-	stStateMachine.intStateNext := cBCD_STA_CloseSocketBusy;
-END_IF
-			
-SIf.strCmd := THIS^.getCmdState(intCmdState:=SIf.intCmd,bolState:=FALSE);]]></ST>
+        <ST><![CDATA[// one time first cyclic call
+// The socket is closed
+stStateMachine.intStateNext := cBCD_STA_SocketClosed;]]></ST>
       </Implementation>
     </Method>
     <ObjectProperties />

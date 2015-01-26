@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <GVL Name="BCD_CmdState" Id="{c639ac96-7344-4302-9c51-5e12cf1bcdc7}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <GVL Name="BCD_CmdState" Id="{654b17fc-95c4-4a6e-8747-ce7bbd1ea6d8}">
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
 	/// ctrl commands definitions
 	cBCD_CMD_DONE: INT := -1;

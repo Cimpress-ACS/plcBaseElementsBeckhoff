@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_Ctrl_SIf_BCC_Par" Id="{09eb4cd5-3d70-468f-9fcf-edc8dee0928f}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_Ctrl_SIf_BCC_Par" Id="{1ebbec12-f416-45c9-af8e-bd808d8d4251}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_BCC_Par :
 STRUCT
 	/// [ms] Timeout power on
 	udiTOPowerOn_ms: UDINT;
 	/// [ms] Timeout read
 	udiTORead_ms: UDINT;
-	// [ms] Barcode scan delay time - Delay before a barcode scan will be triggered after a new product has been detected by trigger sensor input
+	/// [ms] Barcode scan delay time - Delay before a barcode scan will be triggered after a new product has been detected by trigger sensor input
 	udiExecuteScanDelayTime_ms: UDINT;
 END_STRUCT
 END_TYPE

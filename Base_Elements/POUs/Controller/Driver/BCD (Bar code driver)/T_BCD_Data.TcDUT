@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_BCD_Data" Id="{0a5bedfa-8d1c-49db-8ab1-52478bd2840c}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_BCD_Data" Id="{f363979a-64df-4246-8b26-2ce9dead1690}">
     <Declaration><![CDATA[TYPE T_BCD_Data :
 STRUCT
 	bolCodeReaded: BOOL;

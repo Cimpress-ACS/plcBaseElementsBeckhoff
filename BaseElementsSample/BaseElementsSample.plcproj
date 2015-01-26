@@ -64,10 +64,10 @@
     <Folder Include="POUs\Utility Functions\" />
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_Elements,0.0.1.30,Vistaprint">
+    <LibraryReference Include="Base_Elements,0.0.1.31,Vistaprint">
       <Namespace>Base_Elements</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Base_PLC,0.3.5.4,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.5.5,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_EtherCAT,3.3.3.0,Beckhoff Automation GmbH">
@@ -85,7 +85,7 @@
     <LibraryReference Include="Tc2_TcpIp,3.3.2.0,Beckhoff Automation GmbH">
       <Namespace>Tc2_TcpIp</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Tc2_Utilities,3.3.7.0,Beckhoff Automation GmbH">
+    <LibraryReference Include="Tc2_Utilities,3.3.8.0,Beckhoff Automation GmbH">
       <Namespace>Tc2_Utilities</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc3_Interfaces,3.3.0.0,Beckhoff Automation GmbH">
@@ -94,7 +94,7 @@
     <LibraryReference Include="Tc3_MemMan,3.3.1.0,Beckhoff Automation GmbH">
       <Namespace>Tc3_MemMan</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Tc3_Module,3.3.5.0,Beckhoff Automation GmbH">
+    <LibraryReference Include="Tc3_Module,3.3.6.0,Beckhoff Automation GmbH">
       <Namespace>Tc3_Module</Namespace>
     </LibraryReference>
   </ItemGroup>

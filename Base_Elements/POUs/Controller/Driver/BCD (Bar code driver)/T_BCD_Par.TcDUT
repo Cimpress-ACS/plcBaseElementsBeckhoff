@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_BCD_Par" Id="{bb0306e6-2433-4fe4-b43a-be469495c3a6}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_BCD_Par" Id="{0e73db4f-0e7a-4012-9bb4-a6baac9a06b6}">
     <Declaration><![CDATA[TYPE T_BCD_Par :
 STRUCT
 	tTOConnection: TIME;

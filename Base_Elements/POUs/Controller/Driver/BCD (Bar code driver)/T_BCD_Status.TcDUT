@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_BCD_Status" Id="{a3e386fe-5b6a-43d7-8b26-7b1693660cb4}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_BCD_Status" Id="{b917762c-531c-47d1-904c-a37d4358f834}">
     <Declaration><![CDATA[TYPE T_BCD_Status :
 STRUCT
 	/// Socket connected
