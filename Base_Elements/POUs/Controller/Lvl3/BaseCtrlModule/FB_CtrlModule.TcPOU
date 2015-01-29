@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="FB_CtrlModule" Id="{93bcbc09-e224-4f3b-9fe5-ea80da832953}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_CtrlModule EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -166,8 +166,7 @@ END_IF
 IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 	
 	// Ready Output
-	SIf_Out^.bolReady.intern :=		((me.StateMachine.intState = BASE_PLC.cSTA_RUN) OR (me.StateMachine.intState = BASE_PLC.cSTA_RUNBusy))
-								AND	(me.Alarm.eActivAlmClass < BASE_PLC.E_AlmClass.TSTOP);
+	SIf_Out^.bolReady.intern := (me.StateMachine.intState = BASE_PLC.cSTA_RUN) AND (me.Alarm.eActivAlmClass < BASE_PLC.E_AlmClass.TSTOP);
 	
 	// Emergency Off
 	IF ((SIf_In^.bolEmoOk.intern = FALSE) AND (me.StateMachine.intState <> cSTA_EOFF) AND (me.StateMachine.intState <> cSTA_EOFFBusy)
