@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="FB_ECD" Id="{1fea0de2-a9af-4156-b983-ff4982d3f480}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_ECD EXTENDS FB_CtrlBase
 VAR
@@ -1314,6 +1314,15 @@ END_CASE;]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
+    <Property Name="CtrlSIf" Id="{e6b984c1-c9c3-4692-a6b8-7d2b3aaf6b33}">
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_ECD]]></Declaration>
+      <Get Name="Get" Id="{de88a6d9-7197-413b-970f-645bb3ff3655}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Method Name="getCmdState" Id="{feee4ac9-1fc5-4241-8928-60636091e9ca}">
       <Declaration><![CDATA[METHOD PROTECTED getCmdState : STRING
 VAR_INPUT

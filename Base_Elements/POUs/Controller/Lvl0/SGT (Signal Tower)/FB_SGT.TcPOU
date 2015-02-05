@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="FB_SGT" Id="{3e38ff1c-8932-4771-aa3a-87f55e3483ce}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_SGT EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -342,6 +342,17 @@ SIf.Par.udiLampTestTime_ms := 500;]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
+    <Property Name="CtrlSIf" Id="{78d976b8-7e91-4aec-8701-265874a8bb81}">
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_SGT]]></Declaration>
+      <Get Name="Get" Id="{793d7b10-cb14-4d62-a8a2-486c776e42f2}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Method Name="sta_RUN" Id="{860d867e-aded-4dc3-b96a-6c7237c7f688}">
       <Declaration><![CDATA[METHOD PROTECTED sta_RUN : BOOL
 ]]></Declaration>

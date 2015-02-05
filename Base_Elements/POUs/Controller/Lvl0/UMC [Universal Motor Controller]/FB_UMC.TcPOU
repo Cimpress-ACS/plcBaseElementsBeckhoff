@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="FB_UMC" Id="{95b426bb-96dc-4ca4-9df1-b53c93e4707b}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_UMC EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -462,21 +462,11 @@ SIf.Out.uinSpeedSetpoint.intern 	:= uinSpeed;
     <Property Name="CtrlSIf" Id="{647335bc-e279-4764-9976-06282d07dd64}">
       <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_UMC]]></Declaration>
       <Get Name="Get" Id="{00c3feb1-2e98-444a-b023-2a28f641132d}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
+        <Declaration><![CDATA[]]></Declaration>
         <Implementation>
           <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
         </Implementation>
       </Get>
-      <Set Name="Set" Id="{73ee206d-060a-4c20-94b1-47268f2dbfb6}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[]]></ST>
-        </Implementation>
-      </Set>
     </Property>
     <Method Name="sta_SETOPERATIONMODE" Id="{6e71e2b6-44ba-4353-ae18-ab8e79f0c705}">
       <Declaration><![CDATA[METHOD PROTECTED sta_SETOPERATIONMODE : BOOL

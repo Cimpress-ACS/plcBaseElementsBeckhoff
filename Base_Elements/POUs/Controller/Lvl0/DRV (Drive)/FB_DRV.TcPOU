@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="FB_DRV" Id="{a09ebb54-dbb7-4b29-b322-5e52fbbdee8c}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_DRV EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -93,6 +93,15 @@ IF (me.bolActivate) THEN // cyclic call enabled
 END_IF;
 *)]]></ST>
     </Implementation>
+    <Property Name="CtrlSIf" Id="{0d48173d-eb3f-4817-a35d-a8e1f2a8abb2}">
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_DRV]]></Declaration>
+      <Get Name="Get" Id="{337e1a1d-5930-47c5-9ef9-e5e38f4b893a}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Method Name="sta_OFF" Id="{114eb374-98a4-4895-bee8-b5e13ddba14f}">
       <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
 ]]></Declaration>

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="FB_ACL" Id="{35c44579-8ee6-4bc6-a332-f87fe74b8d5d}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_ACL EXTENDS FB_CtrlBase
 VAR
@@ -453,6 +453,15 @@ IF (uinNumOfAdsConnections <= (cuinMaxConnections-1)) THEN
 END_IF]]></ST>
       </Implementation>
     </Method>
+    <Property Name="CtrlSIf" Id="{309b1a1d-faae-42bc-9507-42d211c6d40e}">
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_ACL]]></Declaration>
+      <Get Name="Get" Id="{155f0f78-526f-462c-891a-0145f6676d2f}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Method Name="StateMachine" Id="{3c973f2a-7cfa-4400-8508-f52d5e67adff}">
       <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL]]></Declaration>
       <Implementation>

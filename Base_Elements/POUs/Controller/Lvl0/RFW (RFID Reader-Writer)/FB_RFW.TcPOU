@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="FB_RFW" Id="{6f3444f8-fe94-4d15-ac48-af337cfd9399}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_RFW EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -1321,6 +1321,15 @@ END_IF
 	END_IF]]></ST>
       </Implementation>
     </Method>
+    <Property Name="CtrlSIf" Id="{da0cbadb-1e4d-4be9-b282-9eb599454fa6}">
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_RFW]]></Declaration>
+      <Get Name="Get" Id="{ce60fa01-1a92-4c34-9565-e45c60608d17}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Method Name="IoInBridge" Id="{e161fdba-303b-42de-9649-6c247dfd8304}">
       <Declaration><![CDATA[METHOD PROTECTED IoInBridge : BOOL
 ]]></Declaration>

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="FB_PRS" Id="{aeafdf67-0807-49ec-867e-efc4e7f4565f}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_PRS EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -324,18 +324,8 @@ END_VAR
     </Method>
     <Property Name="CtrlSIf" Id="{bad87dab-0290-4991-8b8f-499f9f9969ab}">
       <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_CTRL_SIf_PRS]]></Declaration>
-      <Set Name="Set" Id="{3ea7f306-7678-41d7-8699-086d0d4e3160}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[]]></ST>
-        </Implementation>
-      </Set>
       <Get Name="Get" Id="{52553f5f-9a95-4914-ba15-e9b5ac5ef4f6}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
+        <Declaration><![CDATA[]]></Declaration>
         <Implementation>
           <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
         </Implementation>

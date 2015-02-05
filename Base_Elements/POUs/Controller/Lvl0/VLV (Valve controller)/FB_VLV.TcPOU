@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="FB_VLV" Id="{e7c452ef-6069-4824-b6af-02d0e02ac29f}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_VLV EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -498,6 +498,15 @@ END_IF
 	END_IF]]></ST>
       </Implementation>
     </Method>
+    <Property Name="CtrlSIf" Id="{e0b02b20-9157-489e-bd37-1790c676c697}">
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_VLV]]></Declaration>
+      <Get Name="Get" Id="{6f8774bf-a28a-4a3b-9e4c-9110aea39590}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Method Name="FB_init" Id="{e6c5f0f7-f14d-4d19-9372-986e38860334}">
       <Declaration><![CDATA[METHOD FB_init : BOOL
 VAR_INPUT

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="FB_VPC" Id="{13511828-5fa3-4db9-8a62-883d17247bf0}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_VPC EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -386,6 +386,15 @@ END_VAR
 	END_IF]]></ST>
       </Implementation>
     </Method>
+    <Property Name="CtrlSIf" Id="{8996880a-f410-4ad8-9c12-fc2a666a5164}">
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_VPC]]></Declaration>
+      <Get Name="Get" Id="{352ec986-40c5-439f-a79d-4979366e898b}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Method Name="sta_PON" Id="{cd944ca7-9f97-4fb3-b4a2-4d1ad61c9f19}">
       <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
 VAR_INPUT

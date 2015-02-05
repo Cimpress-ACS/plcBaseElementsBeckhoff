@@ -106,7 +106,6 @@ METHOD PROTECTED sta_READ : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="Always" Id="{10020a66-2ac0-404a-ab0c-174405e56feb}">
       <Declaration><![CDATA[{attribute 'object_name' := 'Always'}
@@ -198,7 +197,6 @@ IF (((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.Alarm.eActivAlmClass=E_Alm
 	me.StateMachine.intStateNext := cSTA_OFFBusy;
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_OFFBusy" Id="{1e358157-1d8c-4ff8-87e5-692836634a16}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFFBusy'}
@@ -245,7 +243,6 @@ METHOD PROTECTED sta_OFFBusy : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_PON" Id="{1f6d96ef-fba6-49bd-9b96-955bedd08900}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_PON'}
@@ -277,7 +274,6 @@ METHOD PROTECTED sta_PON : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_ERROR" Id="{204fe14c-df4b-470b-8841-32eaae8d53c2}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERROR'}
@@ -325,7 +321,6 @@ METHOD PROTECTED sta_ERROR : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_READBusy" Id="{29dd44a2-735b-4afe-8acc-b4e8668efbc2}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_READBusy'}
@@ -406,7 +401,6 @@ METHOD PROTECTED sta_READBusy : BOOL
 		CIf.Job.intMCmd:= cCMD_DONE;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="StateMachine" Id="{5e85038e-ebaa-466e-bc86-edc34f4f9dd9}">
       <Declaration><![CDATA[{attribute 'object_name' := 'StateMachine'}
@@ -423,7 +417,6 @@ CASE me.StateMachine.intState OF
         THIS^.sta_READ();	
 END_CASE;]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_PONBusy" Id="{649419f2-ed1a-436a-8537-4d973a0011d1}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_PONBusy'}
@@ -487,7 +480,6 @@ METHOD PROTECTED sta_PONBusy : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="IoOutBridge" Id="{65e29ae9-5cbd-4d5a-9190-31fd4ab6c251}">
       <Declaration><![CDATA[{attribute 'object_name' := 'IoOutBridge'}
@@ -503,7 +495,6 @@ IF (CIf.SwCfg.bolSimulation = FALSE) THEN
 	END_IF
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="FB_init" Id="{6ba83922-b9fa-4b1e-8d15-44930c5da899}">
       <Declaration><![CDATA[{attribute 'object_name' := 'FB_init'}
@@ -572,7 +563,6 @@ SIf.Cfg.iSensorType := E_BCD_Type.KEYENCE;
 // simulation
 uliSimBarCode:= 1250000000000;]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_OFF" Id="{a38d43f4-6733-4038-bcc3-99858222a1f7}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFF'}
@@ -607,7 +597,6 @@ METHOD PROTECTED sta_OFF : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="getCmdState" Id="{a6e7d5bb-042c-4bb3-9937-62049f3fe3f2}">
       <Declaration><![CDATA[{attribute 'object_name' := 'getCmdState'}
@@ -639,7 +628,6 @@ IF (getCmdState='') THEN // global not defined get local
 	END_IF
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="IoInBridge" Id="{bae5f191-f982-441e-b783-5b4529c4c898}">
       <Declaration><![CDATA[{attribute 'object_name' := 'IoInBridge'}
@@ -655,7 +643,6 @@ ELSE
 	//simulation of global IO
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="getCtrlSIf" Id="{c164a1c5-b84d-40db-ae10-466a0a94eb2d}">
       <Declaration><![CDATA[{attribute 'object_name' := 'getCtrlSIf'}
@@ -664,8 +651,16 @@ METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_BCC
       <Implementation>
         <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
+    <Property Name="CtrlSIf" Id="{fa14e51f-8e08-45b9-948f-36c1fa29f4b6}">
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_BCC]]></Declaration>
+      <Get Name="Get" Id="{7a3a8170-a5e5-473a-b33c-a0bbe451709a}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <ObjectProperties />
   </POU>
 </TcPlcObject>
