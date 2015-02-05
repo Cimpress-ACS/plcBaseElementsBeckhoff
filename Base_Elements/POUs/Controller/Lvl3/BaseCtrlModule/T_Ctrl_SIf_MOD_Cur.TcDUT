@@ -1,18 +1,25 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <DUT Name="T_Ctrl_SIf_MOD_Cur" Id="{30796f16-fa3d-47dc-b224-e58799f07d37}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_MOD_Cur :
 STRUCT
-	/// Max module capacity calculated from all childs which implement interface IBuffer
+	// Max module capacity calculated from all childs which implement interface IBuffer
 	dinMaxCapacity: DINT;
-	/// Actual number of hangers calculated from all childs which implement interface IBuffer
-	dinNumOfHangers: DINT;
-	/// Togglebit to Line Control
+	
+	// Actual number of items calculated from all childs which implement interface IBuffer
+	dinNumOfItems: DINT;
+	
+	//  Togglebit set by LineControl to indicate it's still alive. If not, the PLC should stop immediately and wait for LineControl.
 	bolKeepAliveHost: BOOL;
+	
+	// Togglebit set by PLC to indicate it's still alive. If not, LineControl should stop immediately and try to recover.
 	bolKeepAlivePlc: BOOL;
-	/// LineControl-Signal: Input Buffer is Full
+	
+	// Interface data to LineControl: Indicates that an input port is full. LineControl should not route any more items to this port.
 	a_bBufferIsFull: ARRAY[0..10] OF BOOL;
-	/// LineControl-Signal: If true Module is not allowed to release hangers (but can be still in RUN state). 
-	bolStopReleaseHangers: BOOL;
+	
+	// Interface data from LineControl: Request to stop releasing any item to an output port. The module can still be in RUN state but must not release items to the next module. 
+	bolStopReleaseItems: ARRAY[0..10] OF BOOL;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

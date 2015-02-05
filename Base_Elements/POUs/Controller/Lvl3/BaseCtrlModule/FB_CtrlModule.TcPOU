@@ -220,13 +220,13 @@ ELSE
 END_IF
 
 //-------------------------------------------------------------------------------
-// Calculate the sum of all hangers in the system and the capacity of the system
+// Calculate the sum of all items in the system and the capacity of the system
 //-------------------------------------------------------------------------------
 IF (usiNumOfIBufferChild>0) THEN 
-	SIf_Cur^.dinNumOfHangers:= 0;
+	SIf_Cur^.dinNumOfItems:= 0;
 	SIf_Cur^.dinMaxCapacity:= 0;
 	FOR ii:= 0 TO (usiNumOfIBufferChild-1) DO
-		SIf_Cur^.dinNumOfHangers:= SIf_Cur^.dinNumOfHangers + a_IBufferChildCtrl[ii].NumOfHangers;
+		SIf_Cur^.dinNumOfItems:= SIf_Cur^.dinNumOfItems + a_IBufferChildCtrl[ii].NumOfItems;
 		SIf_Cur^.dinMaxCapacity:= SIf_Cur^.dinMaxCapacity + a_IBufferChildCtrl[ii].MaxCapacity;
 	END_FOR
 END_IF
