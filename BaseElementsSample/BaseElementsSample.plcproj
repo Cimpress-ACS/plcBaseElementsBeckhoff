@@ -64,10 +64,10 @@
     <Folder Include="POUs\Utility Functions\" />
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_Elements,0.0.1.31,Vistaprint">
+    <LibraryReference Include="Base_Elements,0.0.1.33,Vistaprint">
       <Namespace>Base_Elements</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Base_PLC,0.3.5.5,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.5.6,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_EtherCAT,3.3.3.0,Beckhoff Automation GmbH">

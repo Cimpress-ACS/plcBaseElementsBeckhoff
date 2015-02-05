@@ -180,6 +180,21 @@ IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_MOD.EmergencyOff,0,ADR(SIf_MOD.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 	END_IF
 	
+	// STOP and TSTOP Error
+	IF ((me.Alarm.eActivAlmClass=E_AlmClass.STOP)
+		AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit)
+		AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)
+		AND (me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_OFFBusy)
+		AND (me.StateMachine.intState>cSTA_PON)) THEN
+		me.StateMachine.intStateNext := cSTA_OFFBusy;
+	ELSIF ((me.Alarm.eActivAlmClass=E_AlmClass.TSTOP)
+		AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit)
+		AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)
+		AND (me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_OFFBusy)
+		AND (me.StateMachine.intState>cSTA_PON)) THEN
+		me.StateMachine.intStateNext := cSTA_OFFBusy;
+	END_IF
+	
 END_IF
 
 //-------------------------------------------------------------------------------

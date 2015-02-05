@@ -643,9 +643,6 @@
     <Compile Include="POUs\Utility\ItemBase\T_QueueBase.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Version\Global_Version.TcGVL">
-      <SubType>Code</SubType>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="POUs\" />
@@ -680,7 +677,7 @@
     <Folder Include="Version\" />
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_PLC,0.3.5.5,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.5.6,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_EtherCAT,3.3.3.0,Beckhoff Automation GmbH">
