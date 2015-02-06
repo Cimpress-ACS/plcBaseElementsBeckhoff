@@ -599,8 +599,7 @@ END_FOR]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_EOFF" Id="{7a7e2512-7c7d-4cf3-97d1-a6e983988ed7}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_EOFF : BOOL
-]]></Declaration>
+      <Declaration><![CDATA[METHOD PROTECTED sta_EOFF : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
@@ -621,7 +620,7 @@ END_FOR]]></ST>
 		END_IF
 	
 		// State Change Condition
-		IF (SIf_In^.bolEmoOk.intern) AND (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.intCmd<>BASE_PLC.cCMD_EOFF) AND (me.intCmd<>BASE_PLC.cCMD_DONE) THEN
+		IF (SIf_In^.bolEmoOk.intern) AND (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.intCmd<>BASE_PLC.cCMD_EOFF) THEN
 			me.StateMachine.intStateNext := cSTA_OFF;
 		END_IF
 	END_IF
