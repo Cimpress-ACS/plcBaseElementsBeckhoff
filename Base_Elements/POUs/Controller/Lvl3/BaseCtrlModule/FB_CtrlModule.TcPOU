@@ -620,7 +620,7 @@ END_FOR]]></ST>
 		END_IF
 	
 		// State Change Condition
-		IF (SIf_In^.bolEmoOk.intern) AND (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.intCmd<>BASE_PLC.cCMD_EOFF) THEN
+		IF (SIf_In^.bolEmoOk.intern) AND (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.intCmd<>BASE_PLC.cCMD_EOFF) AND (me.intCmd<>BASE_PLC.cCMD_DONE) THEN
 			me.StateMachine.intStateNext := cSTA_OFF;
 		END_IF
 	END_IF

@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.1.36</ProjectVersion>
+    <ProjectVersion>0.0.1.37</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.1.36 	- go to OFF after EOFF in module controller
+    <Description>0.0.1.37 	- inverted last change
+0.0.1.36 	- go to OFF after EOFF in module controller
 0.0.1.35 	- changed CIf_MOD, renaming, array for stop-release-items
 0.0.1.34 	- handle STOP and TSTOP errors in module controller
 0.0.1.33 	- Ready only when in RUN
