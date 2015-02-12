@@ -188,9 +188,9 @@ IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 		AND	(me.StateMachine.intStateNext<>cSTA_EOFFBusy) AND (me.StateMachine.intStateNext<>cSTA_OFFBusy)) THEN
 		
 		IF (me.Alarm.eActivAlmClass=E_AlmClass.STOP) THEN
-			me.StateMachine.intStateNext := cSTA_OFFBusy;
+			me.StateMachine.intStateNext := cSTA_STOPBusy;
 		ELSIF (me.Alarm.eActivAlmClass=E_AlmClass.TSTOP) THEN
-			me.StateMachine.intStateNext := cSTA_OFFBusy;
+			me.StateMachine.intStateNext := cSTA_STOPBusy;
 		END_IF
 		
 	END_IF

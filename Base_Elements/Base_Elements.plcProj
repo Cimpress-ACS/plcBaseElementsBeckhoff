@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.1.39</ProjectVersion>
+    <ProjectVersion>0.0.1.40</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.1.39 	- Newest BaseLibrary
+    <Description>0.0.1.40 	- Module Ctrl STOP alarm behaviour
+0.0.1.39 	- Newest BaseLibrary
 0.0.1.38 	- Newest BaseLibrary
 0.0.1.37 	- inverted last change
 0.0.1.36 	- go to OFF after EOFF in module controller
