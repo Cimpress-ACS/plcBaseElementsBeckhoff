@@ -180,21 +180,6 @@ IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_MOD.EmergencyOff,0,ADR(SIf_MOD.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 	END_IF
 	
-	// STOP and TSTOP Error
-	IF (	(me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit)
-		AND	(me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)
-		AND	(me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_OFFBusy)
-		AND	(me.StateMachine.intState>cSTA_PON)
-		AND	(me.StateMachine.intStateNext<>cSTA_EOFFBusy) AND (me.StateMachine.intStateNext<>cSTA_OFFBusy)) THEN
-		
-		IF (me.Alarm.eActivAlmClass=E_AlmClass.STOP) THEN
-			me.StateMachine.intStateNext := cSTA_STOPBusy;
-		ELSIF (me.Alarm.eActivAlmClass=E_AlmClass.TSTOP) THEN
-			me.StateMachine.intStateNext := cSTA_STOPBusy;
-		END_IF
-		
-	END_IF
-	
 END_IF
 
 //-------------------------------------------------------------------------------
@@ -1062,6 +1047,25 @@ END_IF]]></ST>
         </Implementation>
       </Set>
     </Property>
+    <Method Name="FurtherReactions" Id="{e50c2c57-3ef3-4abd-b707-730734684d2c}">
+      <Declaration><![CDATA[METHOD PROTECTED FurtherReactions : BOOL]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF ((((NOT me.AlarmConfig.bolOffAlarmTransitionDisable) AND (me.Alarm.eActivAlmClass=E_AlmClass.OFF)) OR ((NOT me.AlarmConfig.bolOffCmdTransitionDisable) AND (me.intCmd=cCMD_OFF)))
+	AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit)
+	AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)
+	AND (me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_OFFBusy)
+	AND (me.StateMachine.intState>cSTA_PON)) THEN
+	
+	// STOP and TSTOP Error
+	IF (me.Alarm.eActivAlmClass=E_AlmClass.STOP) THEN
+		me.StateMachine.intStateNext := cSTA_STOPBusy;
+	ELSIF (me.Alarm.eActivAlmClass=E_AlmClass.TSTOP) THEN
+		me.StateMachine.intStateNext := cSTA_STOPBusy;
+	END_IF
+	
+END_IF]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="sta_ERROR" Id="{ebaa0d20-3483-464b-84fb-8ac6d1d7c3da}">
       <Declaration><![CDATA[METHOD PROTECTED sta_ERROR : BOOL
 ]]></Declaration>
