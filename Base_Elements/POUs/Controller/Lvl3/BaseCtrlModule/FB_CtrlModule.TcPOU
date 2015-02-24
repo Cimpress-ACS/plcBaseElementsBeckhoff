@@ -876,6 +876,43 @@ END_VAR]]></Declaration>
 	END_IF]]></ST>
       </Implementation>
     </Method>
+    <Method Name="sta_OFFBusy" Id="{b43c45d6-db5e-43b9-b8e6-886e382de8a7}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_OFFBusy : BOOL]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		// Set commandos not only in entry action because of possible errors or manual/auto changes
+		// PRE/AVME 06.01.2014
+		//SetAllChildCmd(cCMD_OFF); // set acmd off all childs 
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		SetAllChildCmd(cCMD_OFF); // set acmd off all childs 
+		
+		// State Change Condition
+		IF (CheckAllChildState(cSTA_OFF)) THEN
+			me.StateMachine.intStateNext := cSTA_OFF;
+		ELSIF (me.intCmd=cCMD_RUN) THEN
+			me.StateMachine.intStateNext := cSTA_RUNBusy;
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
     <Property Name="SIf_Par" Id="{b5260abe-a3fb-44c5-b308-7b394f794cb8}">
       <Declaration><![CDATA[PROPERTY SIf_Par : POINTER TO T_Ctrl_SIf_MOD_Par
 ]]></Declaration>
@@ -1050,11 +1087,10 @@ END_IF]]></ST>
     <Method Name="FurtherReactions" Id="{e50c2c57-3ef3-4abd-b707-730734684d2c}">
       <Declaration><![CDATA[METHOD PROTECTED FurtherReactions : BOOL]]></Declaration>
       <Implementation>
-        <ST><![CDATA[IF ((((NOT me.AlarmConfig.bolOffAlarmTransitionDisable) AND (me.Alarm.eActivAlmClass=E_AlmClass.OFF)) OR ((NOT me.AlarmConfig.bolOffCmdTransitionDisable) AND (me.intCmd=cCMD_OFF)))
-	AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit)
-	AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)
-	AND (me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_OFFBusy)
-	AND (me.StateMachine.intState>cSTA_PON)) THEN
+        <ST><![CDATA[IF (	(me.StateMachine.intState<>cSTA_ERROR)	AND	(me.StateMachine.intState<>cSTA_ERRORQuit)
+	AND	(me.StateMachine.intState<>cSTA_EOFF)	AND	(me.StateMachine.intState<>cSTA_EOFFBusy)
+	AND	(me.StateMachine.intState<>cSTA_OFF)	AND	(me.StateMachine.intState<>cSTA_OFFBusy)
+	AND	(me.StateMachine.intState>cSTA_PON))	THEN
 	
 	// STOP and TSTOP Error
 	IF (me.Alarm.eActivAlmClass=E_AlmClass.STOP) THEN
@@ -1062,7 +1098,6 @@ END_IF]]></ST>
 	ELSIF (me.Alarm.eActivAlmClass=E_AlmClass.TSTOP) THEN
 		me.StateMachine.intStateNext := cSTA_STOPBusy;
 	END_IF
-	
 END_IF]]></ST>
       </Implementation>
     </Method>
