@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <DUT Name="T_Ctrl_SIf_BCC" Id="{e5c436e2-87ec-4bea-8091-0de4f2a8dea7}">
+  <DUT Name="T_Ctrl_SIf_BCC" Id="{f11c08c6-0943-4a3f-848d-ef8e1afb035e}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_BCC :
 STRUCT
 	/// configuration

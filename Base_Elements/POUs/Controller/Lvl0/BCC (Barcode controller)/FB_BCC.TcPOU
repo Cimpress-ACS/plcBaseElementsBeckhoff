@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <POU Name="FB_BCC" Id="{1882967c-9006-473f-a29f-d0cbc237327e}">
+  <POU Name="FB_BCC" Id="{45279440-f702-4acc-823a-1e37aa5791b1}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_BCC EXTENDS FB_CtrlBase
 VAR_INPUT
 	In_bolSensorTrigScan: BOOL;
@@ -72,257 +72,120 @@ IF (me.bolActivate) AND (pBCD_SIf_In<>0) THEN // cyclic call enabled
 END_IF;
 *)]]></ST>
     </Implementation>
-    <Method Name="sta_READ" Id="{0ffa1e05-8b87-4201-9072-0c0188e36d2a}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'sta_READ'}
-METHOD PROTECTED sta_READ : BOOL
+    <Method Name="FB_init" Id="{027cd8e8-4c30-47c3-9cbc-4ccde024662d}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'FB_init'}
+METHOD FB_init : BOOL
+VAR_INPUT
+	///if TRUE, the retain variables are initialized (warm start / cold start)
+	bInitRetains: BOOL;
+	///if TRUE, the instance afterwards gets moved into the copy code (online change)
+	bInCopyCode: BOOL;
+END_VAR
+VAR
+	udiTaskCnt: UDINT;
+	ii: UINT;
+END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-
+        <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
+// to manually change in new FUB implementation!!!
+// define valid commands for this controller
+FOR ii:= 0 TO (SIZEOF(CIf.Job.aCmdList)/SIZEOF(CIf.Job.aCmdList[0])-1) BY 1 DO
+	IF (CIf.Job.aCmdList[ii].intCmd=cCMD_INITIALIZED) THEN
+		// found first empty array element
+		EXIT;
 	END_IF
+END_FOR
+CIf.Job.aCmdList[ii].intCmd := cBCC_CMD_READ;
+CIf.Job.aCmdList[ii].strName := 'Read'; 
+CIf.Job.aCmdList[ii].bolAvailable := TRUE;
 
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+// set name of class/typ
+CIf.Info.strType := 'FB_BCC';
+CIf.Info.strFullName := 'Barcode Controller';
 
-		// Simulation
-		IF (CIf.SwCfg.bolSimulation) THEN
-			;
-		END_IF
-		
-		// State Change Condition
-		IF(me.intCmd=cBCC_CMD_READ) THEN
-			me.StateMachine.intStateNext := cBCC_STA_READBusy;
-		END_IF
-	END_IF
+// set alarm class
+SIf.Alm[1].eAlmClass := E_AlmClass.INFO;
+SIf.Alm[1].strText := 'Barcode reader driver error'; 
+SIf.Alm[2].eAlmClass := E_AlmClass.OFF;
+SIf.Alm[2].strText := 'Initialisation error from barcode reader. No answer from device.';
+SIf.Alm[3].eAlmClass := E_AlmClass.INFO;
+SIf.Alm[3].strText := 'Barcode could not be read. Answer *NoRead* from device';
+SIf.Alm[4].eAlmClass := E_AlmClass.INFO;
+SIf.Alm[4].strText := 'Timeout wait on data';
+SIf.Alm[5].eAlmClass := E_AlmClass.INFO;
+SIf.Alm[5].strText := 'Error response from sensor';
+SIf.Alm[6].eAlmClass := E_AlmClass.WARNING;
+SIf.Alm[6].strText := 'New scan was triggered during a scan was already in progress!';
 
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
+//*******************************************************************************
+// initial values
+//*******************************************************************************
+
+// software configuration
+CIf.SwCfg.bolExist := TRUE;
+CIf.SwCfg.bolSimulation := FALSE;
+
+// parameter
+SIf.Par.udiTORead_ms := 4000;  		// Has to be correspond with the "duration" setting of sensor object trigger
+SIf.Par.udiTOPowerOn_ms := 3000;
+SIf.Par.udiExecuteScanDelayTime_ms:= 0;
+
+// configuration
+SIf.Cfg.strSensorIPAdr := '192.168.1.103';
+SIf.Cfg.udiSensorPort := 9004;
+SIf.Cfg.iSensorType := E_BCD_Type.KEYENCE;
+
+// simulation
+uliSimBarCode:= 1250000000000;]]></ST>
       </Implementation>
+      <ObjectProperties />
     </Method>
-    <Method Name="Always" Id="{10020a66-2ac0-404a-ab0c-174405e56feb}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'Always'}
-METHOD PROTECTED Always : BOOL
+    <Method Name="getCmdState" Id="{1a0334c1-a3fb-42e6-951a-2cdf78e7dc68}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'getCmdState'}
+METHOD PROTECTED getCmdState : STRING
+VAR_INPUT
+	intCmdState: INT;
+	bolState: BOOL;
+END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[SUPER^.Always();
-
-// Simulation
-IF (CIf.SwCfg.bolSimulation) THEN
-	// Access to driver empty structure
-	pBCD_SIf := ADR(stBCD_Sim);
-ELSE
-	// Access to real driver interface
-	pBCD_SIf := pBCD_SIf_In;
-END_IF
-
-// ----------------------------------------------------------------------------------
-// cyclic actions outside of statemachine
-IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
-	
-	// Handle sensor trigger input
-	// --------------------------------------------
-	// Check pos. edge of the sensor 
-	IF (SIf.In.bolSensorTrigScan.intern) AND NOT (bolSensorTrigScanOld) THEN	
-		// Kick-off a new scan
-		bolExecuteScan:= TRUE;
-	END_IF
-
-	// Execute scan?
-	IF (bolExecuteScan) AND (me.StateMachine.intState<>BCC_CmdState.cBCC_STA_READBusy) THEN
-		// Wait X-time (time delay) before executing a barcode scan 
-		IF (udiScanDelayTimer_ms >= SIf.Par.udiExecuteScanDelayTime_ms) THEN
-			bolExecuteScan:= FALSE;
-			me.StateMachine.intStateNext := BCC_CmdState.cBCC_STA_READBusy;
-		END_IF
-		// Timer handling
-		udiScanDelayTimer_ms:= udiScanDelayTimer_ms + me.FUBInfo.udiSample_ms;
+        <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
+IF (getCmdState='') THEN // global not defined get local
+	// get string cmd/state string information in runtime
+	IF (bolState=FALSE) THEN
+		// cmd's
+		CASE intCmdState OF
+			cBCC_CMD_READ: 
+				getCmdState := 'READ';
+		END_CASE;
 	ELSE
-		// Reset timer
-		udiScanDelayTimer_ms:= 0;
-	END_IF
 	
-	// Check trigger error conditions
-	// --------------------------------------------
-	// In case if a new scan will be triggered by the sensor trigger input but a scan is already in progress -> set warning!
-	// Check if Scan in progress
-	IF (me.StateMachine.intState=BCC_CmdState.cBCC_STA_READBusy) THEN
-		// New pos. trigger signal detected during scan
-		IF (SIf.In.bolSensorTrigScan.intern) AND (bolSensorTrigScanOld <> SIf.In.bolSensorTrigScan.intern) THEN
-			// SIf.Alm[6].strText := 'New scan was triggered during a scan was already in progress. Check line speed and barcode reader settings!';
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,6,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);	
-		END_IF
+	// cmd's
+		CASE intCmdState OF
+			cBCC_STA_READBusy: 
+				getCmdState := 'READBusy';
+			cBCC_STA_READ: 
+				getCmdState := 'READ';
+		END_CASE;
 	END_IF
-	
-	// Save sensor signal. Used for edge detection
-	bolSensorTrigScanOld:= SIf.In.bolSensorTrigScan.intern;
-		
-	// Status info from driver
-	// --------------------------------------------
-	SIf.Cur.bolComChecked:= pBCD_SIf^.stStatus.bolComChecked;
-	SIf.Cur.bolConnected:= pBCD_SIf^.stStatus.bolSocketConnected;
-	
-END_IF
-
-// config driver
-pBCD_SIf^.stCfg.bolSimulation := CIf.SwCfg.bolSimulation;
-pBCD_SIf^.stCfg.strSensorIPAdr := SIf.Cfg.strSensorIPAdr;
-pBCD_SIf^.stCfg.udiSensorPort := SIf.Cfg.udiSensorPort;
-pBCD_SIf^.stCfg.iSensorType := SIf.Cfg.iSensorType;
-
-// ----------------------------------------------------------------------------------
-// Always change actions in Base Library
-// ----------------------------------------------------------------------------------
-// overrule error always from base -> no EOFF State!! in EOFF go to OFF
-IF (me.StateMachine.intStateNext = cSTA_EOFFBusy) THEN
-	IF (me.StateMachine.intState=cSTA_OFF) THEN
-		me.StateMachine.intStateNext := cSTA_OFF;
-	ELSE // stay in OFF
-		me.StateMachine.intStateNext := cSTA_OFFBusy;
-	END_IF
-END_IF
-
-// Conditions Always
-IF (((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.Alarm.eActivAlmClass=E_AlmClass.OFF) OR (me.intCmd=cCMD_OFF))
-		 AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) AND
-		(me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_OFFBusy)) THEN
-	// alarm evt EOFF, OFF or cmd off
-	me.StateMachine.intStateNext := cSTA_OFFBusy;
 END_IF]]></ST>
       </Implementation>
+      <ObjectProperties />
     </Method>
-    <Method Name="sta_OFFBusy" Id="{1e358157-1d8c-4ff8-87e5-692836634a16}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFFBusy'}
-METHOD PROTECTED sta_OFFBusy : BOOL
+    <Property Name="CtrlSIf" Id="{1b4c2612-f0db-4df4-b217-85825bea7f19}">
+      <Declaration><![CDATA[PROPERTY CtrlSIf : POINTER TO T_Ctrl_SIf_BCC
 ]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-		// Simulation timer	
-		fbSimulationTimer.IN := FALSE;
-		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiTORead_ms / 2);
-		fbSimulationTimer(); // set time/reset timer
-		fbSimulationTimer.IN := TRUE; // start timer
-		
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		// Simulation
-		IF (CIf.SwCfg.bolSimulation) THEN
-			fbSimulationTimer(); // simulation time
-			IF (fbSimulationTimer.Q) THEN
-				pBCD_SIf^.intCmd := cBCD_CMD_DONE;
-			END_IF
-		END_IF
-			
-		// State Change Condition
-		IF (pBCD_SIf^.stErr.bolErrorActive = TRUE) THEN
-			me.StateMachine.intStateNext :=  cSTA_ERROR;
-		ELSIF(pBCD_SIf^.intCmd = cBCD_CMD_DONE) THEN
-			me.StateMachine.intStateNext := cSTA_OFF;
-		END_IF
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_PON" Id="{1f6d96ef-fba6-49bd-9b96-955bedd08900}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'sta_PON'}
-METHOD PROTECTED sta_PON : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		;	
-		// State Change Condition
-		me.StateMachine.intStateNext := cSTA_OFFBusy;
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_ERROR" Id="{204fe14c-df4b-470b-8841-32eaae8d53c2}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERROR'}
-METHOD PROTECTED sta_ERROR : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-		// Driver error activ
-		IF (pBCD_SIf^.stErr.bolErrorActive = TRUE) THEN
-			// SIf.Alm[1].strText := 'Barcode reader driver error'; 
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,1,UDINT_TO_DINT(pBCD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-			// Error response from sensor
-			IF (pBCD_SIf^.stErr.bolSensorError = TRUE) THEN
-				// SIf.Alm[5].strText := 'Error response from sensor with sopas error number';
-				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,5,UDINT_TO_DINT(pBCD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);		
-			END_IF
-		ELSE
-			// Close TCP socket		
-			pBCD_SIf^.intCmd := cBCD_CMD_CLOSE_SOCKET;  	
-		END_IF
-		
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-	
-		// State Change Condition
-		IF (CIf.Job.bolAlmReset = TRUE) THEN
-			// Error ack driver 
-			pBCD_SIf^.stErr.bolErrAck:= TRUE;
-			me.StateMachine.intStateNext := cSTA_ERRORQuit;
-		END_IF
-	END_IF
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_READBusy" Id="{29dd44a2-735b-4afe-8acc-b4e8668efbc2}">
+      <Get Name="Get" Id="{65471485-a7ce-4e5a-b48a-832ae4a9e0d8}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
+        </Implementation>
+        <ObjectProperties />
+      </Get>
+      <ObjectProperties />
+    </Property>
+    <Method Name="sta_READBusy" Id="{2777d30e-8db7-406a-9ebe-672a8d796e56}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_READBusy'}
 METHOD PROTECTED sta_READBusy : BOOL
 ]]></Declaration>
@@ -345,8 +208,9 @@ METHOD PROTECTED sta_READBusy : BOOL
 		SIf.Cur.stData.uliBarCode:= 0;
 		SIf.Cur.stData.strBarCode:= '';
 		
-		// Read barcode
-		pBCD_SIf^.intCmd := cBCD_CMD_READ_BARCODE;
+		me.SubStateMachine.intState := BCC_CmdState.cSUB_READDELAYBusy;
+		me.SubStateMachine.intStateNext := BCC_CmdState.cSUB_READDELAYBusy;
+		
 	END_IF
 
 
@@ -365,32 +229,50 @@ METHOD PROTECTED sta_READBusy : BOOL
 				pBCD_SIf^.intCmd := cBCD_CMD_DONE;		
 			END_IF
 		END_IF	
-
-		// Check for new barcode
-		IF (pBCD_SIf^.stData.uliBarCode <> uliBarCodeOld) AND (pBCD_SIf^.stData.uliBarCode<>0) THEN
-			uliBarCodeOld:= pBCD_SIf^.stData.uliBarCode;
-			SIf.Cur.bolNewCodeReaded:= TRUE;
-		END_IF
 		
-		// Get data from driver
-		SIf.Cur.stData.uliBarCode:= pBCD_SIf^.stData.uliBarCode;
-		SIf.Cur.stData.strBarCode:= pBCD_SIf^.stData.strBarCode;			
+		CASE me.SubStateMachine.intState OF 
+			BCC_CmdState.cSUB_READDELAYBusy:
+				IF me.SubStateMachine.udiTimeInState_ms > SIf.Par.udiExecuteScanDelayTime_ms THEN
+					me.SubStateMachine.intStateNext := BCC_CmdState.cSUB_SENDREADCOMMAND;
+				END_IF
+
+			BCC_CmdState.cSUB_SENDREADCOMMAND:
+				// Read barcode
+				pBCD_SIf^.intCmd := cBCD_CMD_READ_BARCODE;
+				me.SubStateMachine.intStateNext := BCC_CmdState.cSUB_READBusy;
+				
+			BCC_CmdState.cSUB_READBusy:
+				// Check for new barcode
+				IF (pBCD_SIf^.stData.uliBarCode <> uliBarCodeOld) AND (pBCD_SIf^.stData.uliBarCode<>0) THEN
+					uliBarCodeOld:= pBCD_SIf^.stData.uliBarCode;
+					SIf.Cur.bolNewCodeReaded:= TRUE;
+				END_IF
+				
+				// Get data from driver
+				SIf.Cur.stData.uliBarCode:= pBCD_SIf^.stData.uliBarCode;
+				SIf.Cur.stData.strBarCode:= pBCD_SIf^.stData.strBarCode;			
+
+				IF (me.SubStateMachine.udiTimeInState_ms > SIf.Par.udiTORead_ms) THEN
+					// SIf.Alm[4].strText := 'Timeout wait on data';
+					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,4,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+					me.StateMachine.intStateNext :=  cSTA_ERROR;
+				END_IF
+
+				IF (pBCD_SIf^.intCmd = cBCD_CMD_DONE) THEN
+					IF (SIf.Cur.stData.uliBarCode=0) THEN
+						SIf.Cur.bolNoRead:= TRUE;
+						uliBarCodeOld:= 0;
+						// SIf.Alm[3].strText := 'Barcode could not be read. Answer *NoRead* from device';
+						pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,3,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);	
+					END_IF		
+					me.StateMachine.intStateNext := cBCC_STA_READ;
+				END_IF
+		END_CASE
+
 		
 		// State Change Condition
 		IF (pBCD_SIf^.stErr.bolErrorActive = TRUE) THEN  
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
-		ELSIF (me.StateMachine.udiTimeInState_ms > SIf.Par.udiTORead_ms) THEN
-			// SIf.Alm[4].strText := 'Timeout wait on data';
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,4,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-			me.StateMachine.intStateNext :=  cSTA_ERROR;
-		ELSIF (pBCD_SIf^.intCmd = cBCD_CMD_DONE) THEN
-			IF (SIf.Cur.stData.uliBarCode=0) THEN
-				SIf.Cur.bolNoRead:= TRUE;
-				uliBarCodeOld:= 0;
-				// SIf.Alm[3].strText := 'Barcode could not be read. Answer *NoRead* from device';
-				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,3,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);	
-			END_IF		
-			me.StateMachine.intStateNext := cBCC_STA_READ;
 		END_IF
 	END_IF
 
@@ -401,24 +283,9 @@ METHOD PROTECTED sta_READBusy : BOOL
 		CIf.Job.intMCmd:= cCMD_DONE;
 	END_IF]]></ST>
       </Implementation>
+      <ObjectProperties />
     </Method>
-    <Method Name="StateMachine" Id="{5e85038e-ebaa-466e-bc86-edc34f4f9dd9}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'StateMachine'}
-METHOD PROTECTED StateMachine : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[SUPER^.StateMachine();
-
-// main statemachine of base controller
-CASE me.StateMachine.intState OF
-    cBCC_STA_READBusy: 
-        THIS^.sta_READBusy();
-    cBCC_STA_READ: 
-        THIS^.sta_READ();	
-END_CASE;]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_PONBusy" Id="{649419f2-ed1a-436a-8537-4d973a0011d1}">
+    <Method Name="sta_PONBusy" Id="{334101e3-ccae-4f85-84ed-31195e895af4}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_PONBusy'}
 METHOD PROTECTED sta_PONBusy : BOOL
 ]]></Declaration>
@@ -480,8 +347,9 @@ METHOD PROTECTED sta_PONBusy : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
+      <ObjectProperties />
     </Method>
-    <Method Name="IoOutBridge" Id="{65e29ae9-5cbd-4d5a-9190-31fd4ab6c251}">
+    <Method Name="IoOutBridge" Id="{40bacbd8-90e5-4cfd-89be-61d294ed6bc1}">
       <Declaration><![CDATA[{attribute 'object_name' := 'IoOutBridge'}
 METHOD PROTECTED IoOutBridge : BOOL
 ]]></Declaration>
@@ -495,76 +363,182 @@ IF (CIf.SwCfg.bolSimulation = FALSE) THEN
 	END_IF
 END_IF]]></ST>
       </Implementation>
+      <ObjectProperties />
     </Method>
-    <Method Name="FB_init" Id="{6ba83922-b9fa-4b1e-8d15-44930c5da899}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'FB_init'}
-METHOD FB_init : BOOL
-VAR_INPUT
-	///if TRUE, the retain variables are initialized (warm start / cold start)
-	bInitRetains: BOOL;
-	///if TRUE, the instance afterwards gets moved into the copy code (online change)
-	bInCopyCode: BOOL;
-END_VAR
-VAR
-	udiTaskCnt: UDINT;
-	ii: UINT;
-END_VAR
+    <Method Name="getCtrlSIf" Id="{543c60ab-0e88-44dc-8407-2023e5ed3710}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'getCtrlSIf'}
+METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_BCC
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
-// to manually change in new FUB implementation!!!
-// define valid commands for this controller
-FOR ii:= 0 TO (SIZEOF(CIf.Job.aCmdList)/SIZEOF(CIf.Job.aCmdList[0])-1) BY 1 DO
-	IF (CIf.Job.aCmdList[ii].intCmd=cCMD_INITIALIZED) THEN
-		// found first empty array element
-		EXIT;
-	END_IF
-END_FOR
-CIf.Job.aCmdList[ii].intCmd := cBCC_CMD_READ;
-CIf.Job.aCmdList[ii].strName := 'Read'; 
-CIf.Job.aCmdList[ii].bolAvailable := TRUE;
-
-// set name of class/typ
-CIf.Info.strType := 'FB_BCC';
-CIf.Info.strFullName := 'Barcode Controller';
-
-// set alarm class
-SIf.Alm[1].eAlmClass := E_AlmClass.INFO;
-SIf.Alm[1].strText := 'Barcode reader driver error'; 
-SIf.Alm[2].eAlmClass := E_AlmClass.OFF;
-SIf.Alm[2].strText := 'Initialisation error from barcode reader. No answer from device.';
-SIf.Alm[3].eAlmClass := E_AlmClass.INFO;
-SIf.Alm[3].strText := 'Barcode could not be read. Answer *NoRead* from device';
-SIf.Alm[4].eAlmClass := E_AlmClass.INFO;
-SIf.Alm[4].strText := 'Timeout wait on data';
-SIf.Alm[5].eAlmClass := E_AlmClass.INFO;
-SIf.Alm[5].strText := 'Error response from sensor';
-SIf.Alm[6].eAlmClass := E_AlmClass.WARNING;
-SIf.Alm[6].strText := 'New scan was triggered during a scan was already in progress!';
-
-//*******************************************************************************
-// initial values
-//*******************************************************************************
-
-// software configuration
-CIf.SwCfg.bolExist := TRUE;
-CIf.SwCfg.bolSimulation := FALSE;
-
-// parameter
-SIf.Par.udiTORead_ms := 4000;  		// Has to be correspond with the "duration" setting of sensor object trigger
-SIf.Par.udiTOPowerOn_ms := 3000;
-SIf.Par.udiExecuteScanDelayTime_ms:= 500;
-
-// configuration
-SIf.Cfg.strSensorIPAdr := '192.168.1.103';
-SIf.Cfg.udiSensorPort := 9004;
-SIf.Cfg.iSensorType := E_BCD_Type.KEYENCE;
-
-// simulation
-uliSimBarCode:= 1250000000000;]]></ST>
+        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
       </Implementation>
+      <ObjectProperties />
     </Method>
-    <Method Name="sta_OFF" Id="{a38d43f4-6733-4038-bcc3-99858222a1f7}">
+    <Method Name="StateMachine" Id="{6f1529fe-fc92-48e6-97a4-1ace6185aa97}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'StateMachine'}
+METHOD PROTECTED StateMachine : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.StateMachine();
+
+// main statemachine of base controller
+CASE me.StateMachine.intState OF
+    cBCC_STA_READBusy: 
+        THIS^.sta_READBusy();
+    cBCC_STA_READ: 
+        THIS^.sta_READ();	
+END_CASE;]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="sta_OFFBusy" Id="{8731517c-5969-45d3-8e4e-e3b35e0e21f1}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFFBusy'}
+METHOD PROTECTED sta_OFFBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		// Simulation timer	
+		fbSimulationTimer.IN := FALSE;
+		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiTORead_ms / 2);
+		fbSimulationTimer(); // set time/reset timer
+		fbSimulationTimer.IN := TRUE; // start timer
+		
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			fbSimulationTimer(); // simulation time
+			IF (fbSimulationTimer.Q) THEN
+				pBCD_SIf^.intCmd := cBCD_CMD_DONE;
+			END_IF
+		END_IF
+			
+		// State Change Condition
+		IF (pBCD_SIf^.stErr.bolErrorActive = TRUE) THEN
+			me.StateMachine.intStateNext :=  cSTA_ERROR;
+		ELSIF(pBCD_SIf^.intCmd = cBCD_CMD_DONE) THEN
+			me.StateMachine.intStateNext := cSTA_OFF;
+		END_IF
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="sta_READ" Id="{9437c12b-f1f7-40ae-9361-55220ca1a983}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_READ'}
+METHOD PROTECTED sta_READ : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			;
+		END_IF
+		
+		// State Change Condition
+		IF(me.intCmd=cBCC_CMD_READ) THEN
+			me.StateMachine.intStateNext := cBCC_STA_READBusy;
+		END_IF
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="sta_ERROR" Id="{a5e376a5-463e-48a4-95ef-4283ae225167}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERROR'}
+METHOD PROTECTED sta_ERROR : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		// Driver error activ
+		IF (pBCD_SIf^.stErr.bolErrorActive = TRUE) THEN
+			// SIf.Alm[1].strText := 'Barcode reader driver error'; 
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,1,UDINT_TO_DINT(pBCD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			// Error response from sensor
+			IF (pBCD_SIf^.stErr.bolSensorError = TRUE) THEN
+				// SIf.Alm[5].strText := 'Error response from sensor with sopas error number';
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,5,UDINT_TO_DINT(pBCD_SIf^.stErr.udiErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);		
+			END_IF
+		ELSE
+			// Close TCP socket		
+			pBCD_SIf^.intCmd := cBCD_CMD_CLOSE_SOCKET;  	
+		END_IF
+		
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+	
+		// State Change Condition
+		IF (CIf.Job.bolAlmReset = TRUE) THEN
+			// Error ack driver 
+			pBCD_SIf^.stErr.bolErrAck:= TRUE;
+			me.StateMachine.intStateNext := cSTA_ERRORQuit;
+		END_IF
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="IoInBridge" Id="{c0840189-3aaf-4b0c-bbe0-97624726de38}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'IoInBridge'}
+METHOD PROTECTED IoInBridge : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
+SIf.In.bolSensorTrigScan.map := THIS^.In_bolSensorTrigScan;
+
+IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolSensorTrigScan));
+ELSE
+	//simulation of global IO
+END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="sta_OFF" Id="{cfd62a73-2bd8-4fed-af32-c5d24dd1f263}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFF'}
 METHOD PROTECTED sta_OFF : BOOL
 ]]></Declaration>
@@ -597,70 +571,131 @@ METHOD PROTECTED sta_OFF : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
+      <ObjectProperties />
     </Method>
-    <Method Name="getCmdState" Id="{a6e7d5bb-042c-4bb3-9937-62049f3fe3f2}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'getCmdState'}
-METHOD PROTECTED getCmdState : STRING
-VAR_INPUT
-	intCmdState: INT;
-	bolState: BOOL;
-END_VAR
+    <Method Name="Always" Id="{e2d98657-d8c8-409c-bf44-4972b4418587}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'Always'}
+METHOD PROTECTED Always : BOOL
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
-IF (getCmdState='') THEN // global not defined get local
-	// get string cmd/state string information in runtime
-	IF (bolState=FALSE) THEN
-		// cmd's
-		CASE intCmdState OF
-			cBCC_CMD_READ: 
-				getCmdState := 'READ';
-		END_CASE;
-	ELSE
-	
-	// cmd's
-		CASE intCmdState OF
-			cBCC_STA_READBusy: 
-				getCmdState := 'READBusy';
-			cBCC_STA_READ: 
-				getCmdState := 'READ';
-		END_CASE;
-	END_IF
-END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="IoInBridge" Id="{bae5f191-f982-441e-b783-5b4529c4c898}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'IoInBridge'}
-METHOD PROTECTED IoInBridge : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
-SIf.In.bolSensorTrigScan.map := THIS^.In_bolSensorTrigScan;
+        <ST><![CDATA[SUPER^.Always();
 
-IF (CIf.SwCfg.bolSimulation = FALSE) THEN
-	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolSensorTrigScan));
+// Simulation
+IF (CIf.SwCfg.bolSimulation) THEN
+	// Access to driver empty structure
+	pBCD_SIf := ADR(stBCD_Sim);
 ELSE
-	//simulation of global IO
+	// Access to real driver interface
+	pBCD_SIf := pBCD_SIf_In;
+END_IF
+
+// ----------------------------------------------------------------------------------
+// cyclic actions outside of statemachine
+IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
+	
+	// Handle sensor trigger input
+	// --------------------------------------------
+	// Check pos. edge of the sensor 
+	IF (SIf.In.bolSensorTrigScan.intern) AND NOT (bolSensorTrigScanOld) THEN	
+		// Kick-off a new scan
+		bolExecuteScan:= TRUE;
+	END_IF
+
+	// Execute scan?
+	IF (bolExecuteScan) AND (me.StateMachine.intState<>BCC_CmdState.cBCC_STA_READBusy) THEN
+		// Wait X-time (time delay) before executing a barcode scan 
+		bolExecuteScan:= FALSE;
+		me.StateMachine.intStateNext := BCC_CmdState.cBCC_STA_READBusy;
+
+		// Timer handling
+		udiScanDelayTimer_ms:= udiScanDelayTimer_ms + me.FUBInfo.udiSample_ms;
+	ELSE
+		// Reset timer
+		udiScanDelayTimer_ms:= 0;
+	END_IF
+	
+	// Check trigger error conditions
+	// --------------------------------------------
+	// In case if a new scan will be triggered by the sensor trigger input but a scan is already in progress -> set warning!
+	// Check if Scan in progress
+	IF (me.StateMachine.intState=BCC_CmdState.cBCC_STA_READBusy) THEN
+		// New pos. trigger signal detected during scan
+		IF (SIf.In.bolSensorTrigScan.intern) AND (bolSensorTrigScanOld <> SIf.In.bolSensorTrigScan.intern) THEN
+			// SIf.Alm[6].strText := 'New scan was triggered during a scan was already in progress. Check line speed and barcode reader settings!';
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,6,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);	
+		END_IF
+	END_IF
+	
+	// Save sensor signal. Used for edge detection
+	bolSensorTrigScanOld:= SIf.In.bolSensorTrigScan.intern;
+		
+	// Status info from driver
+	// --------------------------------------------
+	SIf.Cur.bolComChecked:= pBCD_SIf^.stStatus.bolComChecked;
+	SIf.Cur.bolConnected:= pBCD_SIf^.stStatus.bolSocketConnected;
+	
+END_IF
+
+// config driver
+pBCD_SIf^.stCfg.bolSimulation := CIf.SwCfg.bolSimulation;
+pBCD_SIf^.stCfg.strSensorIPAdr := SIf.Cfg.strSensorIPAdr;
+pBCD_SIf^.stCfg.udiSensorPort := SIf.Cfg.udiSensorPort;
+pBCD_SIf^.stCfg.iSensorType := SIf.Cfg.iSensorType;
+
+// ----------------------------------------------------------------------------------
+// Always change actions in Base Library
+// ----------------------------------------------------------------------------------
+// overrule error always from base -> no EOFF State!! in EOFF go to OFF
+IF (me.StateMachine.intStateNext = cSTA_EOFFBusy) THEN
+	IF (me.StateMachine.intState=cSTA_OFF) THEN
+		me.StateMachine.intStateNext := cSTA_OFF;
+	ELSE // stay in OFF
+		me.StateMachine.intStateNext := cSTA_OFFBusy;
+	END_IF
+END_IF
+
+// Conditions Always
+IF (((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.Alarm.eActivAlmClass=E_AlmClass.OFF) OR (me.intCmd=cCMD_OFF))
+		 AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) AND
+		(me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_OFFBusy)) THEN
+	// alarm evt EOFF, OFF or cmd off
+	me.StateMachine.intStateNext := cSTA_OFFBusy;
 END_IF]]></ST>
       </Implementation>
+      <ObjectProperties />
     </Method>
-    <Method Name="getCtrlSIf" Id="{c164a1c5-b84d-40db-ae10-466a0a94eb2d}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'getCtrlSIf'}
-METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_BCC
+    <Method Name="sta_PON" Id="{ee4f9e12-45a7-4973-8c42-060121364187}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_PON'}
+METHOD PROTECTED sta_PON : BOOL
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;	
+		// State Change Condition
+		me.StateMachine.intStateNext := cSTA_OFFBusy;
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
       </Implementation>
+      <ObjectProperties />
     </Method>
-    <Property Name="CtrlSIf" Id="{fa14e51f-8e08-45b9-948f-36c1fa29f4b6}">
-      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_BCC]]></Declaration>
-      <Get Name="Get" Id="{7a3a8170-a5e5-473a-b33c-a0bbe451709a}">
-        <Declaration><![CDATA[]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
-        </Implementation>
-      </Get>
-    </Property>
     <ObjectProperties />
   </POU>
 </TcPlcObject>

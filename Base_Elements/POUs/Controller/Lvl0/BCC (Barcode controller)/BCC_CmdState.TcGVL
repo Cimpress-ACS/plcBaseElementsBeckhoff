@@ -1,13 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <GVL Name="BCC_CmdState" Id="{c7ec8444-7fde-48d7-a68b-5e5b7dcde440}">
+  <GVL Name="BCC_CmdState" Id="{56fea13e-d56a-481c-81fa-4bf893476a5b}">
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
 	/// ctrl commands definitions
 	/// specific commands >200 - every command has to be a even number
-	cBCC_CMD_READ: INT 	:= 202;
+	cBCC_CMD_READ: INT := 202;
 	/// ctrl specific states definitions
-	cBCC_STA_READBusy	: INT := 201;
-	cBCC_STA_READ		: INT := cBCC_CMD_READ;
+	cBCC_STA_READBusy: INT := 201;
+	cBCC_STA_READ: INT := cBCC_CMD_READ;
+	
+	cSUB_READDELAYBusy			: INT := 300;
+	cSUB_SENDREADCOMMAND		: INT := 301;
+	cSUB_READBusy				: INT := 302;
 END_VAR]]></Declaration>
     <ObjectProperties />
   </GVL>

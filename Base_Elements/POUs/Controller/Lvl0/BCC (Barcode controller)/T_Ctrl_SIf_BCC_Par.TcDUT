@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <DUT Name="T_Ctrl_SIf_BCC_Par" Id="{1ebbec12-f416-45c9-af8e-bd808d8d4251}">
+  <DUT Name="T_Ctrl_SIf_BCC_Par" Id="{f116adff-fddf-4ac8-95de-c4ab4f337edd}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_BCC_Par :
 STRUCT
 	/// [ms] Timeout power on
