@@ -1,23 +1,24 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_UMC_Lenze_Control" Id="{689dd466-9e8f-4801-89ec-dedc16c84692}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_UMC_Lenze_Control" Id="{ca3c0471-19a9-4721-9e57-fa8225b8f4b0}">
     <Declaration><![CDATA[TYPE T_UMC_Lenze_Control :
 STRUCT
-	SwitchOn		: BIT;
-	DisableVoltage	: BIT;
-	SetQuickStop	: BIT;
-	EnableOperation	: BIT;
-	ModeSpecific_1  : BIT;
-	ModeSpecific_2  : BIT;
-	ModeSpecific_3  : BIT;
-	ResetFault		: BIT;
-	SetHalt			: BIT;
-	Reserved_1 		: BIT;
-	Reserved_2		: BIT;
-	SetDCBreak		: BIT;
-	JogSpeed1		: BIT;
-	JogSpeed2		: BIT;
-	SetFail			: BIT;
-	SetSpeedCcw		: BIT;
+	SwitchOn: BIT;
+	DisableVoltage: BIT;
+	SetQuickStop: BIT;
+	EnableOperation: BIT;
+	ModeSpecific_1: BIT;
+	ModeSpecific_2: BIT;
+	ModeSpecific_3: BIT;
+	ResetFault: BIT;
+	SetHalt: BIT;
+	Reserved_1: BIT;
+	Reserved_2: BIT;
+	SetDCBreak: BIT;
+	JogSpeed1: BIT;
+	JogSpeed2: BIT;
+	SetFail: BIT;
+	SetSpeedCcw: BIT;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

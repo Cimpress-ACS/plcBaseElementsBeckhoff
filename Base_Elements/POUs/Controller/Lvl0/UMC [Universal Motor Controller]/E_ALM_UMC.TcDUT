@@ -1,16 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="E_ALM_UMC" Id="{1dc2b6bb-ec31-4f5e-a1fc-10724ff27799}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="E_ALM_UMC" Id="{0e81823e-a6e7-4b07-bc48-5defe334492f}">
     <Declaration><![CDATA[TYPE E_ALM_UMC :
 (
-	MotorOnTimeout 					:= 1,
-	MotorError						:= 2,
-	MotorWarning					:= 3,
-	MotorOverCurrent				:= 4,
-	MotorNotReady					:= 5,
-	DirectionParameterOverflow		:= 6,
-	SpeedOverLimit					:= 7,
-	MotorStatusInformation			:= 8,
+	MotorOnTimeout := 1,
+	MotorError := 2,
+	MotorWarning := 3,
+	MotorOverCurrent := 4,
+	MotorNotReady := 5,
+	DirectionParameterOverflow := 6,
+	SpeedOverLimit := 7,
+	MotorStatusInformation := 8,
 	MAX_E_ALM_UMC
 );
 END_TYPE

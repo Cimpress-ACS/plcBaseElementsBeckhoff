@@ -1,10 +1,11 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="E_TURN_DIRECTION" Id="{5373aa4f-5c05-4fa3-905f-04c364bc0593}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="E_TURN_DIRECTION" Id="{c64f9134-9c1a-4730-886a-ba6e51a4143f}">
     <Declaration><![CDATA[TYPE E_TURN_DIRECTION :
 (
-	AUTOMATIC		:= 0,
-	LEFT			:= 1,
-	RIGHT			:= 2,
+	AUTOMATIC := 0,
+	LEFT := 1,
+	RIGHT := 2,
 	MAX_E_TURN_DIRECTION
 );
 END_TYPE

@@ -1,15 +1,16 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_UMC_In" Id="{83dfa7d0-2e20-4749-a793-9db1285c3cad}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_Ctrl_SIf_UMC_In" Id="{b0db4743-48ef-4a32-af02-0493db66d305}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_UMC_In :
 STRUCT
 	/// Status Word of Lenze
-	uinStatus				: Base_PLC.T_Ctrl_IoUint;
+	uinStatus: Base_PLC.T_Ctrl_IoUint;
 	/// Motor actual speed
-	intMotorActualSpeed		: Base_PLC.T_Ctrl_IoInt;
+	intMotorActualSpeed: Base_PLC.T_Ctrl_IoInt;
 	/// Motor actual speed setpoint 
-	uinMotorSetSpeed		: Base_PLC.T_Ctrl_IoUint;
-	/// Is the EMO Ok...
-	bolEmoOk				: Base_PLC.T_Ctrl_IoBool;
+	uinMotorSetSpeed: Base_PLC.T_Ctrl_IoUint;
+	/// Motor 400V available information
+	bol400V_Ok: Base_PLC.T_Ctrl_IoBool;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

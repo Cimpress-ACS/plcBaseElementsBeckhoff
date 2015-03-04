@@ -1,11 +1,12 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_UMC_Out" Id="{fe27ee24-a61b-42c9-afd4-fe935e58db78}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_Ctrl_SIf_UMC_Out" Id="{000c99f6-65d6-40ac-a59c-acdb9a383c92}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_UMC_Out :
 STRUCT
 	/// Control word for Lenze FU
-	uinControl			: BASE_PLC.T_Ctrl_IoUint;
+	uinControl: BASE_PLC.T_Ctrl_IoUint;
 	/// Speed Setpoint; 16384 (214) ≡ 100% (bez. auf L-C11)
-	uinSpeedSetpoint	: BASE_PLC.T_Ctrl_IoUint;
+	uinSpeedSetpoint: BASE_PLC.T_Ctrl_IoUint;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

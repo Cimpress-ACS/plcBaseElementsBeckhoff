@@ -1,15 +1,16 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_UMC_Cfg" Id="{cb8f9005-64ea-40b3-ada8-84f7ce1118fe}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_Ctrl_SIf_UMC_Cfg" Id="{f8552fca-b1a4-492e-8c49-2fced970e6ef}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_UMC_Cfg :
 STRUCT
 	/// Motor Type
-	MotorType							: E_CFG_UMC;			
+	MotorType: E_CFG_UMC;
 	/// [RPM] L0011 Setting of the Lenze motor. This value is 100% of the output control setting.
-	uinLC11								: UINT;
+	uinLC11: UINT;
 	/// Value that is equal to 100% of LC11
-	uinLC11_100							: UINT;
+	uinLC11_100: UINT;
 	/// Maximum allowed speed in [%] of LC11
-	uinMaxSpeed							: UINT;
+	uinMaxSpeed: UINT;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

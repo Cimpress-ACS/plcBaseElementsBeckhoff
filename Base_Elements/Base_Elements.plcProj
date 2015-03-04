@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.1.44</ProjectVersion>
+    <ProjectVersion>0.0.1.45</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.1.44 	- Fixes for the BCC
+    <Description>0.0.1.45 	- Implemented IO-400V signal to UMC
+0.0.1.44 	- Fixes for the BCC
 0.0.1.43 	- fixed FurtherReactions for module ctrl
 	- added OFFBusy to module ctrl
 0.0.1.42 	- module ctrl uses FurtherReactions
@@ -672,9 +673,9 @@
     <Folder Include="POUs\Controller\Lvl0\DRV %28Drive%29" />
     <Folder Include="POUs\Controller\Lvl0\ECD %28EtherCAT Diagnostic%29" />
     <Folder Include="POUs\Controller\Lvl0\SGT %28Signal Tower%29\" />
+    <Folder Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]" />
     <Folder Include="POUs\Controller\Lvl0\VLV %28Valve controller%29\" />
     <Folder Include="POUs\Controller\Lvl0\VPC [Vacuum Pump Controller]" />
-    <Folder Include="POUs\Controller\Lvl0\UMC [Universal Motor Controller]" />
     <Folder Include="POUs\Controller\Lvl0\RFW %28RFID Reader-Writer%29" />
     <Folder Include="POUs\Controller\Lvl2\" />
     <Folder Include="POUs\Controller\Driver" />

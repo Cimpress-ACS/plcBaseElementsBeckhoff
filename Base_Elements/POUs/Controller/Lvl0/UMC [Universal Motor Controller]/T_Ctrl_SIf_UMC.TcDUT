@@ -1,5 +1,6 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_UMC" Id="{853f656d-7b87-4868-8ec7-dbe013149948}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_Ctrl_SIf_UMC" Id="{33525c32-04ac-4344-9209-308827820ce8}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_UMC :
 STRUCT
 	///configuration

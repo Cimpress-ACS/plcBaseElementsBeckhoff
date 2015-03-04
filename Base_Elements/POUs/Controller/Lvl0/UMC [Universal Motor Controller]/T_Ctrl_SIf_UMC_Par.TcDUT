@@ -1,25 +1,26 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_UMC_Par" Id="{d210d8f4-9c03-4ef8-a9e7-ac02470a7839}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_Ctrl_SIf_UMC_Par" Id="{b9ba4ec3-2cb8-45c2-aa71-d1ebd44a47e5}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_UMC_Par :
 STRUCT
 	/// Rotation direction E_CFG_UMC
-	eRotationDirection					: E_TURN_DIRECTION;
+	eRotationDirection: E_TURN_DIRECTION;
 	/// [ms] time to initialize and reset the errors on the motor
-	udiStartupOnTime_ms					: UDINT;
+	udiStartupOnTime_ms: UDINT;
 	/// [ms] time the motor has time to go from OFF to ON
-	udiMotorOnTime_ms					: UDINT;
+	udiMotorOnTime_ms: UDINT;
 	/// [rpm] Speed control selection
-	uinSpeed_rpm						: UINT;
+	uinSpeed_rpm: UINT;
 	/// [ms] time to wait until the motor reaches the set speed.
-	udiSimMotorOnTime_ms				: UDINT;
+	udiSimMotorOnTime_ms: UDINT;
 	/// [ms] Delay until the drive startsup
-	udiMoveStartLatency					: UDINT;
+	udiMoveStartLatency: UDINT;
 	/// [ms] Delay until the drive stops 
-	udiMoveStopLatency					: UDINT;
+	udiMoveStopLatency: UDINT;
 	/// Motor reset retries
-	uinMotorResetCnt					: UINT;
-	// [ms] Motor Reset Pulse Time		
-	uinMotorResetPulseTime_ms			: UINT;
+	uinMotorResetCnt: UINT;
+	/// [ms] Motor Reset Pulse Time		
+	uinMotorResetPulseTime_ms: UINT;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

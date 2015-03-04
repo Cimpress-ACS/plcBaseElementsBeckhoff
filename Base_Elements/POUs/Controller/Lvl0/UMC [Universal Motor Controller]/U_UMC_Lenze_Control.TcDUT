@@ -1,12 +1,14 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="U_UMC_Lenze_Control" Id="{ee731394-96a1-4716-a04f-7fd149420a24}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="U_UMC_Lenze_Control" Id="{9768d289-6cef-41e2-82ba-11dc57e84170}">
     <Declaration><![CDATA[TYPE U_UMC_Lenze_Control :
+
 UNION
-	Output		: UINT;
-	Data		: T_UMC_Lenze_Control;
+	Output: UINT;
+	Data: T_UMC_Lenze_Control;
 END_UNION
-END_TYPE
-]]></Declaration>
+
+END_TYPE]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>

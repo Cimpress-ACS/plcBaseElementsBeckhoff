@@ -1,9 +1,10 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="E_CFG_UMC" Id="{8d48b65b-6576-4dda-8f73-113a5c640012}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="E_CFG_UMC" Id="{13c27364-c2e6-4822-9f8f-ab42b9793010}">
     <Declaration><![CDATA[TYPE E_CFG_UMC :
 (
-	Standard					:= 0,
-	LenzeFC						:= 1,
+	Standard := 0,
+	LenzeFC := 1,
 	MAY_E_CFG_UMC
 );
 END_TYPE
