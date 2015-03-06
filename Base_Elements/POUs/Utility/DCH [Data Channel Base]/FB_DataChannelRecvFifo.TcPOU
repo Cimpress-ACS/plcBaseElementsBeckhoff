@@ -1,17 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.24">
-  <POU Name="FB_DataChannelRecvFifo" Id="{ae597d08-4a69-42c6-9fb0-3008c460e2f1}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <POU Name="FB_DataChannelRecvFifo" Id="{f8874046-7cad-49db-a4f4-745e7a60d367}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_DataChannelRecvFifo EXTENDS FB_ArrayFifo
-VAR_INPUT
-END_VAR
-VAR_OUTPUT
-END_VAR
 VAR
-	m_pDataChannel				: POINTER TO FB_DataChannelRecvBase;
-	m_bolEnable					: BOOL;
-	m_intMaxFifoSize			: INT  := 10;
-	m_pItem						: POINTER TO BYTE;
-	m_bolResult					: BOOL;
+	m_pDataChannel: POINTER TO FB_DataChannelRecvBase;
+	m_bolEnable: BOOL;
+	m_intMaxFifoSize: INT := 10;
+	m_pItem: POINTER TO BYTE;
+	m_bolResult: BOOL;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -31,73 +27,74 @@ END_VAR
 	m_pDataChannel^();
 END_IF]]></ST>
     </Implementation>
-    <Property Name="Item" Id="{62be58f2-7569-483b-a49f-67f61f58529e}">
-      <Declaration><![CDATA[PROPERTY PUBLIC Item : POINTER TO BYTE]]></Declaration>
-      <Set Name="Set" Id="{3aee014a-e624-441d-9a5f-55fee3fac0ed}">
-        <Declaration><![CDATA[VAR
-END_VAR
+    <Property Name="Enable" Id="{121ae519-3f1f-44c4-a897-e9def58cbba8}">
+      <Declaration><![CDATA[PROPERTY Enable : BOOL
 ]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[m_pItem := Item;]]></ST>
-        </Implementation>
-      </Set>
-      <Get Name="Get" Id="{8bc4f753-0ac8-495e-896b-f1318ba9c596}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[]]></ST>
-        </Implementation>
-      </Get>
-    </Property>
-    <Property Name="Enable" Id="{63bf5842-61e2-488d-97c1-116ec3d2f9bc}">
-      <Declaration><![CDATA[PROPERTY PUBLIC Enable : BOOL]]></Declaration>
-      <Set Name="Set" Id="{1ea626ac-b4fe-4b96-9184-00277b85e001}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[m_bolEnable := Enable;]]></ST>
-        </Implementation>
-      </Set>
-      <Get Name="Get" Id="{c1f3703b-41a7-4ced-a19a-4e16cb6e446c}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
+      <Get Name="Get" Id="{28fe9d61-53fd-4414-9374-7c29d1a01a49}">
+        <Declaration><![CDATA[]]></Declaration>
         <Implementation>
           <ST><![CDATA[Enable := m_bolEnable;]]></ST>
         </Implementation>
+        <ObjectProperties />
       </Get>
+      <Set Name="Set" Id="{c6980c5c-b0da-4fd0-966a-29bb916ffc34}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[m_bolEnable := Enable;]]></ST>
+        </Implementation>
+        <ObjectProperties />
+      </Set>
+      <ObjectProperties />
     </Property>
-    <Property Name="DataChannel" Id="{913bfa4f-e7e4-439a-98b8-7080b88d78ea}">
-      <Declaration><![CDATA[PROPERTY PUBLIC DataChannel : POINTER TO FB_DataChannelRecvBase]]></Declaration>
-      <Set Name="Set" Id="{5c04e000-f701-402a-b897-0e080306905c}">
-        <Declaration><![CDATA[VAR
-END_VAR
+    <Property Name="DataChannel" Id="{418a780e-a6f1-4f07-9a72-b99d12689803}">
+      <Declaration><![CDATA[PROPERTY DataChannel : POINTER TO FB_DataChannelRecvBase
 ]]></Declaration>
+      <Set Name="Set" Id="{57e0509c-556b-452f-b328-8926a24c32a1}">
+        <Declaration><![CDATA[]]></Declaration>
         <Implementation>
           <ST><![CDATA[m_pDataChannel := DataChannel;]]></ST>
         </Implementation>
+        <ObjectProperties />
       </Set>
+      <ObjectProperties />
     </Property>
-    <Property Name="MaxFifoSize" Id="{a599e5e1-d0cb-49f1-af78-ed1ab3faac08}">
-      <Declaration><![CDATA[PROPERTY PUBLIC MaxFifoSize : INT]]></Declaration>
-      <Get Name="Get" Id="{bd85c2b6-85dd-4032-9f5a-21525ea64c92}">
-        <Declaration><![CDATA[VAR
-END_VAR
+    <Property Name="Item" Id="{4735f3e9-2891-48be-a827-f3a7cdbdc3a4}">
+      <Declaration><![CDATA[PROPERTY Item : POINTER TO BYTE
 ]]></Declaration>
+      <Set Name="Set" Id="{80f715ec-1c86-4c85-b702-f9d7b2c8e279}">
+        <Declaration><![CDATA[]]></Declaration>
         <Implementation>
-          <ST><![CDATA[MaxFifoSize := m_intMaxFifoSize;]]></ST>
+          <ST><![CDATA[m_pItem := Item;]]></ST>
         </Implementation>
+        <ObjectProperties />
+      </Set>
+      <Get Name="Get" Id="{884270a3-51e7-4248-bd73-4be763a8014b}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+        <ObjectProperties />
       </Get>
-      <Set Name="Set" Id="{f3c4eafc-a7cd-4917-9e2a-e683c3ac73c2}">
-        <Declaration><![CDATA[VAR
-END_VAR
+      <ObjectProperties />
+    </Property>
+    <Property Name="MaxFifoSize" Id="{aaa6560a-f60d-452e-8dce-68e9d8346798}">
+      <Declaration><![CDATA[PROPERTY MaxFifoSize : INT
 ]]></Declaration>
+      <Set Name="Set" Id="{0fdb0b0c-30f8-454e-8942-6d54894fdb7e}">
+        <Declaration><![CDATA[]]></Declaration>
         <Implementation>
           <ST><![CDATA[m_intMaxFifoSize := MaxFifoSize;]]></ST>
         </Implementation>
+        <ObjectProperties />
       </Set>
+      <Get Name="Get" Id="{6fe05995-a498-4592-b1a6-f69e9f3d97cd}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[MaxFifoSize := m_intMaxFifoSize;]]></ST>
+        </Implementation>
+        <ObjectProperties />
+      </Get>
+      <ObjectProperties />
     </Property>
     <ObjectProperties />
   </POU>

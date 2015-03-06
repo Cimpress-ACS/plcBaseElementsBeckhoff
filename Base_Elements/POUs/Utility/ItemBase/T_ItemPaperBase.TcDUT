@@ -1,22 +1,22 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.24">
-  <DUT Name="T_ItemPaperBase" Id="{8283d49a-da89-4337-b4d9-5d314d8b339c}">
-    <Declaration><![CDATA[{attribute 'enable_dynamic_creation'}
-//{attribute 'pack_mode' := '1'}
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_ItemPaperBase" Id="{b9feabca-753b-4b0a-b078-57fab50ecba6}">
+    <Declaration><![CDATA[///{attribute 'pack_mode' := '1'}
+{attribute 'enable_dynamic_creation' := ''}
 TYPE T_ItemPaperBase EXTENDS T_ItemBase :
 STRUCT
-	// Real read process ID values
-	udiPaperIdProcess			: UDINT;		// Paper ID
-	// Set Value of the ID
-	udiPaperIdSet				: UDINT;		// Paper ID
-	// true if this is the paper is the last of a stack. After this paper is placed the stack is ejected.
-	bolLastPaperOfStackBatch	: UINT;			
-	// [ms] Time difference to the previous Paper
-	udiDifferenceToPrevious_ms	: UDINT;
-	// [ms] Time difference to the next paper
-	udiDifferenceToNext_ms		: UDINT;
-	// Paper Stream Destination
-	eDestination				: E_Destination;
+	/// Paper ID
+	udiPaperIdProcess: UDINT;
+	/// Paper ID
+	udiPaperIdSet: UDINT;
+	/// true if this is the paper is the last of a stack. After this paper is placed the stack is ejected.
+	bolLastPaperOfStackBatch: UINT;
+	/// [ms] Time difference to the previous Paper
+	udiDifferenceToPrevious_ms: UDINT;
+	/// [ms] Time difference to the next paper
+	udiDifferenceToNext_ms: UDINT;
+	/// Paper Stream Destination
+	eDestination: E_Destination;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

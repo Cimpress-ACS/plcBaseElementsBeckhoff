@@ -1,47 +1,74 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.24">
-  <Itf Name="I_DataChannelSend" Id="{5539de53-6dc5-487b-bfc7-a1283d83412b}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <Itf Name="I_DataChannelSend" Id="{75d65f29-9061-4ec0-98e9-366b36792db5}">
     <Declaration><![CDATA[INTERFACE I_DataChannelSend
 ]]></Declaration>
-    <Method Name="InitChannel" Id="{0319d644-2b7d-4b63-a417-d706bff53490}">
-      <Declaration><![CDATA[METHOD InitChannel : BOOL
-VAR_INPUT
-	udiDataSize					: UDINT;
-	pOutputData					: POINTER TO BYTE;
-END_VAR
+    <Property Name="Busy" Id="{09072595-833a-4ce3-b03f-a7e253820814}">
+      <Declaration><![CDATA[PROPERTY Busy : BOOL
 ]]></Declaration>
-    </Method>
-    <Property Name="Busy" Id="{1bd077a1-38f5-4100-9bf3-c6787a3f187b}">
-      <Declaration><![CDATA[PROPERTY Busy : BOOL]]></Declaration>
-      <Get Name="Get" Id="{6280c2aa-9d85-4fc7-9214-5f2d0ddb2a1f}">
+      <Get Name="Get" Id="{c427a56a-b079-494b-bdb5-35d154fca078}">
         <Declaration><![CDATA[]]></Declaration>
+        <ObjectProperties />
       </Get>
+      <ObjectProperties />
     </Property>
-    <Method Name="SendData" Id="{638304de-8262-4ff3-987c-939aefa4a86b}">
-      <Declaration><![CDATA[METHOD SendData : BOOL
+    <Method Name="ClearBufferDone" Id="{6b5a9877-63cd-4bdd-a676-ba741a8b6165}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'ClearBufferDone'}
+METHOD ClearBufferDone : BOOL
+]]></Declaration>
+      <ObjectProperties />
+    </Method>
+    <Method Name="SendData" Id="{925bea83-f2ed-4f5f-824b-f4ac3008a371}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'SendData'}
+METHOD SendData : BOOL
 VAR_INPUT
-	udiDataSize				: UDINT;
-	pData					: POINTER TO BYTE;
+	udiDataSize: UDINT;
+	pData: POINTER TO BYTE;
 END_VAR
 ]]></Declaration>
+      <ObjectProperties />
     </Method>
-    <Property Name="Error" Id="{6f742098-ee49-406f-a697-a6cabe4e3792}">
-      <Declaration><![CDATA[PROPERTY Error : INT]]></Declaration>
-      <Get Name="Get" Id="{13050c71-9f03-4e8f-a528-210f44361c72}">
+    <Property Name="DataSize" Id="{a9f62bac-efc6-4071-a51e-1c21b5e51419}">
+      <Declaration><![CDATA[PROPERTY DataSize : UDINT
+]]></Declaration>
+      <Get Name="Get" Id="{d6d8af02-791a-40ea-b813-e02cdb7dc4e9}">
         <Declaration><![CDATA[]]></Declaration>
+        <ObjectProperties />
       </Get>
-      <Set Name="Set" Id="{b2fcd1db-361b-45f2-84c7-e00b2521252d}">
+      <ObjectProperties />
+    </Property>
+    <Property Name="Error" Id="{b8738404-b2fe-4754-a6d8-d590e53cadce}">
+      <Declaration><![CDATA[PROPERTY Error : INT
+]]></Declaration>
+      <Get Name="Get" Id="{d20bdfe6-2260-4145-a6ef-bff27968ad00}">
         <Declaration><![CDATA[]]></Declaration>
+        <ObjectProperties />
+      </Get>
+      <Set Name="Set" Id="{d5711c38-aefc-4a81-82e4-4284e9e31535}">
+        <Declaration><![CDATA[]]></Declaration>
+        <ObjectProperties />
       </Set>
+      <ObjectProperties />
     </Property>
-    <Property Name="DataSize" Id="{bdecb10b-4f0f-45f9-b95b-b08bac46b49f}">
-      <Declaration><![CDATA[PROPERTY DataSize : UDINT]]></Declaration>
-      <Get Name="Get" Id="{529a721d-3f62-4e24-9e54-e53cf5c27ea2}">
-        <Declaration><![CDATA[VAR
+    <Property Name="ClearBufferRequest" Id="{c93a6dac-5ea8-4430-9e37-ff9ddeb2a588}">
+      <Declaration><![CDATA[PROPERTY ClearBufferRequest : BOOL
+]]></Declaration>
+      <Get Name="Get" Id="{803dc20c-6312-4af6-9d74-2254fd6fecbb}">
+        <Declaration><![CDATA[]]></Declaration>
+        <ObjectProperties />
+      </Get>
+      <ObjectProperties />
+    </Property>
+    <Method Name="InitChannel" Id="{ea2c8c13-35a8-4402-9028-818467207db1}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'InitChannel'}
+METHOD InitChannel : BOOL
+VAR_INPUT
+	udiDataSize: UDINT;
+	pOutputData: POINTER TO BYTE;
 END_VAR
 ]]></Declaration>
-      </Get>
-    </Property>
+      <ObjectProperties />
+    </Method>
     <ObjectProperties />
   </Itf>
 </TcPlcObject>

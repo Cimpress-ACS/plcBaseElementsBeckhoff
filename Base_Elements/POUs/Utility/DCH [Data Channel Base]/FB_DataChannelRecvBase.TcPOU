@@ -1,11 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.24">
-  <POU Name="FB_DataChannelRecvBase" Id="{5ad0a660-89a9-4f1e-a1bd-e97d613e50ef}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <POU Name="FB_DataChannelRecvBase" Id="{991275c2-0ad5-480c-abda-d47b263b3af0}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_DataChannelRecvBase IMPLEMENTS I_DataChannelRecv
 VAR_INPUT
-	pOutputDataBuffer		: POINTER TO BYTE;
-END_VAR
-VAR_OUTPUT
+	pOutputDataBuffer: POINTER TO BYTE;
 END_VAR
 VAR CONSTANT
 	cDataState_DONE: INT := -1;
@@ -15,18 +13,17 @@ VAR CONSTANT
 	cMAX_RETRY: INT := 10;
 END_VAR
 VAR
-// Saber Inteface Variables
-// -----------------------------------------------------------------
-	m_uinDataSize				: UDINT;
-//	m_pInputData				: POINTER TO T_IdBase_DCH;
-	m_iDchConfirm				: INT;	
-
-// Local Variables
-// -----------------------------------------------------------------
-	m_eError					: E_DCH_Error;
-	m_eState					: E_SaberPlcDHCState  := E_SaberPlcDHCState.WaitChannelInit;
-	m_intCountRetry				: INT;
-	m_iIdx						: UDINT;
+	/// Saber Inteface Variables
+	/// -----------------------------------------------------------------
+	m_uinDataSize: UDINT;
+	///	m_pInputData				: POINTER TO T_IdBase_DCH;
+	m_iDchConfirm: INT;
+	/// Local Variables
+	/// -----------------------------------------------------------------
+	m_eError: E_DCH_Error;
+	m_eState: E_SaberPlcDHCState := E_SaberPlcDHCState.WaitChannelInit;
+	m_intCountRetry: INT;
+	m_iIdx: UDINT;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -61,88 +58,77 @@ END_VAR
 END_CASE
 ]]></ST>
     </Implementation>
-    <Method Name="InitChannel" Id="{0cae5575-ea89-44fd-88d2-7f28c44f39c5}">
-      <Declaration><![CDATA[METHOD InitChannel : BOOL
-VAR_INPUT
-	udiDataSize	: UDINT;
-	pInputData	: POINTER TO BYTE;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[]]></ST>
-      </Implementation>
-    </Method>
-    <Property Name="DataSize" Id="{22c0b020-38cf-4431-b409-14633ae3a813}">
+    <Property Name="DataSize" Id="{2373de7c-e7a3-4c92-9a4e-17c4b60da80b}">
       <Declaration><![CDATA[PROPERTY DataSize : UDINT
 ]]></Declaration>
-      <Get Name="Get" Id="{0e4df2af-9aac-4a51-8d6a-22f17ad885c4}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
+      <Get Name="Get" Id="{aade9a84-e95f-4203-a517-5e67e487ff41}">
+        <Declaration><![CDATA[]]></Declaration>
         <Implementation>
           <ST><![CDATA[DataSize := m_uinDataSize;]]></ST>
         </Implementation>
+        <ObjectProperties />
       </Get>
+      <ObjectProperties />
     </Property>
-    <Method Name="GetData" Id="{3da8e77a-6be5-4926-860d-b61eb1b606c3}">
-      <Declaration><![CDATA[METHOD GetData : BOOL
+    <Method Name="InitChannel" Id="{632d713b-d4ba-4752-982a-9b836b237112}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'InitChannel'}
+METHOD InitChannel : BOOL
 VAR_INPUT
-	udiDataSize	: UDINT;
-	pData		: POINTER TO BYTE;
+	udiDataSize: UDINT;
+	pInputData: POINTER TO BYTE;
 END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[]]></ST>
       </Implementation>
+      <ObjectProperties />
     </Method>
-    <Property Name="Error" Id="{9afde4f1-4db1-42b8-ade0-d768d3c72f9a}">
-      <Declaration><![CDATA[PROPERTY PUBLIC Error : INT]]></Declaration>
-      <Set Name="Set" Id="{9c8e7786-10e8-46ae-82d0-2997de535dea}">
-        <Declaration><![CDATA[VAR
+    <Method Name="GetData" Id="{84a6c7f4-fd07-4580-af84-fede2e284349}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'GetData'}
+METHOD GetData : BOOL
+VAR_INPUT
+	udiDataSize: UDINT;
+	pData: POINTER TO BYTE;
 END_VAR
 ]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Property Name="Busy" Id="{85e1ac17-4736-4ee8-acd1-b9ccbf06324c}">
+      <Declaration><![CDATA[PROPERTY Busy : BOOL
+]]></Declaration>
+      <Get Name="Get" Id="{dc9be114-7620-413f-836a-489b97e951be}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Busy := m_eState <> E_SaberPlcDHCState.DataReady;]]></ST>
+        </Implementation>
+        <ObjectProperties />
+      </Get>
+      <ObjectProperties />
+    </Property>
+    <Property Name="Error" Id="{e633233a-29b5-405b-9b1f-0062062902a1}">
+      <Declaration><![CDATA[PROPERTY Error : INT
+]]></Declaration>
+      <Get Name="Get" Id="{2ced0919-c651-4d9d-9b4d-988d5428bd68}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Error := m_eError;]]></ST>
+        </Implementation>
+        <ObjectProperties />
+      </Get>
+      <Set Name="Set" Id="{cb640a51-4eff-46f7-992c-c32cb9aa1deb}">
+        <Declaration><![CDATA[]]></Declaration>
         <Implementation>
           <ST><![CDATA[m_iDchConfirm := cDataState_Error;
 m_eState := E_SaberPlcDHCState.Error;
 ]]></ST>
         </Implementation>
+        <ObjectProperties />
       </Set>
-      <Get Name="Get" Id="{fa86b421-22b5-450f-b5cd-aa7ddd24478e}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[Error := m_eError;]]></ST>
-        </Implementation>
-      </Get>
+      <ObjectProperties />
     </Property>
-    <Property Name="Busy" Id="{a77ab9fb-0be5-4eab-ad21-1894e9de3d4e}">
-      <Declaration><![CDATA[PROPERTY Busy : BOOL
-]]></Declaration>
-      <Get Name="Get" Id="{e3547873-5ab8-4c26-99f2-c1ddd856cf28}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[Busy := m_eState <> E_SaberPlcDHCState.DataReady;]]></ST>
-        </Implementation>
-      </Get>
-    </Property>
-    <ObjectProperties>
-      <XmlArchive>
-        <Data>
-          <o xml:space="preserve" t="POUImageProperty">
-            <n n="ImageData" />
-            <v n="TransparencyColor">"White"</v>
-            <v n="MakeTransparent">false</v>
-          </o>
-        </Data>
-        <TypeList>
-          <Type n="Boolean">System.Boolean</Type>
-          <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
-          <Type n="String">System.String</Type>
-        </TypeList>
-      </XmlArchive>
-    </ObjectProperties>
+    <ObjectProperties />
   </POU>
 </TcPlcObject>

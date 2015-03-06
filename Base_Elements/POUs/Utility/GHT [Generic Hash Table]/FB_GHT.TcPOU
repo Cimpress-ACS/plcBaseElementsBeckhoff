@@ -1,38 +1,36 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <POU Name="FB_GHT" Id="{13989cf9-0a64-4274-a8ea-ac26351f6d38}">
-    <Declaration><![CDATA[FUNCTION_BLOCK FB_GHT  IMPLEMENTS IGHT
-VAR_INPUT
-END_VAR
-VAR_OUTPUT
-END_VAR
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <POU Name="FB_GHT" Id="{b4098c71-0bf7-4cfd-a6c9-81baacc2ee18}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_GHT IMPLEMENTS IGHT
 VAR CONSTANT
-	MAX_HASH_LISTS				: INT := 3;
-	MAX_HASHLIST_ENTRIES		: INT := 50;
-	CUTOFF_A					: ULINT := 4000000000;
-	CUTOFF_B					: ULINT := 8000000000;
+	MAX_HASH_LISTS: INT := 3;
+	MAX_HASHLIST_ENTRIES: INT := 50;
+	CUTOFF_A: ULINT := 4000000000;
+	CUTOFF_B: ULINT := 8000000000;
 END_VAR
 VAR
-	m_bolDeleteItems		: BOOL;
-	m_uintCount				: UINT;
-	m_fbHashTable         	: ARRAY[0..MAX_HASH_LISTS-1] OF FB_HashTableCtrl;
-	m_hHashTable          	: ARRAY[0..MAX_HASH_LISTS-1] OF T_HHASHTABLE;
-	m_uliCutoff				: ARRAY[0..MAX_HASH_LISTS-1] OF ULINT;
-	m_aHashTableBuffer		: ARRAY[0..MAX_HASH_LISTS-1] OF T_GHTHashTableBuffer;	
-END_VAR]]></Declaration>
+	m_bolDeleteItems: BOOL;
+	m_uintCount: UINT;
+	m_fbHashTable: ARRAY[0..(MAX_HASH_LISTS - 1)] OF FB_HashTableCtrl;
+	m_hHashTable: ARRAY[0..(MAX_HASH_LISTS - 1)] OF T_HHASHTABLE;
+	m_uliCutoff: ARRAY[0..(MAX_HASH_LISTS - 1)] OF ULINT;
+	m_aHashTableBuffer: ARRAY[0..(MAX_HASH_LISTS - 1)] OF T_GHTHashTableBuffer;
+END_VAR
+]]></Declaration>
     <Implementation>
       <ST><![CDATA[]]></ST>
     </Implementation>
-    <Method Name="Clear" Id="{51129292-e7ba-4dc6-a01b-53085ef891fb}">
+    <Method Name="Clear" Id="{267e3881-69f5-4f28-b331-1d05e34696c4}">
       <Declaration><![CDATA[{attribute 'object_name' := 'Clear'}
 METHOD Clear : BOOL
 VAR_INPUT
-	bolFreePointer		: BOOL;
+	bolFreePointer: BOOL;
 END_VAR
 VAR
-	iIdx				: INT;
-	pData				: POINTER TO BYTE;
-END_VAR]]></Declaration>
+	iIdx: INT;
+	pData: POINTER TO BYTE;
+END_VAR
+]]></Declaration>
       <Implementation>
         <ST><![CDATA[FOR iIdx := 0 TO MAX_HASH_LISTS - 1 DO
 	IF bolFreePointer THEN
@@ -52,19 +50,107 @@ END_FOR
 m_uintCount := 0;
 ]]></ST>
       </Implementation>
+      <ObjectProperties />
     </Method>
-    <Method Name="Lookup" Id="{5227654d-b549-49be-ade7-3a065eaf6023}">
+    <Method Name="Initialize" Id="{34907f79-043c-414f-a670-49757d8337f4}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'Initialize'}
+METHOD Initialize : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[F_CreateHashTableHnd( ADR( m_aHashTableBuffer[0].aBuffer ), SIZEOF( m_aHashTableBuffer[0].aBuffer ), m_hHashTable[0] );
+F_CreateHashTableHnd( ADR( m_aHashTableBuffer[1].aBuffer ), SIZEOF( m_aHashTableBuffer[1].aBuffer ), m_hHashTable[1] );
+F_CreateHashTableHnd( ADR( m_aHashTableBuffer[2].aBuffer ), SIZEOF( m_aHashTableBuffer[2].aBuffer ), m_hHashTable[2] );]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="FB_init" Id="{5a1df219-166d-4006-bc61-66c291f95353}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'FB_init'}
+METHOD FB_init : BOOL
+VAR_INPUT
+	/// if TRUE, the retain variables are initialized (warm start / cold start)
+	bInitRetains: BOOL;
+	/// if TRUE, the instance afterwards gets moved into the copy code (online change)
+	bInCopyCode: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[m_uliCutoff[0] := 0;
+m_uliCutoff[1] := CUTOFF_A;
+m_uliCutoff[2] := CUTOFF_B;
+
+m_uintCount := 0;]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="GetTableIdx" Id="{5a460f39-4baf-477d-8acf-73e7d6e322cd}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'GetTableIdx'}
+METHOD PRIVATE GetTableIdx : INT
+VAR_INPUT
+	uliBarcode: ULINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF uliBarcode < CUTOFF_A THEN
+	GetTableIdx := 0;
+	RETURN;
+END_IF
+
+IF uliBarcode > CUTOFF_B THEN
+	GetTableIdx := 2;
+	RETURN;
+END_IF
+
+GetTableIdx := 1;
+]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="AddItem" Id="{72e13f32-7641-42bd-98b0-6635e8187747}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'AddItem'}
+METHOD AddItem : BOOL
+VAR_INPUT
+	uliKey: ULINT;
+	pData: POINTER TO BYTE;
+END_VAR
+VAR
+	iIdx: INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[iIdx := GetTableIdx(uliKey);
+
+m_fbHashTable[iIdx].A_Add( key := ULINT_TO_UDINT(uliKey-m_uliCutoff[iIdx]), putValue := pData, hTable := m_hHashTable[iIdx] );
+
+IF m_fbHashTable[iIdx].bOk THEN
+	m_uintCount := m_uintCount + 1;
+END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Property Name="Count" Id="{884648f0-8889-40fe-b353-67f50e84c8bb}">
+      <Declaration><![CDATA[PROPERTY Count : UINT
+]]></Declaration>
+      <Get Name="Get" Id="{71dcdc5f-3f48-45d7-bc3f-c8cbacb1a90f}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+        <ObjectProperties />
+      </Get>
+      <ObjectProperties />
+    </Property>
+    <Method Name="Lookup" Id="{bb2abefe-0a4e-48a8-9670-bd49d019a367}">
       <Declaration><![CDATA[{attribute 'object_name' := 'Lookup'}
 METHOD Lookup : POINTER TO BYTE
 VAR_INPUT
-	uliKey		: ULINT;
-	bolRemove	: BOOL;
+	uliKey: ULINT;
+	bolRemove: BOOL;
 END_VAR
 VAR
-	pfbHashTable         	: POINTER TO FB_HashTableCtrl;
-	phHashTable          	: POINTER TO T_HHASHTABLE;
-	uliCutoff				: ULINT;
-	iIdx					: INT;
+	pfbHashTable: POINTER TO FB_HashTableCtrl;
+	phHashTable: POINTER TO T_HHASHTABLE;
+	uliCutoff: ULINT;
+	iIdx: INT;
 END_VAR
 ]]></Declaration>
       <Implementation>
@@ -86,85 +172,8 @@ ELSE
 	Lookup := NULL;
 END_IF]]></ST>
       </Implementation>
+      <ObjectProperties />
     </Method>
-    <Method Name="AddItem" Id="{5d13e989-35a3-4772-8562-68592e192eab}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'AddItem'}
-METHOD AddItem : BOOL
-VAR_INPUT
-	uliKey	: ULINT;
-	pData	: POINTER TO BYTE;
-END_VAR
-VAR
-	iIdx			: INT;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[iIdx := GetTableIdx(uliKey);
-
-m_fbHashTable[iIdx].A_Add( key := ULINT_TO_UDINT(uliKey-m_uliCutoff[iIdx]), putValue := pData, hTable := m_hHashTable[iIdx] );
-
-IF m_fbHashTable[iIdx].bOk THEN
-	m_uintCount := m_uintCount + 1;
-END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="GetTableIdx" Id="{6535cac2-b8c1-42b0-942d-ebf815284961}">
-      <Declaration><![CDATA[METHOD PRIVATE GetTableIdx : INT
-VAR_INPUT
-	uliBarcode	: ULINT;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[IF uliBarcode < CUTOFF_A THEN
-	GetTableIdx := 0;
-	RETURN;
-END_IF
-
-IF uliBarcode > CUTOFF_B THEN
-	GetTableIdx := 2;
-	RETURN;
-END_IF
-
-GetTableIdx := 1;
-]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="Initialize" Id="{69eb8bcf-5f66-44b0-8be1-2c4b018f3be6}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'Initialize'}
-METHOD Initialize : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[F_CreateHashTableHnd( ADR( m_aHashTableBuffer[0].aBuffer ), SIZEOF( m_aHashTableBuffer[0].aBuffer ), m_hHashTable[0] );
-F_CreateHashTableHnd( ADR( m_aHashTableBuffer[1].aBuffer ), SIZEOF( m_aHashTableBuffer[1].aBuffer ), m_hHashTable[1] );
-F_CreateHashTableHnd( ADR( m_aHashTableBuffer[2].aBuffer ), SIZEOF( m_aHashTableBuffer[2].aBuffer ), m_hHashTable[2] );]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="FB_init" Id="{6d7fc525-fe8e-4628-894c-296dca31bb9d}">
-      <Declaration><![CDATA[METHOD FB_init : BOOL
-VAR_INPUT
-	bInitRetains : BOOL; // if TRUE, the retain variables are initialized (warm start / cold start)
-	bInCopyCode : BOOL;  // if TRUE, the instance afterwards gets moved into the copy code (online change)
-END_VAR]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[m_uliCutoff[0] := 0;
-m_uliCutoff[1] := CUTOFF_A;
-m_uliCutoff[2] := CUTOFF_B;
-
-m_uintCount := 0;]]></ST>
-      </Implementation>
-    </Method>
-    <Property Name="Count" Id="{a0d0734a-59fb-4c1e-a3b0-9a3a2a1c59fc}">
-      <Declaration><![CDATA[PROPERTY Count : UINT
-]]></Declaration>
-      <Get Name="Get" Id="{e2350f92-6c2d-45da-b894-03b851cd9633}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[]]></ST>
-        </Implementation>
-      </Get>
-    </Property>
     <ObjectProperties />
   </POU>
 </TcPlcObject>

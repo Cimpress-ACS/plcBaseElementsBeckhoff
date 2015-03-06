@@ -1,58 +1,43 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.24">
-  <POU Name="FB_ArrayFifo" Id="{8f21b93b-ee66-4b5d-963c-a6716dc57667}">
-    <Declaration><![CDATA[FUNCTION_BLOCK PUBLIC FB_ArrayFifo
-VAR_INPUT
-END_VAR
-VAR_OUTPUT
-END_VAR
-VAR CONSTANT
-END_VAR
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <POU Name="FB_ArrayFifo" Id="{9878d5a7-6a77-4aeb-811c-f3bdb5012e93}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ArrayFifo
 VAR
-	// Internal Variables
-	m_pItemBuffer			: POINTER TO BYTE;														// Internal buffer
-	m_uinItemSize			: UINT;
-	m_uinItemCount			: UINT;																	// Actual Count of the elements in the buffer
-	m_iFirstElement			: INT;																	// Index of the first added element
-	m_iLastElement			: INT;																	// Index of the last added element
-	m_uinBufferSize			: UINT := 0;
-	m_uinMaxItemCount		: UINT := 0;
-	m_bolFreePointer		: BOOL := FALSE;
-	
-	fbFifo					: Tc2_Utilities.FB_MemRingBuffer;
+	/// Internal buffer
+	m_pItemBuffer: POINTER TO BYTE;
+	m_uinItemSize: UINT;
+	/// Actual Count of the elements in the buffer
+	m_uinItemCount: UINT;
+	/// Index of the first added element
+	m_iFirstElement: INT;
+	/// Index of the last added element
+	m_iLastElement: INT;
+	m_uinBufferSize: UINT := 0;
+	m_uinMaxItemCount: UINT := 0;
+	m_bolFreePointer: BOOL := FALSE;
+	fbFifo: Tc2_Utilities.FB_MemRingBuffer;
 END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[]]></ST>
     </Implementation>
-    <Method Name="Peek" Id="{4983047c-fde5-46de-88f7-feff82ef4e75}">
-      <Declaration><![CDATA[METHOD Peek : BOOL
-VAR_INPUT
-	pData			: POINTER TO BYTE;
-END_VAR
+    <Property Name="ItemCount" Id="{4ec02bd3-9eb7-4bd9-b84e-91fab5971a76}">
+      <Declaration><![CDATA[PROPERTY ItemCount : UINT
 ]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[Peek := FALSE;
-
-IF fbFifo.nCount > 0 THEN
-	fbFifo.cbRead := m_uinItemSize;
-	fbFifo.pRead := pData;
-	fbFifo.A_GetHead();
-	
-	Peek := fbFifo.bOk;
-END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Action Name="Reset" Id="{51fc6f31-f059-46a5-94df-946bf7c8701c}">
-      <Implementation>
-        <ST><![CDATA[fbFifo.A_Reset();
-m_uinItemCount := 0;]]></ST>
-      </Implementation>
-    </Action>
-    <Method Name="Push" Id="{5368fa5f-c937-408f-886c-5e67277ae859}">
-      <Declaration><![CDATA[METHOD Push : INT
+      <Get Name="Get" Id="{cf45f102-20d2-4764-a71b-a44a25f65b40}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[ItemCount := UDINT_TO_UINT(fbFifo.nCount);]]></ST>
+        </Implementation>
+        <ObjectProperties />
+      </Get>
+      <ObjectProperties />
+    </Property>
+    <Method Name="Push" Id="{51ee066a-0515-4146-bab2-6e2dd4cfc89f}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'Push'}
+METHOD Push : INT
 VAR_INPUT
-	pData	: POINTER TO BYTE;
+	pData: POINTER TO BYTE;
 END_VAR
 ]]></Declaration>
       <Implementation>
@@ -73,56 +58,90 @@ IF fbFifo.nCount < m_uinBufferSize THEN
 	END_IF
 END_IF]]></ST>
       </Implementation>
+      <ObjectProperties />
     </Method>
-    <Property Name="MaxBufferSize" Id="{5a76db07-4818-45ad-90dd-d57a5b796fda}">
-      <Declaration><![CDATA[PROPERTY MaxBufferSize : INT
-]]></Declaration>
-      <Get Name="Get" Id="{98cb82f6-12e3-4703-b49c-fedb0869f838}">
-        <Declaration><![CDATA[VAR
+    <Method Name="Pop" Id="{65e5ff39-9ce7-40e3-9bdc-d53aa97b7794}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'Pop'}
+METHOD Pop : BOOL
+VAR_INPUT
+	pData: POINTER TO BYTE;
 END_VAR
 ]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Pop := FALSE;
+
+IF fbFifo.nCount > 0 THEN
+	fbFifo.cbRead := m_uinItemSize;
+	fbFifo.pRead := pData;
+	fbFifo.A_RemoveHead();
+	m_uinItemCount := UDINT_TO_UINT(fbFifo.nCount);
+	
+	Pop := fbFifo.bOk;
+END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Property Name="MaxBufferSize" Id="{941fab45-67c4-43d2-8945-679b02e3495f}">
+      <Declaration><![CDATA[PROPERTY MaxBufferSize : INT
+]]></Declaration>
+      <Get Name="Get" Id="{9c707549-9f9d-4038-a7ae-fe33ff3ac5db}">
+        <Declaration><![CDATA[]]></Declaration>
         <Implementation>
           <ST><![CDATA[MaxBufferSize := UINT_TO_INT(m_uinBufferSize);]]></ST>
         </Implementation>
+        <ObjectProperties />
       </Get>
+      <ObjectProperties />
     </Property>
-    <Property Name="ItemCount" Id="{5afe8f32-311b-4b77-9ab9-35f4d5ebed07}">
-      <Declaration><![CDATA[PROPERTY ItemCount : UINT
-]]></Declaration>
-      <Get Name="Get" Id="{37e4bf91-f720-418d-93eb-7907ec1e9706}">
-        <Declaration><![CDATA[VAR
+    <Method Name="Peek" Id="{b0d8be82-9fbe-445c-a43d-95b2f2b18a80}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'Peek'}
+METHOD Peek : BOOL
+VAR_INPUT
+	pData: POINTER TO BYTE;
 END_VAR
 ]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[ItemCount := UDINT_TO_UINT(fbFifo.nCount);]]></ST>
-        </Implementation>
-      </Get>
-    </Property>
-    <Property Name="FreePointer" Id="{63bbe1aa-aa0c-4fe0-9f7e-fc43e0a282c3}">
-      <Declaration><![CDATA[PROPERTY PUBLIC FreePointer : BOOL]]></Declaration>
-      <Get Name="Get" Id="{369a02c8-905c-458b-bed0-6121d14c796f}">
-        <Declaration><![CDATA[VAR
-END_VAR
+      <Implementation>
+        <ST><![CDATA[Peek := FALSE;
+
+IF fbFifo.nCount > 0 THEN
+	fbFifo.cbRead := m_uinItemSize;
+	fbFifo.pRead := pData;
+	fbFifo.A_GetHead();
+	
+	Peek := fbFifo.bOk;
+END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Property Name="FreePointer" Id="{d1487ff9-3c8d-4618-b73e-69e22cca9cf0}">
+      <Declaration><![CDATA[PROPERTY FreePointer : BOOL
 ]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[FreePointer := m_bolFreePointer;]]></ST>
-        </Implementation>
-      </Get>
-      <Set Name="Set" Id="{e7366ce1-7d32-46b8-b510-2721aceab744}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
+      <Set Name="Set" Id="{3f7fcaf5-8982-4e84-8cb5-379db13415b5}">
+        <Declaration><![CDATA[]]></Declaration>
         <Implementation>
           <ST><![CDATA[m_bolFreePointer := FreePointer;]]></ST>
         </Implementation>
+        <ObjectProperties />
       </Set>
+      <Get Name="Get" Id="{6daf45c6-c98d-4a2f-affb-5e2df7edf9f5}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[FreePointer := m_bolFreePointer;]]></ST>
+        </Implementation>
+        <ObjectProperties />
+      </Get>
+      <ObjectProperties />
     </Property>
-    <Method Name="Initialize" Id="{afa9aff4-3030-4cd4-98c3-f5be4acc593f}">
-      <Declaration><![CDATA[METHOD PUBLIC Initialize : BOOL
+    <Method Name="Initialize" Id="{de0ef2e0-7ec8-47b6-800d-16e6b474a9fb}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'Initialize'}
+METHOD Initialize : BOOL
 VAR_INPUT
-	uinItemSize		: UINT;					// Size of one item [byte]
-	pBuffer			: POINTER TO BYTE;		// Buffer for the items to be stored in.
-	uinBufferSize	: UINT;					// Buffer Size in [byte]
+	/// Size of one item [byte]
+	uinItemSize: UINT;
+	/// Buffer for the items to be stored in.
+	pBuffer: POINTER TO BYTE;
+	/// Buffer Size in [byte]
+	uinBufferSize: UINT;
 END_VAR
 ]]></Declaration>
       <Implementation>
@@ -140,41 +159,15 @@ IF (pBuffer <> Tc3_MemMan.NULL) AND (uinItemSize > 0) AND (uinBufferSize > 0) TH
 	Initialize := TRUE;
 END_IF]]></ST>
       </Implementation>
+      <ObjectProperties />
     </Method>
-    <Method Name="Pop" Id="{f73171f4-94d4-4635-84b5-9b1890c75a14}">
-      <Declaration><![CDATA[METHOD Pop : BOOL
-VAR_INPUT
-	pData			: POINTER TO BYTE;
-END_VAR
-]]></Declaration>
+    <Action Name="Reset" Id="{e3985b69-c117-46d7-97a8-547c741ea215}">
       <Implementation>
-        <ST><![CDATA[Pop := FALSE;
-
-IF fbFifo.nCount > 0 THEN
-	fbFifo.cbRead := m_uinItemSize;
-	fbFifo.pRead := pData;
-	fbFifo.A_RemoveHead();
-	m_uinItemCount := UDINT_TO_UINT(fbFifo.nCount);
-	
-	Pop := fbFifo.bOk;
-END_IF]]></ST>
+        <ST><![CDATA[fbFifo.A_Reset();
+m_uinItemCount := 0;]]></ST>
       </Implementation>
-    </Method>
-    <ObjectProperties>
-      <XmlArchive>
-        <Data>
-          <o xml:space="preserve" t="POUImageProperty">
-            <n n="ImageData" />
-            <v n="TransparencyColor">"White"</v>
-            <v n="MakeTransparent">false</v>
-          </o>
-        </Data>
-        <TypeList>
-          <Type n="Boolean">System.Boolean</Type>
-          <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
-          <Type n="String">System.String</Type>
-        </TypeList>
-      </XmlArchive>
-    </ObjectProperties>
+      <ObjectProperties />
+    </Action>
+    <ObjectProperties />
   </POU>
 </TcPlcObject>

@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.24">
-  <DUT Name="T_IdBase_DCH" Id="{a605bd6c-05cf-4073-978d-4532785e818d}">
-    <Declaration><![CDATA[{attribute 'enable_dynamic_creation'}
-//{attribute 'pack_mode' := '1'}
-TYPE T_IdBase_DCH:
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_IdBase_DCH" Id="{7251b157-7905-43b2-b6c0-d4d3dda23d55}">
+    <Declaration><![CDATA[///{attribute 'pack_mode' := '1'}
+{attribute 'enable_dynamic_creation' := ''}
+TYPE T_IdBase_DCH :
 STRUCT
-	rBaseInfo					: T_ItemBase;
-	// Real read process ID values
-	udiIdentification			: ULINT;	
+	rBaseInfo: T_ItemBase;
+	/// Real read process ID values
+	udiIdentification: ULINT;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

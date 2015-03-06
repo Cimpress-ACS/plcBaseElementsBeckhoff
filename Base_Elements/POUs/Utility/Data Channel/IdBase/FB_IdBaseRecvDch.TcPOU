@@ -1,28 +1,43 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.24">
-  <POU Name="FB_IdBaseRecvDch" Id="{aae82aae-6f0a-4f35-8cec-65cc1fb4cf52}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <POU Name="FB_IdBaseRecvDch" Id="{09f045ff-7426-4787-b8ab-df9d42246e4f}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_IdBaseRecvDch EXTENDS FB_DataChannelRecvBase IMPLEMENTS I_DataChannelRecv
-VAR_OUTPUT
-END_VAR
-VAR CONSTANT
-END_VAR
 VAR
-// Saber Inteface Variables
-// -----------------------------------------------------------------
-	m_pInputData				: POINTER TO T_IdBase_DCH;
-
-// Local Variables
-// -----------------------------------------------------------------
+	/// Saber Inteface Variables
+	/// -----------------------------------------------------------------
+	m_pInputData: POINTER TO T_IdBase_DCH;
 END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[SUPER^();]]></ST>
     </Implementation>
-    <Method Name="InitChannel" Id="{867e07fd-8ba0-40ec-8a45-53a6756e0a3c}">
-      <Declaration><![CDATA[METHOD PUBLIC InitChannel : BOOL
+    <Method Name="GetData" Id="{470883cc-fb0d-4136-b945-e3dff3eeba16}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'GetData'}
+METHOD GetData : BOOL
 VAR_INPUT
-	udiDataSize					: UDINT;
-	pInputData					: POINTER TO BYTE;
+	udiDataSize: UDINT;
+	pData: POINTER TO BYTE;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[GetData := FALSE;
+
+IF m_eState = E_SaberPlcDHCState.DataReady THEN
+	IF (udiDataSize > 0 ) AND (pData <> TC3_MEMMAN.NULL) THEN
+		TC2_SYSTEM.MEMCPY(destAddr := pData, srcAddr := m_pInputData, n := udiDataSize);
+		m_eState := E_SaberPlcDHCState.Acknowledge;	
+		GetData := TRUE;
+	END_IF	
+END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="InitChannel" Id="{6822137b-5ff4-4c15-b23e-5207bed82e3e}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'InitChannel'}
+METHOD InitChannel : BOOL
+VAR_INPUT
+	udiDataSize: UDINT;
+	pInputData: POINTER TO BYTE;
 END_VAR
 ]]></Declaration>
       <Implementation>
@@ -38,41 +53,8 @@ IF udiDataSize > 0 THEN
 END_IF
 ]]></ST>
       </Implementation>
+      <ObjectProperties />
     </Method>
-    <Method Name="GetData" Id="{e0a04bf6-2687-4b61-bbdc-07899b1a9c83}">
-      <Declaration><![CDATA[METHOD PUBLIC GetData : BOOL
-VAR_INPUT
-	udiDataSize				: UDINT;
-	pData					: POINTER TO BYTE;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[GetData := FALSE;
-
-IF m_eState = E_SaberPlcDHCState.DataReady THEN
-	IF (udiDataSize > 0 ) AND (pData <> TC3_MEMMAN.NULL) THEN
-		TC2_SYSTEM.MEMCPY(destAddr := pData, srcAddr := m_pInputData, n := udiDataSize);
-		m_eState := E_SaberPlcDHCState.Acknowledge;	
-		GetData := TRUE;
-	END_IF	
-END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <ObjectProperties>
-      <XmlArchive>
-        <Data>
-          <o xml:space="preserve" t="POUImageProperty">
-            <n n="ImageData" />
-            <v n="TransparencyColor">"White"</v>
-            <v n="MakeTransparent">false</v>
-          </o>
-        </Data>
-        <TypeList>
-          <Type n="Boolean">System.Boolean</Type>
-          <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
-          <Type n="String">System.String</Type>
-        </TypeList>
-      </XmlArchive>
-    </ObjectProperties>
+    <ObjectProperties />
   </POU>
 </TcPlcObject>

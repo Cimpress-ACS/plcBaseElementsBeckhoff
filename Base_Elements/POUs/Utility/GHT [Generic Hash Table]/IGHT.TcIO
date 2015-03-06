@@ -1,42 +1,51 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <Itf Name="IGHT" Id="{ff3fbdcc-8014-423b-b59a-aa9000d5a9b8}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <Itf Name="IGHT" Id="{3ad09278-75cc-4c61-b3b1-c60b07b8ce05}">
     <Declaration><![CDATA[INTERFACE IGHT
 ]]></Declaration>
-    <Property Name="Count" Id="{24850bbc-fbd3-4f01-8cdc-4af8de1733ca}">
-      <Declaration><![CDATA[PROPERTY Count : UINT]]></Declaration>
-      <Get Name="Get" Id="{fbc5ee8c-8ae8-4be8-9676-c7bf65c4ac90}">
+    <Property Name="Count" Id="{2842ff55-42ec-403c-a7ed-5f33ff10b1c0}">
+      <Declaration><![CDATA[PROPERTY Count : UINT
+]]></Declaration>
+      <Get Name="Get" Id="{237b5070-235a-461b-8dc8-bff6d7f2be79}">
         <Declaration><![CDATA[]]></Declaration>
+        <ObjectProperties />
       </Get>
+      <ObjectProperties />
     </Property>
-    <Method Name="AddItem" Id="{40276ea0-50bf-485c-a32b-b132c2f5b36a}">
-      <Declaration><![CDATA[METHOD AddItem : BOOL
+    <Method Name="Lookup" Id="{3fd58e2a-161e-4fb2-9707-3e65405c7349}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'Lookup'}
+METHOD Lookup : POINTER TO BYTE
 VAR_INPUT
-	uliKey	: ULINT;
-	pData	: POINTER TO BYTE;
+	uliKey: ULINT;
+	bolRemove: BOOL;
 END_VAR
 ]]></Declaration>
+      <ObjectProperties />
     </Method>
-    <Method Name="Initialize" Id="{c15db715-4cb8-4f0b-9982-10b156d900dc}">
-      <Declaration><![CDATA[METHOD Initialize : BOOL
+    <Method Name="AddItem" Id="{d6a830d7-6be7-461f-b3d0-c1d89427041c}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'AddItem'}
+METHOD AddItem : BOOL
 VAR_INPUT
+	uliKey: ULINT;
+	pData: POINTER TO BYTE;
 END_VAR
 ]]></Declaration>
+      <ObjectProperties />
     </Method>
-    <Method Name="Lookup" Id="{edf1dae8-86fa-46e9-9c74-b751a58b71f4}">
-      <Declaration><![CDATA[METHOD Lookup : POINTER TO BYTE
-VAR_INPUT
-	uliKey			: ULINT;
-	bolRemove		: BOOL;
-END_VAR
+    <Method Name="Initialize" Id="{de18cd29-7c32-40d9-898a-5a8a5d368975}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'Initialize'}
+METHOD Initialize : BOOL
 ]]></Declaration>
+      <ObjectProperties />
     </Method>
-    <Method Name="Clear" Id="{f9580e23-fa9e-47a7-88bd-16531b37e2c1}">
-      <Declaration><![CDATA[METHOD Clear : BOOL
+    <Method Name="Clear" Id="{e910517e-5aac-41a3-9815-e4a8a091d268}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'Clear'}
+METHOD Clear : BOOL
 VAR_INPUT
-	bolFreePointer		: BOOL;
+	bolFreePointer: BOOL;
 END_VAR
 ]]></Declaration>
+      <ObjectProperties />
     </Method>
     <ObjectProperties />
   </Itf>

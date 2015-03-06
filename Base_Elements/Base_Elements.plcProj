@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.1.45</ProjectVersion>
+    <ProjectVersion>0.0.1.46</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.1.45 	- Implemented IO-400V signal to UMC
+    <Description>0.0.1.46 	- Implemented a ClearBuffer command into the DataChannelSender
+0.0.1.45 	- Implemented IO-400V signal to UMC
 0.0.1.44 	- Fixes for the BCC
 0.0.1.43 	- fixed FurtherReactions for module ctrl
 	- added OFFBusy to module ctrl
@@ -86,7 +87,7 @@
 0.0.0.7 - Updated to newest tc2_utilities
 0.0.0.6 - Added the PRS controller
 0.0.0.5 - Added the UMC and VPC controller</Description>
-    <Author>DSC - KVO</Author>
+    <Author>Cimpress R&amp;D Control Systems</Author>
     <!--    <OutputType>Exe</OutputType>
     <RootNamespace>MyApplication</RootNamespace>
     <AssemblyName>MyApplication</AssemblyName>-->

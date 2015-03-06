@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.24">
-  <DUT Name="E_PrintSelection" Id="{d1efabbd-b801-4ea2-b5f0-2dd1b77b67ff}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="E_PrintSelection" Id="{41130234-b5dd-4f32-928f-465cf5288750}">
     <Declaration><![CDATA[TYPE E_PrintSelection :
 (
-	// Binary Enum. Print A&B = PrintHeadA | PrintHeadB = 0x03
-	None		 	:= 16#00,
-	PrintHeadA		:= 16#01,
-	PrintHeadB		:= 16#02,
+	/// Binary Enum. Print A&B = PrintHeadA | PrintHeadB = 0x03
+	None := 16#0,
+	PrintHeadA := 16#1,
+	PrintHeadB := 16#2,
 	MAX_E_PrintSelection
 );
 END_TYPE

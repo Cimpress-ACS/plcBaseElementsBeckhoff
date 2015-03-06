@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.24">
-  <GVL Name="IdBaseConst" Id="{cb0632dc-c560-4fd5-9cb8-e5f3818cb927}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <GVL Name="IdBaseConst" Id="{3b5050a6-43fb-4c78-b1e7-56d2e896ad1a}">
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
-	cRECVDATACHANNELBUFFER 		:INT := 20;
+	cRECVDATACHANNELBUFFER: INT := 20;
 END_VAR]]></Declaration>
     <ObjectProperties />
   </GVL>
