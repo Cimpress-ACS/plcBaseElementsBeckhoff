@@ -900,7 +900,7 @@ END_VAR]]></Declaration>
 		// State Change Condition
 		IF (CheckAllChildState(cSTA_OFF)) THEN
 			me.StateMachine.intStateNext := cSTA_OFF;
-		ELSIF (me.intCmd=cCMD_RUN) THEN
+		ELSIF (me.intCmd=cCMD_RUN) AND (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.Alarm.eActivAlmClass<>E_AlmClass.OFF) THEN
 			me.StateMachine.intStateNext := cSTA_RUNBusy;
 		END_IF
 	END_IF
