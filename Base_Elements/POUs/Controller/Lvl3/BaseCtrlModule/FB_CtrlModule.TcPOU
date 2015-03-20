@@ -302,7 +302,7 @@ END_IF
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 				
 		// State Change Condition
-		IF (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.Alarm.eActivAlmClass<>E_AlmClass.OFF) THEN
+		IF (me.Alarm.eActivAlmClass < E_AlmClass.TSTOP) THEN
 			IF (me.intCmd=cCMD_RUN) THEN
 				IF (SIf_In^.bolReady.intern OR SIf_Cfg^.bolIgnoreReadyInput) THEN 
 					me.StateMachine.intStateNext := cSTA_RUNBusy;
@@ -502,6 +502,7 @@ END_VAR]]></Declaration>
 		IF (SIf_MOD.Par^.udiTimeoutStarting_ms <> 0) AND (me.SubStateMachine.udiTimeInState_ms > (SIf_Par^.aListOfRunGrpWaitTime_ms[uinGroupIndex-1] + SIf_MOD.Par^.udiTimeoutStarting_ms)) THEN
 			//SIf_MOD.Alm[E_ALM_MOD.TimeoutStarGroup].strText := 'Timeout start group';
 			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_MOD.TimeoutStartGroup,uinGroupIndex,ADR(SIf_MOD.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := cSTA_ERROR;
 		END_IF
 		
 		// State Change Condition
@@ -900,7 +901,7 @@ END_VAR]]></Declaration>
 		// State Change Condition
 		IF (CheckAllChildState(cSTA_OFF)) THEN
 			me.StateMachine.intStateNext := cSTA_OFF;
-		ELSIF (me.intCmd=cCMD_RUN) AND (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) AND (me.Alarm.eActivAlmClass<>E_AlmClass.OFF) THEN
+		ELSIF (me.intCmd=cCMD_RUN) AND (me.Alarm.eActivAlmClass < E_AlmClass.TSTOP) THEN
 			me.StateMachine.intStateNext := cSTA_RUNBusy;
 		END_IF
 	END_IF
@@ -1102,8 +1103,7 @@ END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_ERROR" Id="{ebaa0d20-3483-464b-84fb-8ac6d1d7c3da}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_ERROR : BOOL
-]]></Declaration>
+      <Declaration><![CDATA[METHOD PROTECTED sta_ERROR : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------

@@ -15,9 +15,11 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.1.47</ProjectVersion>
+    <ProjectVersion>0.0.1.48</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.1.47 	- fixed Module.OFFBusy
+    <Description>0.0.1.48 	- ModuleCtrl: don't go to run if any alarm is present
+	- ModuleCtrl: go to error on Start/Stop Timeout
+0.0.1.47 	- fixed Module.OFFBusy
 0.0.1.46 	- Implemented a ClearBuffer command into the DataChannelSender
 0.0.1.45 	- Implemented IO-400V signal to UMC
 0.0.1.44 	- Fixes for the BCC
