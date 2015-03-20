@@ -853,6 +853,7 @@ END_VAR]]></Declaration>
 		IF (SIf_MOD.Par^.udiTimeoutStopping_ms <> 0) AND (me.SubStateMachine.udiTimeInState_ms > (SIf_Par^.aListOfStopGrpWaitTime_ms[uinGroupIndex-1] + SIf_MOD.Par^.udiTimeoutStopping_ms)) THEN
 			//SIf_MOD.Alm[E_ALM_MOD.TimeoutStopGroup].strText := 'Timeout stop group';
 			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_MOD.TimeoutStopGroup,uinGroupIndex,ADR(SIf_MOD.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := cSTA_ERROR;
 		END_IF
 	
 		// State Change Condition
