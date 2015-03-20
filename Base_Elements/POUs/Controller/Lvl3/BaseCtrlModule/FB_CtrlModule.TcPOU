@@ -988,6 +988,7 @@ udinTimeToggle_ms := 0;
 // software configuration
 CIf.SwCfg.bolExist := TRUE;
 CIf.SwCfg.bolSimulation := FALSE;
+me.AlarmConfig.bolChildrenAlarmPropagation := FALSE;
 
 // No initialization for cfg and par in this base module!
 // Pointer address of the property is not defined at this time]]></ST>
