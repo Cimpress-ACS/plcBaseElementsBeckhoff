@@ -15,9 +15,12 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.1.48</ProjectVersion>
+    <ProjectVersion>0.0.1.49</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.1.48 	- ModuleCtrl: don't go to run if any alarm is present
+    <Description>0.0.1.49 	- new BaseConcept
+	- new STANDBY state  in module ctrl
+	- delete cmd on TSTOP/STOP alarm
+0.0.1.48 	- ModuleCtrl: don't go to run if any alarm is present
 	- ModuleCtrl: go to error on Start/Stop Timeout
 0.0.1.47 	- fixed Module.OFFBusy
 0.0.1.46 	- Implemented a ClearBuffer command into the DataChannelSender
@@ -579,6 +582,9 @@
     <Compile Include="POUs\Controller\Lvl3\BaseCtrlModule\T_Sequence.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\Controller\Lvl3\BaseCtrlModule\MOD_CmdState.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\Utility\AFF [Array Fifo]\FB_ArrayFifo.TcPOU">
       <SubType>Code</SubType>
     </Compile>
@@ -697,7 +703,7 @@
     <Folder Include="Version\" />
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_PLC,0.3.5.9,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.5.10,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_EtherCAT,3.3.3.0,Beckhoff Automation GmbH">

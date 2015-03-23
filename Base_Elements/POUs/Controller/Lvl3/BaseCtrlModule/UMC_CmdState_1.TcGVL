@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <GVL Name="UMC_CmdState_1" Id="{e6c96cf7-12f6-42f5-bc77-64fa9372126e}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	///ctrl commands definitions
+	///specific commands >200 - every command has to be a even number
+	cCMD_RIGHT: INT := 202;
+	cCMD_LEFT: INT := 204;
+	///ctrl specific states definitions
+	cSTA_RESETMOTORERROR: INT := 203;
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

@@ -119,18 +119,24 @@ END_IF]]></ST>
 VAR_INPUT
 	intCmdState: INT;
 	bolState: BOOL;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
 IF (getCmdState='') THEN // global not defined get local
 	// get string cmd/state string information in runtime
 	IF (bolState=FALSE) THEN
 		// cmd's
+		CASE intCmdState OF
+			cCMD_STANDBY: 
+				getCmdState := 'cCMD_STANDBY';
+		END_CASE
 	ELSE
-	
-	// cmd's
+		// states
 		CASE intCmdState OF	
+			cSTA_STANDBY:
+				getCmdState := 'cSTA_STANDBY';
+			cSTA_STANDBYBusy:
+				getCmdState := 'cSTA_STANDBYBusy';
 			// SUB States
 			cSTA_SUB_INITIALIZED:
 				getCmdState := 'cSTA_SUB_INITIALIZED';
@@ -278,6 +284,45 @@ END_IF
 		END_IF
 
 	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_STANDBYBusy" Id="{36793c08-dd27-4319-9d02-fddd0d7ca717}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_STANDBYBusy : BOOL]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		// State Change Condition	
+		IF (me.intCmd=cCMD_STOP) THEN
+			me.StateMachine.intStateNext :=  cSTA_STOPBusy;
+		ELSIF NOT (SIf_In^.bolReady.intern OR SIf_Cfg^.bolIgnoreReadyInput) THEN
+			//SIf_MOD.Alm[E_ALM_MOD.NextModuleNotReadyStop].strText := 'Next Module is not Ready';
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_MOD.NextModuleNotReadyStop,0,ADR(SIf_MOD.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := cSTA_STOPBusy;
+			CIf.Job.intACmd := cCMD_DONE;
+		ELSIF (me.intCmd=cCMD_RUN) THEN
+			me.StateMachine.intStateNext :=  cSTA_RUNBusy;
+		ELSE
+			me.StateMachine.intStateNext :=  cSTA_STANDBY;
+		END_IF
+		
+	END_IF
+
 
 //--------------------------------------------------------------------------------------
 // Exit action
@@ -666,6 +711,43 @@ END_IF
         </Implementation>
       </Get>
     </Property>
+    <Method Name="sta_STANDBY" Id="{818d995b-2816-4bc9-bf65-d6f7ffb8b920}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_STANDBY : BOOL]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	END_IF
+
+	
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		// State Change Condition	
+		IF (me.intCmd=cCMD_STOP) THEN
+			me.StateMachine.intStateNext :=  cSTA_STOPBusy;
+		ELSIF NOT (SIf_In^.bolReady.intern OR SIf_Cfg^.bolIgnoreReadyInput) THEN
+			//SIf_MOD.Alm[E_ALM_MOD.NextModuleNotReadyStop].strText := 'Next Module is not Ready';
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_MOD.NextModuleNotReadyStop,0,ADR(SIf_MOD.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := cSTA_STOPBusy;
+			CIf.Job.intACmd := cCMD_DONE;
+		ELSIF (me.intCmd=cCMD_RUN) THEN
+			me.StateMachine.intStateNext :=  cSTA_RUNBusy;
+		END_IF
+		
+	END_IF
+
+	
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="IoInBridge" Id="{95c556ec-c88e-4a00-9f2f-5c4a543adc13}">
       <Declaration><![CDATA[METHOD PROTECTED IoInBridge : BOOL]]></Declaration>
       <Implementation>
@@ -960,6 +1042,10 @@ CIf.Job.aCmdList[ii].intCmd := cCMD_STOP;
 CIf.Job.aCmdList[ii].strName := 'Stop'; 
 CIf.Job.aCmdList[ii].bolAvailable := TRUE;
 ii := ii +1;
+CIf.Job.aCmdList[ii].intCmd := cCMD_STANDBY;
+CIf.Job.aCmdList[ii].strName := 'Standby'; 
+CIf.Job.aCmdList[ii].bolAvailable := TRUE;
+ii := ii +1;
 
 // set name of class/typ
 CIf.Info.strType := 'FB_CtrlModule';
@@ -1013,8 +1099,7 @@ END_IF
       </Implementation>
     </Method>
     <Method Name="StateMachine" Id="{c244d7e5-c41f-489f-97da-65b69148df4b}">
-      <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL
-]]></Declaration>
+      <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[SUPER^.StateMachine();
 
@@ -1028,6 +1113,10 @@ CASE me.StateMachine.intState OF
         THIS^.sta_STOP();
     cSTA_STOPBusy: 
         THIS^.sta_STOPBusy();
+	cSTA_STANDBY:
+		THIS^.sta_STANDBY();
+	cSTA_STANDBYBusy:
+		THIS^.sta_STANDBYBusy();
 END_CASE;]]></ST>
       </Implementation>
     </Method>
@@ -1090,17 +1179,26 @@ END_IF]]></ST>
     <Method Name="FurtherReactions" Id="{e50c2c57-3ef3-4abd-b707-730734684d2c}">
       <Declaration><![CDATA[METHOD PROTECTED FurtherReactions : BOOL]]></Declaration>
       <Implementation>
-        <ST><![CDATA[IF (	(me.StateMachine.intState<>cSTA_ERROR)	AND	(me.StateMachine.intState<>cSTA_ERRORQuit)
-	AND	(me.StateMachine.intState<>cSTA_EOFF)	AND	(me.StateMachine.intState<>cSTA_EOFFBusy)
-	AND	(me.StateMachine.intState<>cSTA_OFF)	AND	(me.StateMachine.intState<>cSTA_OFFBusy)
-	AND	(me.StateMachine.intState>cSTA_PON))	THEN
+        <ST><![CDATA[IF (	(NOT me.AlarmConfig.bolOffAlarmTransitionDisable)	AND (me.Alarm.eActivAlmClass=E_AlmClass.STOP)
+	AND (me.StateMachine.intState<>cSTA_ERROR)				AND	(me.StateMachine.intState<>cSTA_ERRORQuit)
+	AND	(me.StateMachine.intState<>cSTA_EOFF)				AND	(me.StateMachine.intState<>cSTA_EOFFBusy)
+	AND	(me.StateMachine.intState<>cSTA_OFF)				AND	(me.StateMachine.intState<>cSTA_OFFBusy)
+	AND (me.StateMachine.intState<>cSTA_STOP)				AND (me.StateMachine.intState<>cSTA_STOPBusy)
+	AND	(me.StateMachine.intState>cSTA_PON)) THEN
 	
-	// STOP and TSTOP Error
-	IF (me.Alarm.eActivAlmClass=E_AlmClass.STOP) THEN
-		me.StateMachine.intStateNext := cSTA_STOPBusy;
-	ELSIF (me.Alarm.eActivAlmClass=E_AlmClass.TSTOP) THEN
-		me.StateMachine.intStateNext := cSTA_STOPBusy;
-	END_IF
+	me.StateMachine.intStateNext := cSTA_STOPBusy;
+	me.StateMachine.intState := cSTA_DONE;
+	
+ELSIF (	(NOT me.AlarmConfig.bolOffAlarmTransitionDisable)	AND (me.Alarm.eActivAlmClass=E_AlmClass.TSTOP)
+	AND (me.StateMachine.intState<>cSTA_ERROR)				AND	(me.StateMachine.intState<>cSTA_ERRORQuit)
+	AND	(me.StateMachine.intState<>cSTA_EOFF)				AND	(me.StateMachine.intState<>cSTA_EOFFBusy)
+	AND	(me.StateMachine.intState<>cSTA_OFF)				AND	(me.StateMachine.intState<>cSTA_OFFBusy)
+	AND (me.StateMachine.intState<>cSTA_STOP)				AND (me.StateMachine.intState<>cSTA_STOPBusy)
+	AND	(me.StateMachine.intState>cSTA_PON)) THEN
+	
+	me.StateMachine.intStateNext := cSTA_STOPBusy;
+	me.StateMachine.intState := cSTA_DONE;
+	
 END_IF]]></ST>
       </Implementation>
     </Method>

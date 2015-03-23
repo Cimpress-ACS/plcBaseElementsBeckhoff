@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <GVL Name="MOD_CmdState" Id="{3980fa95-9d98-4540-b8c6-a61f8dfb75a7}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	///ctrl commands definitions
+	///specific commands >200 - every command has to be a even number
+	cCMD_STANDBY: INT := 202;
+	///ctrl specific states definitions
+	cSTA_STANDBYBusy: INT := 201;
+	cSTA_STANDBY: INT := MOD_CmdState.cCMD_STANDBY;
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>
