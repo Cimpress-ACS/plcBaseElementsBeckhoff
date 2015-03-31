@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.1.49</ProjectVersion>
+    <ProjectVersion>0.0.1.50</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.1.49 	- new BaseConcept
+    <Description>0.0.1.50 	- new BaseConcept
+0.0.1.49 	- new BaseConcept
 	- new STANDBY state  in module ctrl
 	- delete cmd on TSTOP/STOP alarm
 0.0.1.48 	- ModuleCtrl: don't go to run if any alarm is present
@@ -703,7 +704,7 @@
     <Folder Include="Version\" />
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_PLC,0.3.5.10,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.5.12,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_EtherCAT,3.3.3.0,Beckhoff Automation GmbH">
