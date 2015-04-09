@@ -418,7 +418,7 @@ END_IF
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 		
 		// State Change Condition
-		IF (me.Alarm.eActivAlmClass<>E_AlmClass.STOP) THEN
+		IF (me.Alarm.eActivAlmClass<E_AlmClass.TSTOP) THEN
 			IF (me.intCmd=cCMD_RUN) THEN
 				IF (SIf_In^.bolReady.intern OR SIf_Cfg^.bolIgnoreReadyInput) THEN 
 					me.StateMachine.intStateNext := cSTA_RUNBusy;
@@ -943,7 +943,7 @@ END_VAR]]></Declaration>
 			me.StateMachine.intStateNext := cSTA_STOP;
 		ELSIF (me.intCmd=cCMD_RUN) THEN
 			// State Change Condition
-			IF (me.Alarm.eActivAlmClass<>E_AlmClass.STOP) THEN	
+			IF (me.Alarm.eActivAlmClass<E_AlmClass.TSTOP) THEN	
 				me.StateMachine.intStateNext := cSTA_RUNBusy;	
 			ELSE
 				// Clear pending command to prevent automatic recovery!
