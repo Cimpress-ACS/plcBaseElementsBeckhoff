@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="E_MOD_STARTUP" Id="{86ed49cc-103f-41b2-965a-eae686b88710}">
+    <Declaration><![CDATA[TYPE E_MOD_STARTUP :
+(
+	NONE := 0,
+	Start,
+	ReadCsvFile,
+	HostInit,
+	ParameterSync,
+	Ready
+);
+END_TYPE]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

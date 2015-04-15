@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.1.51</ProjectVersion>
+    <ProjectVersion>0.0.1.52</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.1.51 	- don't leave STOP when alarms present
+    <Description>0.0.1.52 	- add CSV Reader
+0.0.1.51 	- don't leave STOP when alarms present
 0.0.1.50 	- new BaseConcept
 0.0.1.49 	- new BaseConcept
 	- new STANDBY state  in module ctrl
@@ -554,6 +555,9 @@
     <Compile Include="POUs\Controller\Lvl3\BaseCtrlModule\E_ALM_MOD.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\Controller\Lvl3\BaseCtrlModule\E_MOD_STARTUP.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\Controller\Lvl3\BaseCtrlModule\FB_CtrlModule.TcPOU">
       <SubType>Code</SubType>
     </Compile>
@@ -588,6 +592,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Utility\AFF [Array Fifo]\FB_ArrayFifo.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Utility\CFR [Csv File Reader]\FB_CFR.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Utility\Data Channel\IdBase\FB_IdBaseRecvDch.TcPOU">
@@ -696,6 +703,7 @@
     <Folder Include="POUs\Controller\Lvl3\BaseCtrlModule\" />
     <Folder Include="POUs\Utility" />
     <Folder Include="POUs\Utility\AFF [Array Fifo]\" />
+    <Folder Include="POUs\Utility\CFR [Csv File Reader]\" />
     <Folder Include="POUs\Utility\Data Channel\" />
     <Folder Include="POUs\Utility\Data Channel\IdBase\" />
     <Folder Include="POUs\Utility\DCH [Data Channel Base]\" />
