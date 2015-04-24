@@ -139,7 +139,6 @@ SIf.Cfg.iSensorType := E_BCD_Type.KEYENCE;
 // simulation
 uliSimBarCode:= 1250000000000;]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="getCmdState" Id="{1a0334c1-a3fb-42e6-951a-2cdf78e7dc68}">
       <Declaration><![CDATA[{attribute 'object_name' := 'getCmdState'}
@@ -171,7 +170,6 @@ IF (getCmdState='') THEN // global not defined get local
 	END_IF
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Property Name="CtrlSIf" Id="{1b4c2612-f0db-4df4-b217-85825bea7f19}">
       <Declaration><![CDATA[PROPERTY CtrlSIf : POINTER TO T_Ctrl_SIf_BCC
@@ -181,9 +179,7 @@ END_IF]]></ST>
         <Implementation>
           <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
         </Implementation>
-        <ObjectProperties />
       </Get>
-      <ObjectProperties />
     </Property>
     <Method Name="sta_READBusy" Id="{2777d30e-8db7-406a-9ebe-672a8d796e56}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_READBusy'}
@@ -271,7 +267,7 @@ METHOD PROTECTED sta_READBusy : BOOL
 
 		
 		// State Change Condition
-		IF (pBCD_SIf^.stErr.bolErrorActive = TRUE) THEN  
+		IF (pBCD_SIf^.stErr.bolErrorActive = TRUE) OR NOT pBCD_SIf^.stStatus.bolSocketConnected THEN  
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
 		END_IF
 	END_IF
@@ -283,7 +279,6 @@ METHOD PROTECTED sta_READBusy : BOOL
 		CIf.Job.intMCmd:= cCMD_DONE;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_PONBusy" Id="{334101e3-ccae-4f85-84ed-31195e895af4}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_PONBusy'}
@@ -293,61 +288,79 @@ METHOD PROTECTED sta_PONBusy : BOOL
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
 // Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-		// Simulation timer	
-		fbSimulationTimer.IN := FALSE;
-		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiTORead_ms / 2);
-		fbSimulationTimer(); // set time/reset timer
-		fbSimulationTimer.IN := TRUE; // start timer
-		
-		// Reset driver status
-		pBCD_SIf^.stStatus.bolSocketConnected := FALSE;
-		pBCD_SIf^.stStatus.bolComChecked := FALSE;
-	END_IF
+IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	
+	// Simulation timer	
+	fbSimulationTimer.IN := FALSE;
+	fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiTORead_ms / 2);
+	fbSimulationTimer(); // set time/reset timer
+	fbSimulationTimer.IN := TRUE; // start timer
+	
+	me.SubStateMachine.intState 		:= cSUB_CLOSESOCKETstart;
+	me.SubStateMachine.intStateNext 	:= cSUB_CLOSESOCKETstart;
+END_IF
 
 //--------------------------------------------------------------------------------------
 // Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-			
-		// Simulation
-		IF (CIf.SwCfg.bolSimulation) THEN
-			fbSimulationTimer(); // simulation time
-			IF (fbSimulationTimer.Q) THEN
-				// Set driver status
-				pBCD_SIf^.stStatus.bolSocketConnected := TRUE;
-				pBCD_SIf^.stStatus.bolComChecked := TRUE;		
-			END_IF
+IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+	// Simulation
+	IF (CIf.SwCfg.bolSimulation) THEN
+		fbSimulationTimer(); // simulation time
+		IF (fbSimulationTimer.Q) THEN
+			// Set driver status
+			pBCD_SIf^.stStatus.bolSocketConnected := TRUE;
+			pBCD_SIf^.stStatus.bolComChecked := TRUE;		
+			me.StateMachine.intStateNext := cSTA_PON;
 		END_IF
-			
-		// Try to open the TCP socket
-		IF (pBCD_SIf^.stStatus.bolSocketConnected = FALSE) THEN		
-			pBCD_SIf^.intCmd := cBCD_CMD_CONNECT_SOCKET; 
-		END_IF 
-					
-		// Check if socket connected
-		IF (pBCD_SIf^.stStatus.bolSocketConnected = TRUE) AND (pBCD_SIf^.stStatus.bolComChecked = FALSE) THEN
-			pBCD_SIf^.intCmd :=	cBCD_CMD_COM_TEST; // Execute a communication test to see if the device answer		
-		END_IF
+	ELSE
+		CASE me.SubStateMachine.intState OF
+			cSUB_CLOSESOCKETstart		:
+				pBCD_SIf^.intCmd := cBCD_CMD_CLOSE_SOCKET; 
+				me.SubStateMachine.intStateNext := cSUB_CLOSESOCKETbusy;
+				
+			cSUB_CLOSESOCKETbusy		:
+				IF (pBCD_SIf^.stStatus.bolSocketConnected = FALSE) THEN
+					me.SubStateMachine.intStateNext := cSUB_CONNECTSOCKETstart;
+				END_IF		
+	
+			cSUB_CONNECTSOCKETstart		:
+				pBCD_SIf^.intCmd := cBCD_CMD_CONNECT_SOCKET; 
+				me.SubStateMachine.intStateNext := cSUB_CONNECTSOCKETbusy;
+				
+			cSUB_CONNECTSOCKETbusy		:
+				IF (pBCD_SIf^.stStatus.bolSocketConnected = TRUE) THEN
+					me.SubStateMachine.intStateNext := cSUB_TESTSOCKETstart;
+				END_IF		
+	
+			cSUB_TESTSOCKETstart		:
+				pBCD_SIf^.intCmd :=	cBCD_CMD_COM_TEST; // Execute a communication test to see if the device answer		
+				me.SubStateMachine.intStateNext := cSUB_TESTSOCKETbusy;
+				
+			cSUB_TESTSOCKETbusy			:
+				IF (pBCD_SIf^.stStatus.bolComChecked = TRUE) THEN
+					me.SubStateMachine.intStateNext := cSUB_DONE;
+				END_IF		
+	
+			cSUB_DONE					:
+				me.StateMachine.intStateNext := cSTA_PON;
+		END_CASE;		
 		
 		// State Change Condition
 		IF ((pBCD_SIf^.stErr.bolErrorActive = TRUE) OR (me.StateMachine.udiTimeInState_ms >= SIf.Par.udiTOPowerOn_ms)) THEN
-			// SIf.Alm[2].strText := 'Initialisation error from barcode reader. No answer from device.';
 			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,2,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			me.StateMachine.intStateNext := cSTA_ERROR;				
-		ELSIF (pBCD_SIf^.stStatus.bolComChecked = TRUE) THEN
-			me.StateMachine.intStateNext := cSTA_PON;
 		END_IF
 	END_IF
+END_IF
 
 //--------------------------------------------------------------------------------------
 // Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
+IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+	;
+END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="IoOutBridge" Id="{40bacbd8-90e5-4cfd-89be-61d294ed6bc1}">
       <Declaration><![CDATA[{attribute 'object_name' := 'IoOutBridge'}
@@ -363,7 +376,6 @@ IF (CIf.SwCfg.bolSimulation = FALSE) THEN
 	END_IF
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="getCtrlSIf" Id="{543c60ab-0e88-44dc-8407-2023e5ed3710}">
       <Declaration><![CDATA[{attribute 'object_name' := 'getCtrlSIf'}
@@ -372,7 +384,6 @@ METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_BCC
       <Implementation>
         <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="StateMachine" Id="{6f1529fe-fc92-48e6-97a4-1ace6185aa97}">
       <Declaration><![CDATA[{attribute 'object_name' := 'StateMachine'}
@@ -389,7 +400,6 @@ CASE me.StateMachine.intState OF
         THIS^.sta_READ();	
 END_CASE;]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_OFFBusy" Id="{8731517c-5969-45d3-8e4e-e3b35e0e21f1}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFFBusy'}
@@ -423,7 +433,7 @@ METHOD PROTECTED sta_OFFBusy : BOOL
 		END_IF
 			
 		// State Change Condition
-		IF (pBCD_SIf^.stErr.bolErrorActive = TRUE) THEN
+		IF (pBCD_SIf^.stErr.bolErrorActive = TRUE) OR NOT pBCD_SIf^.stStatus.bolSocketConnected THEN
 			me.StateMachine.intStateNext :=  cSTA_ERROR;
 		ELSIF(pBCD_SIf^.intCmd = cBCD_CMD_DONE) THEN
 			me.StateMachine.intStateNext := cSTA_OFF;
@@ -436,7 +446,6 @@ METHOD PROTECTED sta_OFFBusy : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_READ" Id="{9437c12b-f1f7-40ae-9361-55220ca1a983}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_READ'}
@@ -446,33 +455,36 @@ METHOD PROTECTED sta_READ : BOOL
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
 // Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 
-	END_IF
+END_IF
 
 //--------------------------------------------------------------------------------------
 // Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 
-		// Simulation
-		IF (CIf.SwCfg.bolSimulation) THEN
-			;
-		END_IF
-		
-		// State Change Condition
-		IF(me.intCmd=cBCC_CMD_READ) THEN
-			me.StateMachine.intStateNext := cBCC_STA_READBusy;
-		END_IF
+	// Simulation
+	IF (CIf.SwCfg.bolSimulation) THEN
+		;
 	END_IF
+	
+	// State Change Condition
+	IF(me.intCmd=cBCC_CMD_READ) THEN
+		me.StateMachine.intStateNext := cBCC_STA_READBusy;
+	END_IF
+	// State Change Condition
+	IF (pBCD_SIf^.stErr.bolErrorActive = TRUE) OR NOT pBCD_SIf^.stStatus.bolSocketConnected THEN  
+		me.StateMachine.intStateNext :=  cSTA_ERROR;
+	END_IF
+END_IF
 
 //--------------------------------------------------------------------------------------
 // Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
+IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+	;
+END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_ERROR" Id="{a5e376a5-463e-48a4-95ef-4283ae225167}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERROR'}
@@ -520,7 +532,6 @@ METHOD PROTECTED sta_ERROR : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="IoInBridge" Id="{c0840189-3aaf-4b0c-bbe0-97624726de38}">
       <Declaration><![CDATA[{attribute 'object_name' := 'IoInBridge'}
@@ -536,7 +547,6 @@ ELSE
 	//simulation of global IO
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_OFF" Id="{cfd62a73-2bd8-4fed-af32-c5d24dd1f263}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFF'}
@@ -563,6 +573,11 @@ METHOD PROTECTED sta_OFF : BOOL
 				me.StateMachine.intStateNext := cBCC_STA_READBusy;
 			END_IF
 		END_IF
+
+		// State Change Condition
+		IF (pBCD_SIf^.stErr.bolErrorActive = TRUE) OR NOT pBCD_SIf^.stStatus.bolSocketConnected THEN  
+			me.StateMachine.intStateNext :=  cSTA_ERROR;
+		END_IF
 	END_IF
 
 //--------------------------------------------------------------------------------------
@@ -571,7 +586,6 @@ METHOD PROTECTED sta_OFF : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="Always" Id="{e2d98657-d8c8-409c-bf44-4972b4418587}">
       <Declaration><![CDATA[{attribute 'object_name' := 'Always'}
@@ -659,10 +673,9 @@ IF (((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.Alarm.eActivAlmClass=E_Alm
 		 AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) AND
 		(me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_OFFBusy)) THEN
 	// alarm evt EOFF, OFF or cmd off
-	me.StateMachine.intStateNext := cSTA_OFFBusy;
+	me.StateMachine.intStateNext := cSTA_PONBusy;
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_PON" Id="{ee4f9e12-45a7-4973-8c42-060121364187}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_PON'}
@@ -672,29 +685,25 @@ METHOD PROTECTED sta_PON : BOOL
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
 // Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-	END_IF
+IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	
+END_IF
 
 
 //--------------------------------------------------------------------------------------
 // Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		;	
-		// State Change Condition
-		me.StateMachine.intStateNext := cSTA_OFFBusy;
-	END_IF
+IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+	me.StateMachine.intStateNext := cSTA_OFFBusy;
+END_IF
 
 
 //--------------------------------------------------------------------------------------
 // Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
+IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+	;
+END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <ObjectProperties />
   </POU>

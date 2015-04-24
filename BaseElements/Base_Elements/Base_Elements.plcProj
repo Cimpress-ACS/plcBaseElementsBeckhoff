@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.1.52</ProjectVersion>
+    <ProjectVersion>0.0.1.53</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.1.52 	- add CSV Reader
+    <Description>0.0.1.53 	- [RP-1730] Added better error recovery to the BCC.
+0.0.1.52 	- add CSV Reader
 0.0.1.51 	- don't leave STOP when alarms present
 0.0.1.50 	- new BaseConcept
 0.0.1.49 	- new BaseConcept

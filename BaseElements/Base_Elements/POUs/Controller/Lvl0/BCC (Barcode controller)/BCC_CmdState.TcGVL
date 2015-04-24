@@ -12,6 +12,14 @@
 	cSUB_READDELAYBusy			: INT := 300;
 	cSUB_SENDREADCOMMAND		: INT := 301;
 	cSUB_READBusy				: INT := 302;
+	
+	cSUB_CLOSESOCKETstart		: INT := 310;
+	cSUB_CLOSESOCKETbusy		: INT := 311;
+	cSUB_CONNECTSOCKETstart		: INT := 312;
+	cSUB_CONNECTSOCKETbusy		: INT := 313;
+	cSUB_TESTSOCKETstart		: INT := 314;
+	cSUB_TESTSOCKETbusy			: INT := 315;
+	cSUB_DONE					: INT := 316;
 END_VAR]]></Declaration>
     <ObjectProperties />
   </GVL>
