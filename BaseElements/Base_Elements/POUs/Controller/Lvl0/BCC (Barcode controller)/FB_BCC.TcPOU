@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <POU Name="FB_BCC" Id="{45279440-f702-4acc-823a-1e37aa5791b1}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FB_BCC" Id="{45279440-f702-4acc-823a-1e37aa5791b1}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_BCC EXTENDS FB_CtrlBase
 VAR_INPUT
 	In_bolSensorTrigScan: BOOL;
@@ -317,8 +317,10 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 	ELSE
 		CASE me.SubStateMachine.intState OF
 			cSUB_CLOSESOCKETstart		:
-				pBCD_SIf^.intCmd := cBCD_CMD_CLOSE_SOCKET; 
-				me.SubStateMachine.intStateNext := cSUB_CLOSESOCKETbusy;
+				IF pBCD_SIf^.intCmd = cBCD_CMD_DONE THEN
+					pBCD_SIf^.intCmd := cBCD_CMD_CLOSE_SOCKET; 
+					me.SubStateMachine.intStateNext := cSUB_CLOSESOCKETbusy;
+				END_IF
 				
 			cSUB_CLOSESOCKETbusy		:
 				IF (pBCD_SIf^.stStatus.bolSocketConnected = FALSE) THEN
@@ -326,8 +328,10 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 				END_IF		
 	
 			cSUB_CONNECTSOCKETstart		:
-				pBCD_SIf^.intCmd := cBCD_CMD_CONNECT_SOCKET; 
-				me.SubStateMachine.intStateNext := cSUB_CONNECTSOCKETbusy;
+				IF pBCD_SIf^.intCmd = cBCD_CMD_DONE THEN
+					pBCD_SIf^.intCmd := cBCD_CMD_CONNECT_SOCKET; 
+					me.SubStateMachine.intStateNext := cSUB_CONNECTSOCKETbusy;
+				END_IF
 				
 			cSUB_CONNECTSOCKETbusy		:
 				IF (pBCD_SIf^.stStatus.bolSocketConnected = TRUE) THEN
@@ -335,8 +339,10 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 				END_IF		
 	
 			cSUB_TESTSOCKETstart		:
-				pBCD_SIf^.intCmd :=	cBCD_CMD_COM_TEST; // Execute a communication test to see if the device answer		
-				me.SubStateMachine.intStateNext := cSUB_TESTSOCKETbusy;
+				IF pBCD_SIf^.intCmd = cBCD_CMD_DONE THEN
+					pBCD_SIf^.intCmd :=	cBCD_CMD_COM_TEST; // Execute a communication test to see if the device answer		
+					me.SubStateMachine.intStateNext := cSUB_TESTSOCKETbusy;
+				END_IF;
 				
 			cSUB_TESTSOCKETbusy			:
 				IF (pBCD_SIf^.stStatus.bolComChecked = TRUE) THEN
@@ -705,6 +711,5 @@ IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>
