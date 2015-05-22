@@ -383,6 +383,44 @@ IF (CIf.SwCfg.bolSimulation = FALSE) THEN
 END_IF]]></ST>
       </Implementation>
     </Method>
+    <Method Name="sta_ERRORQuit" Id="{47069f04-7c98-400e-8ad0-a46832cd2757}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_ERRORQuit : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	
+END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+	
+	;
+	// evtl. wait time if reset of device is necessary and then decide to go to states or ERROR state
+	IF (CIf.Job.bolAlmReset = TRUE) THEN
+		CIf.Job.eMe_ActivAlmClass := E_AlmClass.NONE; // reset feedback channel for parent
+		CIf.Job.bolAlmReset := FALSE;
+	END_IF
+	
+	// State Change Condition
+	IF (CIf.Job.bolAlmReset = FALSE) THEN
+		me.StateMachine.intStateNext := cSTA_PONBusy;
+	END_IF
+END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+	;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="getCtrlSIf" Id="{543c60ab-0e88-44dc-8407-2023e5ed3710}">
       <Declaration><![CDATA[{attribute 'object_name' := 'getCtrlSIf'}
 METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_BCC
