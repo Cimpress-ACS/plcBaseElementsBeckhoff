@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <POU Name="FB_CtrlModule" Id="{93bcbc09-e224-4f3b-9fe5-ea80da832953}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FB_CtrlModule" Id="{93bcbc09-e224-4f3b-9fe5-ea80da832953}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_CtrlModule EXTENDS FB_CtrlBase
 VAR_INPUT
 	// Emergency circuit OK
@@ -1179,25 +1179,27 @@ END_IF]]></ST>
     <Method Name="FurtherReactions" Id="{e50c2c57-3ef3-4abd-b707-730734684d2c}">
       <Declaration><![CDATA[METHOD PROTECTED FurtherReactions : BOOL]]></Declaration>
       <Implementation>
-        <ST><![CDATA[IF (	(NOT me.AlarmConfig.bolOffAlarmTransitionDisable)	AND (me.Alarm.eActivAlmClass=E_AlmClass.STOP)
-	AND (me.StateMachine.intState<>cSTA_ERROR)				AND	(me.StateMachine.intState<>cSTA_ERRORQuit)
-	AND	(me.StateMachine.intState<>cSTA_EOFF)				AND	(me.StateMachine.intState<>cSTA_EOFFBusy)
-	AND	(me.StateMachine.intState<>cSTA_OFF)				AND	(me.StateMachine.intState<>cSTA_OFFBusy)
-	AND (me.StateMachine.intState<>cSTA_STOP)				AND (me.StateMachine.intState<>cSTA_STOPBusy)
-	AND	(me.StateMachine.intState>cSTA_PON)) THEN
+        <ST><![CDATA[IF		(me.Alarm.eActivAlmClass=E_AlmClass.STOP)
+	AND (me.StateMachine.intState<>cSTA_ERROR)		AND	(me.StateMachine.intState<>cSTA_ERRORQuit)
+	AND	(me.StateMachine.intState<>cSTA_EOFF)		AND	(me.StateMachine.intState<>cSTA_EOFFBusy)
+	AND	(me.StateMachine.intState<>cSTA_OFF)		AND	(me.StateMachine.intState<>cSTA_OFFBusy)
+	AND (me.StateMachine.intState<>cSTA_STOP)		AND (me.StateMachine.intState<>cSTA_STOPBusy)
+	AND	(me.StateMachine.intState>cSTA_PON) THEN
 	
 	me.StateMachine.intStateNext := cSTA_STOPBusy;
-	me.StateMachine.intState := cSTA_DONE;
+	CIf.Job.intACmd := cCMD_DONE;
+	CIf.Job.intMCmd := cCMD_DONE;
 	
-ELSIF (	(NOT me.AlarmConfig.bolOffAlarmTransitionDisable)	AND (me.Alarm.eActivAlmClass=E_AlmClass.TSTOP)
-	AND (me.StateMachine.intState<>cSTA_ERROR)				AND	(me.StateMachine.intState<>cSTA_ERRORQuit)
-	AND	(me.StateMachine.intState<>cSTA_EOFF)				AND	(me.StateMachine.intState<>cSTA_EOFFBusy)
-	AND	(me.StateMachine.intState<>cSTA_OFF)				AND	(me.StateMachine.intState<>cSTA_OFFBusy)
-	AND (me.StateMachine.intState<>cSTA_STOP)				AND (me.StateMachine.intState<>cSTA_STOPBusy)
-	AND	(me.StateMachine.intState>cSTA_PON)) THEN
+ELSIF	(me.Alarm.eActivAlmClass=E_AlmClass.TSTOP)
+	AND (me.StateMachine.intState<>cSTA_ERROR)		AND	(me.StateMachine.intState<>cSTA_ERRORQuit)
+	AND	(me.StateMachine.intState<>cSTA_EOFF)		AND	(me.StateMachine.intState<>cSTA_EOFFBusy)
+	AND	(me.StateMachine.intState<>cSTA_OFF)		AND	(me.StateMachine.intState<>cSTA_OFFBusy)
+	AND (me.StateMachine.intState<>cSTA_STOP)		AND (me.StateMachine.intState<>cSTA_STOPBusy)
+	AND	(me.StateMachine.intState>cSTA_PON) THEN
 	
 	me.StateMachine.intStateNext := cSTA_STOPBusy;
-	me.StateMachine.intState := cSTA_DONE;
+	CIf.Job.intACmd := cCMD_DONE;
+	CIf.Job.intMCmd := cCMD_DONE;
 	
 END_IF]]></ST>
       </Implementation>
@@ -1251,6 +1253,5 @@ END_IF]]></ST>
         </Implementation>
       </Get>
     </Property>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>
