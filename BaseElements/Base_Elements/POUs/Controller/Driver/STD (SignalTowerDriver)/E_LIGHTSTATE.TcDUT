@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="E_LIGHTSTATE" Id="{be89386a-9bcb-48a0-ac2c-45ae69d612ed}">
+    <Declaration><![CDATA[TYPE E_LIGHTSTATE :
+(
+	Off,
+	BlinkSlow,
+	BlinkFast,
+	On
+);
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

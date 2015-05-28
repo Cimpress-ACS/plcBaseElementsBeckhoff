@@ -15,9 +15,10 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.1.57</ProjectVersion>
+    <ProjectVersion>0.0.1.58</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.1.57 	- update Libraries
+    <Description>0.0.1.58 	- [RP-1546] - Stacklight Driver
+0.0.1.57 	- update Libraries
 0.0.1.56 	- [RP-1730] - Error Exit Problem
 0.0.1.55 	- [RP-1814] - Fix Barcode reader POnBusy problem
 0.0.1.54 	- TwinCAT 3.1.4018.4
@@ -265,6 +266,14 @@
     </Compile>
     <Compile Include="POUs\Controller\Driver\RFD %28RFID Driver%29\T_StateWord.TcDUT">
       <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\STD %28SignalTowerDriver%29\E_LIGHTSTATE.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\STD %28SignalTowerDriver%29\FB_STD.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\BCC %28Barcode controller%29\BCC_CmdState.TcGVL">
       <SubType>Code</SubType>
@@ -691,6 +700,7 @@
     <Folder Include="POUs\Controller\Driver\BCD %28Bar code driver%29" />
     <Folder Include="POUs\Controller\Driver\PRS [Present Sensor]" />
     <Folder Include="POUs\Controller\Driver\RFD %28RFID Driver%29" />
+    <Folder Include="POUs\Controller\Driver\STD %28SignalTowerDriver%29" />
     <Folder Include="POUs\Controller\Lvl0" />
     <Folder Include="POUs\Controller\Lvl0\BCC %28Barcode controller%29" />
     <Folder Include="POUs\Controller\Lvl0\CYL %28Cylinder%29" />

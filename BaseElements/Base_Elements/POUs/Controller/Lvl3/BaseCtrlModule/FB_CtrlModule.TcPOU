@@ -39,6 +39,8 @@ VAR
 	usiNumOfIBufferFullChild: USINT;
 	/// Counter
 	ii: INT;
+	// Signal Tower Driver
+	m_pSignalTower			: POINTER TO FB_STD;
 END_VAR
 VAR CONSTANT
 	/// sub States for run and stop sequences
@@ -594,6 +596,25 @@ IF (CIf.Info.uinChildNbr > 0) THEN
 END_IF]]></ST>
       </Implementation>
     </Method>
+    <Property Name="SignalTownerDriver" Id="{4c1f4121-84cd-478a-8387-7b6c872caa12}">
+      <Declaration><![CDATA[PROPERTY PUBLIC SignalTownerDriver : POINTER TO FB_STD]]></Declaration>
+      <Set Name="Set" Id="{a7d5dc26-9280-4458-bdcf-1a055bc5c381}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[m_pSignalTower := SignalTownerDriver;]]></ST>
+        </Implementation>
+      </Set>
+      <Get Name="Get" Id="{ec12a2f7-05b0-43b8-af2a-e736e372f855}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[SignalTownerDriver := m_pSignalTower;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Property Name="SIf_Out" Id="{66efe5fb-6c08-4450-a924-f790660b37a8}">
       <Declaration><![CDATA[PROPERTY SIf_Out : POINTER TO T_Ctrl_SIf_MOD_Out]]></Declaration>
       <Set Name="Set" Id="{04a68e53-e094-401a-ba3b-ad0a8d642962}">
@@ -746,6 +767,22 @@ END_IF
 	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 		;
 	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CycleEndDuty" Id="{8b2fafa0-18fb-4979-8917-575392318b6c}">
+      <Declaration><![CDATA[METHOD PROTECTED CycleEndDuty : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CycleEndDuty := SUPER^.CycleEndDuty();
+
+IF m_pSignalTower <> NULL THEN
+	m_pSignalTower^.State := me.StateMachine.intState;
+	m_pSignalTower^.AlarmClass := me.Alarm.eActivAlmClass;
+	m_pSignalTower^();
+END_IF
+]]></ST>
       </Implementation>
     </Method>
     <Method Name="IoInBridge" Id="{95c556ec-c88e-4a00-9f2f-5c4a543adc13}">
