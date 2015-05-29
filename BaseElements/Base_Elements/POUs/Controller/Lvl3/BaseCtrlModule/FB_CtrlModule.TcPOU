@@ -647,7 +647,11 @@ END_VAR
 // Childs are listed in list of sequences
 FOR ii:=0 TO usiNumOfSeq-1 BY 1 DO	
 	aListOfSeq[ii].pCIF := THIS^.AddChild(aListOfSeq[ii].pChild^);
-END_FOR]]></ST>
+END_FOR
+
+IF m_pSignalTower <> NULL THEN
+	m_pSignalTower^.HornEnable := SIf_MOD.Cfg^.bolStackLightHornEnable;
+END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_EOFF" Id="{7a7e2512-7c7d-4cf3-97d1-a6e983988ed7}">
@@ -1111,6 +1115,7 @@ udinTimeToggle_ms := 0;
 // software configuration
 CIf.SwCfg.bolExist := TRUE;
 CIf.SwCfg.bolSimulation := FALSE;
+
 me.AlarmConfig.bolChildrenAlarmPropagation := FALSE;
 
 // No initialization for cfg and par in this base module!

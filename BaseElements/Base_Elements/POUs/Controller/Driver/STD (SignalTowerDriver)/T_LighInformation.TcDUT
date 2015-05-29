@@ -5,6 +5,7 @@
 STRUCT
 	eState			: E_LIGHTSTATE;
 	udiTime_ms		: UDINT;
+	bolOutput		: REFERENCE TO BOOL;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

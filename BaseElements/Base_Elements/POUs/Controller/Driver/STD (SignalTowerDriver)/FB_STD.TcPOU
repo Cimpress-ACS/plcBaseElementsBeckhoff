@@ -39,12 +39,15 @@ ProcessOutput();]]></ST>
     <Method Name="ProcessOutput" Id="{0f73e241-afa4-4b34-97b7-2289ab143f81}">
       <Declaration><![CDATA[{attribute 'object_name' := 'ProcessOutput'}
 METHOD PROTECTED ProcessOutput : BOOL
+VAR
+	iIdx		: INT;
+END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[Out_bolRed := GetOutputProcessed(m_aColor[E_StackLightColor.Red],out_bolRed);
-Out_bolYellow := GetOutputProcessed(m_aColor[E_StackLightColor.Yellow],out_bolYellow);
-Out_bolGreen := GetOutputProcessed(m_aColor[E_StackLightColor.Green],out_bolGreen);
-Out_bolBlue := GetOutputProcessed(m_aColor[E_StackLightColor.Blue],out_bolBlue);
+        <ST><![CDATA[FOR iIdx := 0 TO E_StackLightColor.Max_SackLightColor-1 DO
+	GetOutputProcessed(ADR(m_aColor[iIdx]));	
+END_FOR
+
 Out_bolHorn := CheckAlmClass() AND m_bolHornEnable;
 ]]></ST>
       </Implementation>
@@ -76,33 +79,30 @@ END_FOR
       <Declaration><![CDATA[{attribute 'object_name' := 'GetOutputProcessed'}
 METHOD PROTECTED GetOutputProcessed : BOOL
 VAR_INPUT
-	eColor			: T_LighInformation;
-END_VAR
-VAR_IN_OUT
-	bolOutputOld	: BOOL;
+	pColor			: POINTER TO T_LighInformation;
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[CASE eColor.eState OF
+        <ST><![CDATA[CASE pColor^.eState OF
 	E_LIGHTSTATE.Off:
-		GetOutputProcessed := FALSE;
-		eColor.udiTime_ms := 0;
+		pColor^.bolOutput := FALSE;
+		pColor^.udiTime_ms := 0;
 	E_LIGHTSTATE.On:
-		GetOutputProcessed := TRUE;
-		eColor.udiTime_ms := 0;
+		pColor^.bolOutput := TRUE;
+		pColor^.udiTime_ms := 0;
 	E_LIGHTSTATE.BlinkSlow:
-		IF eColor.udiTime_ms >= c_BLINKSLOW THEN
-			GetOutputProcessed := NOT bolOutputOld;
-			eColor.udiTime_ms := 0;
+		IF pColor^.udiTime_ms >= c_BLINKSLOW THEN
+			pColor^.bolOutput := NOT pColor^.bolOutput;
+			pColor^.udiTime_ms := 0;
 		END_IF		
 	E_LIGHTSTATE.BlinkFast:
-		IF eColor.udiTime_ms >= c_BLINKFAST THEN
-			GetOutputProcessed := NOT bolOutputOld;
-			eColor.udiTime_ms := 0;
+		IF pColor^.udiTime_ms >= c_BLINKFAST THEN
+			pColor^.bolOutput := NOT pColor^.bolOutput;
+			pColor^.udiTime_ms := 0;
 		END_IF		
 ELSE
-	eColor.udiTime_ms := 0;
-	GetOutputProcessed := FALSE;
+	pColor^.udiTime_ms := 0;
+	pColor^.bolOutput := FALSE;
 END_CASE
 ]]></ST>
       </Implementation>
@@ -246,7 +246,13 @@ VAR
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[//automatic read out infos about FUB
+        <ST><![CDATA[// Assign the References
+m_aColor[E_StackLightColor.Red].bolOutput REF= Out_bolRed;
+m_aColor[E_StackLightColor.Yellow].bolOutput REF= Out_bolYellow;
+m_aColor[E_StackLightColor.Green].bolOutput REF= Out_bolGreen;
+m_aColor[E_StackLightColor.Blue].bolOutput REF= Out_bolBlue;
+
+//automatic read out infos about FUB
 udiTaskCnt := TwinCAT_SystemInfoVarList._AppInfo.TaskCnt;
 fbGETCURTASKINDEX();
 udiTaskCnt := fbGETCURTASKINDEX.index;
