@@ -20,14 +20,10 @@ VAR
 	/// Actual sample time
 	m_udiSample_ms: UDINT;
 	/// Actual time in ms
-	m_udiTime: UDINT;
-	m_bolHornEnable: BOOL := FALSE;
-	m_eRed: E_LIGHTSTATE;
-	m_eYellow: E_LIGHTSTATE;
-	m_eGreen: E_LIGHTSTATE;
-	m_eBlue: E_LIGHTSTATE;
-	m_eAlarmClass: E_AlmClass;
-	m_iActualState: INT;
+	m_bolHornEnable			: BOOL := FALSE;
+	m_aColor				: ARRAY[0..E_StackLightColor.Max_SackLightColor-1] OF T_LighInformation;
+	m_eAlarmClass			: E_AlmClass;
+	m_iActualState			: INT;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -45,10 +41,10 @@ ProcessOutput();]]></ST>
 METHOD PROTECTED ProcessOutput : BOOL
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[Out_bolRed := GetOutputProcessed(m_eRed,out_bolRed);
-Out_bolYellow := GetOutputProcessed(m_eYellow,out_bolYellow);
-Out_bolGreen := GetOutputProcessed(m_eRed,out_bolGreen);
-Out_bolBlue := GetOutputProcessed(m_eRed,out_bolBlue);
+        <ST><![CDATA[Out_bolRed := GetOutputProcessed(m_aColor[E_StackLightColor.Red],out_bolRed);
+Out_bolYellow := GetOutputProcessed(m_aColor[E_StackLightColor.Yellow],out_bolYellow);
+Out_bolGreen := GetOutputProcessed(m_aColor[E_StackLightColor.Green],out_bolGreen);
+Out_bolBlue := GetOutputProcessed(m_aColor[E_StackLightColor.Blue],out_bolBlue);
 Out_bolHorn := CheckAlmClass() AND m_bolHornEnable;
 ]]></ST>
       </Implementation>
@@ -56,9 +52,13 @@ Out_bolHorn := CheckAlmClass() AND m_bolHornEnable;
     <Method Name="ProcessInput" Id="{28cad425-68ba-46d1-b920-af193dfe7578}">
       <Declaration><![CDATA[{attribute 'object_name' := 'ProcessInput'}
 METHOD PROTECTED ProcessInput : BOOL
-]]></Declaration>
+VAR
+	iIdx			: INT;
+END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[m_udiTime := (m_udiTime + m_udiSample_ms) MOD 1000000000;
+        <ST><![CDATA[FOR iIdx := 0 TO E_StackLightColor.Max_SackLightColor-1 DO
+	m_aColor[iIdx].udiTime_ms := m_aColor[iIdx].udiTime_ms + m_udiSample_ms;
+END_FOR
 ]]></ST>
       </Implementation>
     </Method>
@@ -76,25 +76,32 @@ METHOD PROTECTED ProcessInput : BOOL
       <Declaration><![CDATA[{attribute 'object_name' := 'GetOutputProcessed'}
 METHOD PROTECTED GetOutputProcessed : BOOL
 VAR_INPUT
-	eColor: E_LIGHTSTATE;
-	bolOutputOld: BOOL;
+	eColor			: T_LighInformation;
+END_VAR
+VAR_IN_OUT
+	bolOutputOld	: BOOL;
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[CASE eColor OF
+        <ST><![CDATA[CASE eColor.eState OF
 	E_LIGHTSTATE.Off:
 		GetOutputProcessed := FALSE;
+		eColor.udiTime_ms := 0;
 	E_LIGHTSTATE.On:
 		GetOutputProcessed := TRUE;
+		eColor.udiTime_ms := 0;
 	E_LIGHTSTATE.BlinkSlow:
-		IF (m_udiTime MOD c_BLINKSLOW) = 0 THEN
+		IF eColor.udiTime_ms >= c_BLINKSLOW THEN
 			GetOutputProcessed := NOT bolOutputOld;
+			eColor.udiTime_ms := 0;
 		END_IF		
 	E_LIGHTSTATE.BlinkFast:
-		IF (m_udiTime MOD c_BLINKFAST) = 0 THEN
+		IF eColor.udiTime_ms >= c_BLINKFAST THEN
 			GetOutputProcessed := NOT bolOutputOld;
+			eColor.udiTime_ms := 0;
 		END_IF		
 ELSE
+	eColor.udiTime_ms := 0;
 	GetOutputProcessed := FALSE;
 END_CASE
 ]]></ST>
@@ -103,6 +110,12 @@ END_CASE
     <Method Name="AssignTowerLights" Id="{59cc2aef-072b-4764-9cde-e82f43060080}">
       <Declaration><![CDATA[{attribute 'object_name' := 'AssignTowerLights'}
 METHOD PROTECTED AssignTowerLights : BOOL
+VAR
+	eRed		: E_LIGHTSTATE;
+	eYellow		: E_LIGHTSTATE;
+	eGreen		: E_LIGHTSTATE;
+	eBlue		: E_LIGHTSTATE;
+END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// This method can be overwriten to get another functionality for another system.
@@ -116,10 +129,10 @@ CASE m_iActualState OF
 	cSTA_EOFFBusy,	
 	cSTA_EOFF,		
 	cSTA_OFF:
-		m_eRed 		:= E_LIGHTSTATE.On;
-		m_eYellow	:= E_LIGHTSTATE.Off;
-		m_eGreen	:= E_LIGHTSTATE.Off;
-		m_eBlue		:= E_LIGHTSTATE.Off;		
+		eRed	:= E_LIGHTSTATE.On;
+		eYellow	:= E_LIGHTSTATE.Off;
+		eGreen	:= E_LIGHTSTATE.Off;
+		eBlue	:= E_LIGHTSTATE.Off;		
 
 	// Red Blink Fast	
 	// -------------------------------------------
@@ -127,78 +140,84 @@ CASE m_iActualState OF
 	cSTA_TSTOP,		
 	cSTA_ERROR,		
 	cSTA_ERRORQuit:	
-		m_eRed 		:= E_LIGHTSTATE.BlinkFast;
-		m_eYellow	:= E_LIGHTSTATE.Off;
-		m_eGreen	:= E_LIGHTSTATE.Off;
-		m_eBlue		:= E_LIGHTSTATE.Off;		
+		eRed	:= E_LIGHTSTATE.BlinkFast;
+		eYellow	:= E_LIGHTSTATE.Off;
+		eGreen	:= E_LIGHTSTATE.Off;
+		eBlue	:= E_LIGHTSTATE.Off;		
 
 	// Red Blink Slow	
 	// -------------------------------------------
 	cSTA_OFFBusy:	
-		m_eRed 		:= E_LIGHTSTATE.BlinkSlow;
-		m_eYellow	:= E_LIGHTSTATE.Off;
-		m_eGreen	:= E_LIGHTSTATE.Off;
-		m_eBlue		:= E_LIGHTSTATE.Off;		
+		eRed	    := E_LIGHTSTATE.BlinkSlow;
+		eYellow		:= E_LIGHTSTATE.Off;
+		eGreen	 	:= E_LIGHTSTATE.Off;
+		eBlue	  	:= E_LIGHTSTATE.Off;		
 
 	// Yellow Blink Slow	
 	// -------------------------------------------
 	cSTA_STOPBusy,	
 	cSTA_INITBusy:	
 		IF CheckAlmClass() THEN
-			m_eRed 		:= E_LIGHTSTATE.BlinkFast;
+			eRed 		:= E_LIGHTSTATE.BlinkFast;
 		ELSE
-			m_eRed 		:= E_LIGHTSTATE.Off;
+			eRed 		:= E_LIGHTSTATE.Off;
 		END_IF
-
-		m_eYellow	:= E_LIGHTSTATE.BlinkSlow;
-		m_eGreen	:= E_LIGHTSTATE.Off;
-		m_eBlue		:= E_LIGHTSTATE.Off;		
+			   
+		eYellow	:= E_LIGHTSTATE.BlinkSlow;
+		eGreen	:= E_LIGHTSTATE.Off;
+		eBlue	:= E_LIGHTSTATE.Off;		
 
 	// Yellow ON	
 	// -------------------------------------------
 	cSTA_INIT,		
 	cSTA_STOP:		
 		IF CheckAlmClass() THEN
-			m_eRed 		:= E_LIGHTSTATE.BlinkFast;
+			eRed 		:= E_LIGHTSTATE.BlinkFast;
 		ELSE
-			m_eRed 		:= E_LIGHTSTATE.Off;
+			eRed 		:= E_LIGHTSTATE.Off;
 		END_IF
 
-		m_eYellow	:= E_LIGHTSTATE.On;
-		m_eGreen	:= E_LIGHTSTATE.Off;
-		m_eBlue		:= E_LIGHTSTATE.Off;		
+		eYellow	:= E_LIGHTSTATE.On;
+		eGreen	:= E_LIGHTSTATE.Off;
+		eBlue	:= E_LIGHTSTATE.Off;		
 	
 	// Green Blink Slow	
 	// -------------------------------------------
 	cSTA_RUNBusy:	
 		IF CheckAlmClass() THEN
-			m_eRed 		:= E_LIGHTSTATE.BlinkFast;
+			eRed 		:= E_LIGHTSTATE.BlinkFast;
 		ELSE
-			m_eRed 		:= E_LIGHTSTATE.Off;
+			eRed 		:= E_LIGHTSTATE.Off;
 		END_IF
 
-		m_eYellow	:= E_LIGHTSTATE.Off;
-		m_eGreen	:= E_LIGHTSTATE.BlinkSlow;
-		m_eBlue		:= E_LIGHTSTATE.Off;		
+		eYellow		:= E_LIGHTSTATE.Off;
+		eGreen	 	:= E_LIGHTSTATE.BlinkSlow;
+		eBlue	  	:= E_LIGHTSTATE.Off;		
 
 	// Green ON	
 	// -------------------------------------------
 	cSTA_RUN:		
 		IF CheckAlmClass() THEN
-			m_eRed 		:= E_LIGHTSTATE.BlinkFast;
+			eRed 		:= E_LIGHTSTATE.BlinkFast;
 		ELSE
-			m_eRed 		:= E_LIGHTSTATE.Off;
+			eRed 		:= E_LIGHTSTATE.Off;
 		END_IF
 
-		m_eYellow	:= E_LIGHTSTATE.Off;
-		m_eGreen	:= E_LIGHTSTATE.On;
-		m_eBlue		:= E_LIGHTSTATE.Off;
+		eYellow		:= E_LIGHTSTATE.Off;
+		eGreen	 	:= E_LIGHTSTATE.On;
+		eBlue	  	:= E_LIGHTSTATE.Off;
 ELSE
-	m_eRed 		:= E_LIGHTSTATE.On;
-	m_eYellow	:= E_LIGHTSTATE.Off;
-	m_eGreen	:= E_LIGHTSTATE.Off;
-	m_eBlue		:= E_LIGHTSTATE.Off;		
-END_CASE]]></ST>
+	eRed	   	:= E_LIGHTSTATE.On;
+	eYellow		:= E_LIGHTSTATE.Off;
+	eGreen	 	:= E_LIGHTSTATE.Off;
+	eBlue	  	:= E_LIGHTSTATE.Off;		
+END_CASE
+
+m_aColor[E_StackLightColor.Red].eState		:= eRed;
+m_aColor[E_StackLightColor.Yellow].eState	:= eYellow;
+m_aColor[E_StackLightColor.Green].eState	:= eGreen;
+m_aColor[E_StackLightColor.Blue].eState		:= eBlue;		
+]]></ST>
       </Implementation>
     </Method>
     <Method Name="CheckAlmClass" Id="{c36e547f-dad2-4a37-8b7a-1e713797d340}">
