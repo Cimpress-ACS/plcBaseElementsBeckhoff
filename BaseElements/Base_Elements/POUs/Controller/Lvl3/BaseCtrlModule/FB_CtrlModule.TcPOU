@@ -11,6 +11,12 @@ END_VAR
 VAR_OUTPUT
 	// signals that this module is ready
 	Out_bolReady: BOOL;
+	// Stacklights outputs
+	Out_bolRed: BOOL;
+	Out_bolYellow: BOOL;
+	Out_bolGreen: BOOL;
+	Out_bolBlue: BOOL;
+	Out_bolHorn: BOOL;
 END_VAR
 VAR
 	/// Timeout supervision of Keep alive Toggle Bit
@@ -40,7 +46,7 @@ VAR
 	/// Counter
 	ii: INT;
 	// Signal Tower Driver
-	m_pSignalTower			: POINTER TO FB_STD;
+	_fbSignalTower			: FB_STD;
 END_VAR
 VAR CONSTANT
 	/// sub States for run and stop sequences
@@ -596,25 +602,6 @@ IF (CIf.Info.uinChildNbr > 0) THEN
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <Property Name="SignalTownerDriver" Id="{4c1f4121-84cd-478a-8387-7b6c872caa12}">
-      <Declaration><![CDATA[PROPERTY PUBLIC SignalTownerDriver : POINTER TO FB_STD]]></Declaration>
-      <Set Name="Set" Id="{a7d5dc26-9280-4458-bdcf-1a055bc5c381}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[m_pSignalTower := SignalTownerDriver;]]></ST>
-        </Implementation>
-      </Set>
-      <Get Name="Get" Id="{ec12a2f7-05b0-43b8-af2a-e736e372f855}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[SignalTownerDriver := m_pSignalTower;]]></ST>
-        </Implementation>
-      </Get>
-    </Property>
     <Property Name="SIf_Out" Id="{66efe5fb-6c08-4450-a924-f790660b37a8}">
       <Declaration><![CDATA[PROPERTY SIf_Out : POINTER TO T_Ctrl_SIf_MOD_Out]]></Declaration>
       <Set Name="Set" Id="{04a68e53-e094-401a-ba3b-ad0a8d642962}">
@@ -649,9 +636,9 @@ FOR ii:=0 TO usiNumOfSeq-1 BY 1 DO
 	aListOfSeq[ii].pCIF := THIS^.AddChild(aListOfSeq[ii].pChild^);
 END_FOR
 
-IF m_pSignalTower <> NULL THEN
-	m_pSignalTower^.HornEnable := SIf_MOD.Cfg^.bolStackLightHornEnable;
-END_IF]]></ST>
+_fbSignalTower.Initialize();
+_fbSignalTower.HornEnable := SIf_MOD.Cfg^.bolStackLightHornEnable;
+]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_EOFF" Id="{7a7e2512-7c7d-4cf3-97d1-a6e983988ed7}">
@@ -781,11 +768,14 @@ END_VAR
       <Implementation>
         <ST><![CDATA[CycleEndDuty := SUPER^.CycleEndDuty();
 
-IF m_pSignalTower <> NULL THEN
-	m_pSignalTower^.State := me.StateMachine.intState;
-	m_pSignalTower^.AlarmClass := me.Alarm.eActivAlmClass;
-	m_pSignalTower^();
-END_IF
+_fbSignalTower.State := me.StateMachine.intState;
+_fbSignalTower.AlarmClass := me.Alarm.eActivAlmClass;
+_fbSignalTower();
+Out_bolRed 		:= _fbSignalTower.Out_bolRed;
+Out_bolYellow 	:= _fbSignalTower.Out_bolYellow;
+Out_bolGreen 	:= _fbSignalTower.Out_bolGreen;
+Out_bolBlue 	:= _fbSignalTower.Out_bolBlue;
+Out_bolHorn 	:= _fbSignalTower.Out_bolHorn;
 ]]></ST>
       </Implementation>
     </Method>
