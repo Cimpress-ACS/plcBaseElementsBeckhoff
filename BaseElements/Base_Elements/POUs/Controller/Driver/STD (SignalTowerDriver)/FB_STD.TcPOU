@@ -1,0 +1,291 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FB_STD" Id="{1bb648d9-9320-48ee-aa00-1104f532eccc}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_STD
+VAR_OUTPUT
+	Out_bolRed: BOOL;
+	Out_bolYellow: BOOL;
+	Out_bolGreen: BOOL;
+	Out_bolBlue: BOOL;
+	Out_bolHorn: BOOL;
+END_VAR
+VAR CONSTANT
+	/// Fast Toggle Blink with X ms periode
+	c_BLINKFAST: UINT := 1000;
+	/// Slow Toggle Blink with X ms periode
+	c_BLINKSLOW: UINT := 2000;
+END_VAR
+VAR
+	m_bolInitDone: BOOL := FALSE;
+	/// Actual sample time
+	m_udiSample_ms: UDINT;
+	/// Actual time in ms
+	m_bolHornEnable			: BOOL := FALSE;
+	m_aColor				: ARRAY[0..E_StackLightColor.Max_SackLightColor-1] OF T_LighInformation;
+	m_eAlarmClass			: E_AlmClass;
+	m_iActualState			: INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+IF NOT m_bolInitDone THEN
+	Initialize();
+END_IF
+
+ProcessInput();
+AssignTowerLights();
+ProcessOutput();]]></ST>
+    </Implementation>
+    <Method Name="ProcessOutput" Id="{0f73e241-afa4-4b34-97b7-2289ab143f81}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'ProcessOutput'}
+METHOD PROTECTED ProcessOutput : BOOL
+VAR
+	iIdx		: INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[FOR iIdx := 0 TO E_StackLightColor.Max_SackLightColor-1 DO
+	GetOutputProcessed(ADR(m_aColor[iIdx]));	
+END_FOR
+
+Out_bolHorn := CheckAlmClass() AND m_bolHornEnable;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ProcessInput" Id="{28cad425-68ba-46d1-b920-af193dfe7578}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'ProcessInput'}
+METHOD PROTECTED ProcessInput : BOOL
+VAR
+	iIdx			: INT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[FOR iIdx := 0 TO E_StackLightColor.Max_SackLightColor-1 DO
+	m_aColor[iIdx].udiTime_ms := m_aColor[iIdx].udiTime_ms + m_udiSample_ms;
+END_FOR
+]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="State" Id="{476a00ed-ef74-4658-837e-0a56fd52db6b}">
+      <Declaration><![CDATA[PROPERTY State : INT
+]]></Declaration>
+      <Set Name="Set" Id="{f9ecf29b-fc53-4512-93d4-d08b06dc3e4b}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[m_iActualState := State;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Method Name="GetOutputProcessed" Id="{55800798-a2ee-47d2-bc81-7113637f1c06}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'GetOutputProcessed'}
+METHOD PROTECTED GetOutputProcessed : BOOL
+VAR_INPUT
+	pColor			: POINTER TO T_LighInformation;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE pColor^.eState OF
+	E_LIGHTSTATE.Off:
+		pColor^.bolOutput := FALSE;
+		pColor^.udiTime_ms := 0;
+	E_LIGHTSTATE.On:
+		pColor^.bolOutput := TRUE;
+		pColor^.udiTime_ms := 0;
+	E_LIGHTSTATE.BlinkSlow:
+		IF pColor^.udiTime_ms >= c_BLINKSLOW THEN
+			pColor^.bolOutput := NOT pColor^.bolOutput;
+			pColor^.udiTime_ms := 0;
+		END_IF		
+	E_LIGHTSTATE.BlinkFast:
+		IF pColor^.udiTime_ms >= c_BLINKFAST THEN
+			pColor^.bolOutput := NOT pColor^.bolOutput;
+			pColor^.udiTime_ms := 0;
+		END_IF		
+ELSE
+	pColor^.udiTime_ms := 0;
+	pColor^.bolOutput := FALSE;
+END_CASE
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="AssignTowerLights" Id="{59cc2aef-072b-4764-9cde-e82f43060080}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'AssignTowerLights'}
+METHOD PROTECTED AssignTowerLights : BOOL
+VAR
+	eRed		: E_LIGHTSTATE;
+	eYellow		: E_LIGHTSTATE;
+	eGreen		: E_LIGHTSTATE;
+	eBlue		: E_LIGHTSTATE;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// This method can be overwriten to get another functionality for another system.
+CASE m_iActualState OF
+	// RED is steady on
+	// -------------------------------------------
+	cSTA_DONE, 
+	cSTA_INITIALIZED,
+	cSTA_PONBusy,	
+	cSTA_PON,		
+	cSTA_EOFFBusy,	
+	cSTA_EOFF,		
+	cSTA_OFF:
+		eRed	:= E_LIGHTSTATE.On;
+		eYellow	:= E_LIGHTSTATE.Off;
+		eGreen	:= E_LIGHTSTATE.Off;
+		eBlue	:= E_LIGHTSTATE.Off;		
+
+	// Red Blink Fast	
+	// -------------------------------------------
+	cSTA_TSTOPBusy,	
+	cSTA_TSTOP,		
+	cSTA_ERROR,		
+	cSTA_ERRORQuit:	
+		eRed	:= E_LIGHTSTATE.BlinkFast;
+		eYellow	:= E_LIGHTSTATE.Off;
+		eGreen	:= E_LIGHTSTATE.Off;
+		eBlue	:= E_LIGHTSTATE.Off;		
+
+	// Red Blink Slow	
+	// -------------------------------------------
+	cSTA_OFFBusy:	
+		eRed	    := E_LIGHTSTATE.BlinkSlow;
+		eYellow		:= E_LIGHTSTATE.Off;
+		eGreen	 	:= E_LIGHTSTATE.Off;
+		eBlue	  	:= E_LIGHTSTATE.Off;		
+
+	// Yellow Blink Slow	
+	// -------------------------------------------
+	cSTA_STOPBusy,	
+	cSTA_INITBusy:	
+		IF CheckAlmClass() THEN
+			eRed 		:= E_LIGHTSTATE.BlinkFast;
+		ELSE
+			eRed 		:= E_LIGHTSTATE.Off;
+		END_IF
+			   
+		eYellow	:= E_LIGHTSTATE.BlinkSlow;
+		eGreen	:= E_LIGHTSTATE.Off;
+		eBlue	:= E_LIGHTSTATE.Off;		
+
+	// Yellow ON	
+	// -------------------------------------------
+	cSTA_INIT,		
+	cSTA_STOP:		
+		IF CheckAlmClass() THEN
+			eRed 		:= E_LIGHTSTATE.BlinkFast;
+		ELSE
+			eRed 		:= E_LIGHTSTATE.Off;
+		END_IF
+
+		eYellow	:= E_LIGHTSTATE.On;
+		eGreen	:= E_LIGHTSTATE.Off;
+		eBlue	:= E_LIGHTSTATE.Off;		
+	
+	// Green Blink Slow	
+	// -------------------------------------------
+	cSTA_RUNBusy:	
+		IF CheckAlmClass() THEN
+			eRed 		:= E_LIGHTSTATE.BlinkFast;
+		ELSE
+			eRed 		:= E_LIGHTSTATE.Off;
+		END_IF
+
+		eYellow		:= E_LIGHTSTATE.Off;
+		eGreen	 	:= E_LIGHTSTATE.BlinkSlow;
+		eBlue	  	:= E_LIGHTSTATE.Off;		
+
+	// Green ON	
+	// -------------------------------------------
+	cSTA_RUN:		
+		IF CheckAlmClass() THEN
+			eRed 		:= E_LIGHTSTATE.BlinkFast;
+		ELSE
+			eRed 		:= E_LIGHTSTATE.Off;
+		END_IF
+
+		eYellow		:= E_LIGHTSTATE.Off;
+		eGreen	 	:= E_LIGHTSTATE.On;
+		eBlue	  	:= E_LIGHTSTATE.Off;
+ELSE
+	eRed	   	:= E_LIGHTSTATE.On;
+	eYellow		:= E_LIGHTSTATE.Off;
+	eGreen	 	:= E_LIGHTSTATE.Off;
+	eBlue	  	:= E_LIGHTSTATE.Off;		
+END_CASE
+
+m_aColor[E_StackLightColor.Red].eState		:= eRed;
+m_aColor[E_StackLightColor.Yellow].eState	:= eYellow;
+m_aColor[E_StackLightColor.Green].eState	:= eGreen;
+m_aColor[E_StackLightColor.Blue].eState		:= eBlue;		
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CheckAlmClass" Id="{c36e547f-dad2-4a37-8b7a-1e713797d340}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'CheckAlmClass'}
+METHOD PROTECTED CheckAlmClass : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE m_eAlarmClass OF
+	E_AlmClass.OFF,
+	E_AlmClass.EOFF,
+	E_AlmClass.STOP,
+	E_AlmClass.TSTOP:
+		CheckAlmClass := TRUE;
+ELSE
+	CheckAlmClass := FALSE;
+END_CASE
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Initialize" Id="{daed0ed1-9a01-45ab-b36c-7172d3879506}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'Initialize'}
+METHOD Initialize : BOOL
+VAR
+	udiTaskCnt: UDINT;
+	fbGETCURTASKINDEX: Tc2_System.GETCURTASKINDEX;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Assign the References
+m_aColor[E_StackLightColor.Red].bolOutput REF= Out_bolRed;
+m_aColor[E_StackLightColor.Yellow].bolOutput REF= Out_bolYellow;
+m_aColor[E_StackLightColor.Green].bolOutput REF= Out_bolGreen;
+m_aColor[E_StackLightColor.Blue].bolOutput REF= Out_bolBlue;
+
+//automatic read out infos about FUB
+udiTaskCnt := TwinCAT_SystemInfoVarList._AppInfo.TaskCnt;
+fbGETCURTASKINDEX();
+udiTaskCnt := fbGETCURTASKINDEX.index;
+m_udiSample_ms := TwinCAT_SystemInfoVarList._TaskInfo[UDINT_TO_DINT(udiTaskCnt)].CycleTime/10000; //[ms] X[100ns]/10000 -> [ms]
+m_bolInitDone := TRUE;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="AlarmClass" Id="{dcbfea31-89ab-46bc-9280-e6c60e70f7ff}">
+      <Declaration><![CDATA[PROPERTY AlarmClass : E_AlmClass
+]]></Declaration>
+      <Set Name="Set" Id="{554a2e15-3880-445c-bc4c-4ca704f280b0}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[m_eAlarmClass := AlarmClass;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="HornEnable" Id="{ea7e9a15-73bb-4840-9fda-58e950f8a4af}">
+      <Declaration><![CDATA[PROPERTY HornEnable : BOOL
+]]></Declaration>
+      <Set Name="Set" Id="{d085baa1-b0fb-4d92-a22a-c52b963b3b5a}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[m_bolHornEnable := HornEnable;]]></ST>
+        </Implementation>
+      </Set>
+      <Get Name="Get" Id="{edc7907b-a708-446c-946a-ea89736993d3}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[HornEnable := m_bolHornEnable;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+  </POU>
+</TcPlcObject>

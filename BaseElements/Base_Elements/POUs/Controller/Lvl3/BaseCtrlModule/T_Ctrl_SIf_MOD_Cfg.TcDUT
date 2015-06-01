@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
   <DUT Name="T_Ctrl_SIf_MOD_Cfg" Id="{0a6ad749-9fa3-41c0-ba6b-a045ebbc52d5}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_MOD_Cfg :
 STRUCT
@@ -7,8 +7,9 @@ STRUCT
 	bolComToLineControlEnabled: BOOL;
 	/// Ignore Ready Input
 	bolIgnoreReadyInput: BOOL;
+	/// True = Enable the Stacklight Horn
+	bolStackLightHornEnable: BOOL;
 END_STRUCT
 END_TYPE]]></Declaration>
-    <ObjectProperties />
   </DUT>
 </TcPlcObject>

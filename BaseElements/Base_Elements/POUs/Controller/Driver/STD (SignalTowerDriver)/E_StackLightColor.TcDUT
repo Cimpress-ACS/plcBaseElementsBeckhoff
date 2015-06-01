@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="E_StackLightColor" Id="{bda7aab6-4fca-41b3-82c6-e005308c37c1}">
+    <Declaration><![CDATA[TYPE E_StackLightColor :
+(
+	Red,
+	Yellow,
+	Green,
+	Blue,
+	Max_SackLightColor
+);
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
