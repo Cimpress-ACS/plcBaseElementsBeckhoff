@@ -15,9 +15,9 @@
     <LibraryReferences>{5700a827-0754-4a41-8cd1-aa5d95c0cdf8}</LibraryReferences>
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
-    <ProjectVersion>0.0.1.59</ProjectVersion>
     <Released>True</Released>
-    <Description>0.0.1.59 	- update Library
+    <Description>0.0.1.60 	- add second Stop status to sequence
+0.0.1.59 	- update Library
 0.0.1.58 	- [RP-1546] - Stacklight Driver
 0.0.1.57 	- update Libraries
 0.0.1.56 	- [RP-1730] - Error Exit Problem
@@ -104,6 +104,7 @@
 0.0.0.6 - Added the PRS controller
 0.0.0.5 - Added the UMC and VPC controller</Description>
     <Author>Cimpress R&amp;D Control Systems</Author>
+    <ProjectVersion>0.0.1.60</ProjectVersion>
     <!--    <OutputType>Exe</OutputType>
     <RootNamespace>MyApplication</RootNamespace>
     <AssemblyName>MyApplication</AssemblyName>-->
