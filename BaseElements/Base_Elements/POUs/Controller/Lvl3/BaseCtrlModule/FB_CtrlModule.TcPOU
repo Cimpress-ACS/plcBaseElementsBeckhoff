@@ -800,8 +800,7 @@ END_IF]]></ST>
       <Declaration><![CDATA[METHOD AddSeqChild
 VAR_INPUT
 	stSequence: T_Sequence;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// Method add a sequence to list
 IF (usiNumOfSeq <= (Base_Const.cMaxNrOfChilds-1)) THEN
@@ -813,6 +812,7 @@ IF (usiNumOfSeq <= (Base_Const.cMaxNrOfChilds-1)) THEN
 	aListOfSeq[usiNumOfSeq].intStatusSeqRun2:= stSequence.intStatusSeqRun2;
 	aListOfSeq[usiNumOfSeq].intCmdSeqStop:= stSequence.intCmdSeqStop;
 	aListOfSeq[usiNumOfSeq].intStatusSeqStop:= stSequence.intStatusSeqStop;
+	aListOfSeq[usiNumOfSeq].intStatusSeqStop2:= stSequence.intStatusSeqStop2;
 	// Inc. number of sequence
 	usiNumOfSeq:= usiNumOfSeq+1;
 	// Check if the pointer is valid
@@ -922,7 +922,7 @@ END_VAR]]></Declaration>
 					// If child is associated for the current group index		
 					IF (aListOfSeq[ii].uinGroupStop = uinGroupIndex) THEN
 						// Check defined status and if child not already checked
-						IF ((aListOfSeq[ii].pCIF^.Job.intState = aListOfSeq[ii].intStatusSeqStop) AND (aListOfSeq[ii].bolChecked = FALSE)) THEN
+						IF (((aListOfSeq[ii].pCIF^.Job.intState = aListOfSeq[ii].intStatusSeqStop) OR (aListOfSeq[ii].pCIF^.Job.intState = aListOfSeq[ii].intStatusSeqStop2)) AND (aListOfSeq[ii].bolChecked = FALSE)) THEN
 							aListOfSeq[ii].bolChecked:= TRUE;
 							intCheckCounter:= intCheckCounter - 1;
 						END_IF				
