@@ -134,17 +134,10 @@ IF (getCmdState='') THEN // global not defined get local
 	// get string cmd/state string information in runtime
 	IF (bolState=FALSE) THEN
 		// cmd's
-		CASE intCmdState OF
-			cCMD_STANDBY: 
-				getCmdState := 'cCMD_STANDBY';
-		END_CASE
+		;
 	ELSE
 		// states
-		CASE intCmdState OF	
-			cSTA_STANDBY:
-				getCmdState := 'cSTA_STANDBY';
-			cSTA_STANDBYBusy:
-				getCmdState := 'cSTA_STANDBYBusy';
+		CASE intCmdState OF
 			// SUB States
 			cSTA_SUB_INITIALIZED:
 				getCmdState := 'cSTA_SUB_INITIALIZED';
