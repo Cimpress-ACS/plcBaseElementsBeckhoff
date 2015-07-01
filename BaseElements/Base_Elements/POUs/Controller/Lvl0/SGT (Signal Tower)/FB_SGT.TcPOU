@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <POU Name="FB_SGT" Id="{3e38ff1c-8932-4771-aa3a-87f55e3483ce}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FB_SGT" Id="{3e38ff1c-8932-4771-aa3a-87f55e3483ce}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_SGT EXTENDS FB_CtrlBase
 VAR_INPUT
 	/// Green lamp ON
@@ -132,10 +132,7 @@ IF (getCmdState='') THEN // global not defined get local
 	// get string cmd/state string information in runtime
 	IF (bolState=FALSE) THEN
 		// States's
-		CASE intCmdState OF
-			(*cCMD_Standby: 
-				getCmdState := 'cCMD_Standby'; *)
-		END_CASE;  
+		;
 	ELSE
 		// States's
 		CASE intCmdState OF
@@ -638,6 +635,5 @@ END_IF]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>
