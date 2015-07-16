@@ -298,24 +298,131 @@ END_IF
       </Implementation>
     </Method>
     <Method Name="sta_STANDBYBusy" Id="{36793c08-dd27-4319-9d02-fddd0d7ca717}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_STANDBYBusy : BOOL]]></Declaration>
+      <Declaration><![CDATA[METHOD PROTECTED sta_STANDBYBusy : BOOL
+VAR
+	ii: INT;
+	bolFurtherGrpExist: BOOL;
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
 // Entry action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;	
+		// Init sub state machine
+		me.SubStateMachine.intState := cSTA_SUB_INITIALIZED; 
+		me.SubStateMachine.intStateNext := cSTA_SUB_INITIALIZED;
 	END_IF
 
 
 //--------------------------------------------------------------------------------------
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		me.StateMachine.intStateNext :=  cSTA_STANDBY;
-		
-	END_IF
 
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			;
+		END_IF
+		
+		// Stop Cycle with substates	
+		//--------------------------------------------------------------------------------------
+		// sub state machine for sequence
+		CASE me.SubStateMachine.intState OF
+			//--------------------------------------------------------------------------------------
+			cSTA_SUB_INITIALIZED:
+			
+				// Loop over all registered childs
+				FOR ii:=0 TO usiNumOfSeq-1 BY 1 DO
+					// Clear checked flag		
+					aListOfSeq[ii].bolChecked:= FALSE;
+				END_FOR
+				uinGroupIndex:= 1;
+				me.SubStateMachine.intStateNext := cSTA_SUB_SEND_GROUP_CMD;
+				
+			cSTA_SUB_SEND_GROUP_CMD:
+				
+				intCheckCounter:= 0;
+				// Loop over all registered childs
+				FOR ii:=0 TO usiNumOfSeq-1 BY 1 DO
+					// If child is associated for the current group index		
+					IF (aListOfSeq[ii].uinGroupStop = uinGroupIndex) THEN
+						// Send defined command
+						aListOfSeq[ii].pCIF^.Job.intACmd:= aListOfSeq[ii].intCmdSeqStandby;
+						intCheckCounter:= intCheckCounter + 1;
+					END_IF			
+				END_FOR
+				// Change state
+				me.SubStateMachine.intStateNext := cSTA_SUB_CHECK_GROUP_STATUS;
+			
+			
+			cSTA_SUB_CHECK_GROUP_STATUS:
+	
+				// Loop over all registered childs
+				FOR ii:=0 TO usiNumOfSeq-1 BY 1 DO
+					// If child is associated for the current group index		
+					IF (aListOfSeq[ii].uinGroupStop = uinGroupIndex) THEN
+						// Check defined status and if child not already checked
+						IF (aListOfSeq[ii].pCIF^.Job.intState = aListOfSeq[ii].intStatusSeqStandby AND aListOfSeq[ii].bolChecked = FALSE) THEN
+							aListOfSeq[ii].bolChecked:= TRUE;
+							intCheckCounter:= intCheckCounter - 1;
+						END_IF				
+					END_IF			
+				END_FOR
+				
+				// All childs in group has the right state
+				IF (intCheckCounter <= 0) THEN		
+					bolFurtherGrpExist:= FALSE;
+					// Check if a further group exist!	
+					FOR ii:=0 TO usiNumOfSeq-1 BY 1 DO	
+						IF (aListOfSeq[ii].uinGroupStop > uinGroupIndex) THEN
+							bolFurtherGrpExist:= TRUE;
+							EXIT;
+						END_IF			
+					END_FOR
+					// further group exist
+					IF (bolFurtherGrpExist = TRUE) THEN
+						IF (uinGroupIndex < uinMaxNrOfGroups) THEN			
+							me.SubStateMachine.intStateNext := cSTA_SUB_WAIT;	
+						END_IF
+					ELSE
+						me.SubStateMachine.intStateNext := cSTA_SUB_FINISHED;		
+					END_IF
+				END_IF
+
+			cSTA_SUB_WAIT:
+				
+				IF (me.SubStateMachine.udiTimeInState_ms >= SIf_Par^.aListOfStopGrpWaitTime_ms[uinGroupIndex-1]) THEN
+					// Inc. group index 
+					uinGroupIndex:= uinGroupIndex + 1;	
+					// Change state, send command for next group
+					me.SubStateMachine.intStateNext := cSTA_SUB_SEND_GROUP_CMD;
+				END_IF
+			
+			cSTA_SUB_FINISHED:
+					;		
+		END_CASE
+		
+		// Check time out error
+		IF (SIf_MOD.Par^.udiTimeoutStopping_ms <> 0) AND (me.SubStateMachine.udiTimeInState_ms > (SIf_Par^.aListOfStopGrpWaitTime_ms[uinGroupIndex-1] + SIf_MOD.Par^.udiTimeoutStopping_ms)) THEN
+			//SIf_MOD.Alm[E_ALM_MOD.TimeoutStopGroup].strText := 'Timeout stop group';
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_MOD.TimeoutStopGroup,uinGroupIndex,ADR(SIf_MOD.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := cSTA_ERROR;
+		END_IF
+	
+		// State Change Condition
+		IF (me.SubStateMachine.intState = cSTA_SUB_FINISHED) THEN
+			me.StateMachine.intStateNext := cSTA_STANDBY;
+		ELSIF (me.intCmd=cCMD_RUN) THEN
+			// State Change Condition
+			IF (me.Alarm.eActivAlmClass<E_AlmClass.TSTOP) THEN	
+				me.StateMachine.intStateNext := cSTA_RUNBusy;	
+			ELSE
+				// Clear pending command to prevent automatic recovery!
+				CIf.Job.intACmd:=cSTA_DONE;
+			END_IF
+		END_IF
+
+	END_IF
 
 //--------------------------------------------------------------------------------------
 // Exit action
@@ -726,21 +833,29 @@ END_IF
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 	END_IF
 
-	
+
 //--------------------------------------------------------------------------------------
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 		
-		// State Change Condition	
-		IF (me.intCmd=cCMD_STOP) THEN
-			me.StateMachine.intStateNext :=  cSTA_STOPBusy;
-		ELSIF (me.intCmd=cCMD_RUN) THEN
-			me.StateMachine.intStateNext :=  cSTA_RUNBusy;
+		// State Change Condition
+		IF (me.Alarm.eActivAlmClass<E_AlmClass.TSTOP) THEN
+			IF (me.intCmd=cCMD_RUN) THEN
+				IF (SIf_In^.bolReady.intern OR SIf_Cfg^.bolIgnoreReadyInput) THEN 
+					me.StateMachine.intStateNext := cSTA_RUNBusy;
+				ELSE
+					//SIf_MOD.Alm[E_ALM_MOD.NextModuleNotReadyWarning].strText := 'Next Module is not Ready';
+					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_MOD.NextModuleNotReadyWarning,0,ADR(SIf_MOD.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+					CIf.Job.intACmd := cCMD_DONE;
+				END_IF
+			END_IF
+			
+			IF (me.intCmd=cCMD_STOP) THEN
+					me.StateMachine.intStateNext := cSTA_STOPBusy;
+			END_IF
 		END_IF
-		
 	END_IF
 
-	
 //--------------------------------------------------------------------------------------
 // Exit action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
@@ -800,6 +915,8 @@ IF (usiNumOfSeq <= (Base_Const.cMaxNrOfChilds-1)) THEN
 	aListOfSeq[usiNumOfSeq].intStatusSeqRun2:= stSequence.intStatusSeqRun2;
 	aListOfSeq[usiNumOfSeq].intCmdSeqStop:= stSequence.intCmdSeqStop;
 	aListOfSeq[usiNumOfSeq].intStatusSeqStop:= stSequence.intStatusSeqStop;
+	aListOfSeq[usiNumOfSeq].intCmdSeqStandby:= stSequence.intCmdSeqStandby;
+	aListOfSeq[usiNumOfSeq].intStatusSeqStandby:= stSequence.intStatusSeqStandby;	
 	aListOfSeq[usiNumOfSeq].intStatusSeqStop2:= stSequence.intStatusSeqStop2;
 	// Inc. number of sequence
 	usiNumOfSeq:= usiNumOfSeq+1;

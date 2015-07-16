@@ -16,7 +16,8 @@
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
     <Released>True</Released>
-    <Description>0.0.1.62 	- implemented STANDBY transitions
+    <Description>0.0.1.63 	- implemented STANDBY startup/shutdown
+0.0.1.62 	- implemented STANDBY transitions
 0.0.1.61 	- update Library
 0.0.1.60 	- add second Stop status to sequence
 0.0.1.59 	- update Library
@@ -106,7 +107,7 @@
 0.0.0.6 - Added the PRS controller
 0.0.0.5 - Added the UMC and VPC controller</Description>
     <Author>Cimpress R&amp;D Control Systems</Author>
-    <ProjectVersion>0.0.1.62</ProjectVersion>
+    <ProjectVersion>0.0.1.63</ProjectVersion>
     <!--    <OutputType>Exe</OutputType>
     <RootNamespace>MyApplication</RootNamespace>
     <AssemblyName>MyApplication</AssemblyName>-->
