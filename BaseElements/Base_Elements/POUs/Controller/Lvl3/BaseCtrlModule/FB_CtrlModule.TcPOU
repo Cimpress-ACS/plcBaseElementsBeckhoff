@@ -283,6 +283,10 @@ END_IF
 			me.StateMachine.intStateNext := cSTA_STOPBusy;
 			CIf.Job.intACmd := cCMD_DONE;
 		END_IF
+		
+		IF (me.intCmd=cCMD_STANDBY) THEN
+			me.StateMachine.intStateNext := cSTA_STANDBYBusy;
+		END_IF
 
 	END_IF
 
@@ -308,19 +312,7 @@ END_IF
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 		
-		// State Change Condition	
-		IF (me.intCmd=cCMD_STOP) THEN
-			me.StateMachine.intStateNext :=  cSTA_STOPBusy;
-		ELSIF NOT (SIf_In^.bolReady.intern OR SIf_Cfg^.bolIgnoreReadyInput) THEN
-			//SIf_MOD.Alm[E_ALM_MOD.NextModuleNotReadyStop].strText := 'Next Module is not Ready';
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_MOD.NextModuleNotReadyStop,0,ADR(SIf_MOD.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-			me.StateMachine.intStateNext := cSTA_STOPBusy;
-			CIf.Job.intACmd := cCMD_DONE;
-		ELSIF (me.intCmd=cCMD_RUN) THEN
-			me.StateMachine.intStateNext :=  cSTA_RUNBusy;
-		ELSE
-			me.StateMachine.intStateNext :=  cSTA_STANDBY;
-		END_IF
+		me.StateMachine.intStateNext :=  cSTA_STANDBY;
 		
 	END_IF
 
@@ -357,6 +349,10 @@ END_IF
 					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_MOD.NextModuleNotReadyWarning,0,ADR(SIf_MOD.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 					CIf.Job.intACmd := cCMD_DONE;
 				END_IF
+			END_IF
+			
+			IF (me.intCmd=cCMD_STANDBY) THEN
+				me.StateMachine.intStateNext := cSTA_STANDBYBusy;
 			END_IF
 		END_IF
 	END_IF
@@ -428,6 +424,10 @@ END_IF
 					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_MOD.NextModuleNotReadyWarning,0,ADR(SIf_MOD.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 					CIf.Job.intACmd := cCMD_DONE;
 				END_IF
+			END_IF
+			
+			IF (me.intCmd=cCMD_STANDBY) THEN
+					me.StateMachine.intStateNext := cSTA_STANDBYBusy;
 			END_IF
 		END_IF
 	END_IF
@@ -734,11 +734,6 @@ END_IF
 		// State Change Condition	
 		IF (me.intCmd=cCMD_STOP) THEN
 			me.StateMachine.intStateNext :=  cSTA_STOPBusy;
-		ELSIF NOT (SIf_In^.bolReady.intern OR SIf_Cfg^.bolIgnoreReadyInput) THEN
-			//SIf_MOD.Alm[E_ALM_MOD.NextModuleNotReadyStop].strText := 'Next Module is not Ready';
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_MOD.NextModuleNotReadyStop,0,ADR(SIf_MOD.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-			me.StateMachine.intStateNext := cSTA_STOPBusy;
-			CIf.Job.intACmd := cCMD_DONE;
 		ELSIF (me.intCmd=cCMD_RUN) THEN
 			me.StateMachine.intStateNext :=  cSTA_RUNBusy;
 		END_IF
