@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <POU Name="MiddlePRG_1" Id="{d0b780f9-d9b7-47f3-8805-851f8ce5d376}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="MiddlePRG_1" Id="{d0b780f9-d9b7-47f3-8805-851f8ce5d376}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM MiddlePRG_1
 VAR
 	fbAlm_Man: FB_Alm_Man; // alarm manager
