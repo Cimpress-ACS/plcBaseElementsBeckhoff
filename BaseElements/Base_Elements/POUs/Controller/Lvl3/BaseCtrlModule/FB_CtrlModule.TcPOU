@@ -94,7 +94,7 @@ Version		Date			Author		Comment
 0.00.11		13.01.2014		AVM/MRU		Bugzilla ID 03: BufferFull added
 0.00.12		20.01.2014		AVM/MRU		EMO, general error reworked; AddRunGrp, AddStopGrp removed
 										Timeout run/stop group added 
-0.00.13		22.01.2014		AVM/MRU		Alternativ status for run sequence added
+0.00.13		22.01.2014		AVM/MRU		Alternative status for run sequence added
 0.00.14		08.02.2014		VP/RE		Added bolStopReleaseHangers to CUR.
 
 ___________________________________________________________________________________________________*)
@@ -274,18 +274,16 @@ END_IF
 			;
 		END_IF
 
-		// State Change Condition	
-		IF (me.intCmd=cCMD_STOP) THEN
-			me.StateMachine.intStateNext :=  cSTA_STOPBusy;
-		ELSIF NOT (SIf_In^.bolReady.intern OR SIf_Cfg^.bolIgnoreReadyInput) THEN
+		// State Change Condition
+		IF NOT (SIf_In^.bolReady.intern OR SIf_Cfg^.bolIgnoreReadyInput) THEN
 			//SIf_MOD.Alm[E_ALM_MOD.NextModuleNotReadyStop].strText := 'Next Module is not Ready';
 			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_MOD.NextModuleNotReadyStop,0,ADR(SIf_MOD.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			me.StateMachine.intStateNext := cSTA_STOPBusy;
 			CIf.Job.intACmd := cCMD_DONE;
-		END_IF
-		
-		IF (me.intCmd=cCMD_STANDBY) THEN
+		ELSIF (me.intCmd=cCMD_STANDBY) THEN
 			me.StateMachine.intStateNext := cSTA_STANDBYBusy;
+		ELSIF (me.intCmd=cCMD_STOP) THEN
+			me.StateMachine.intStateNext := cSTA_STOPBusy;
 		END_IF
 
 	END_IF
@@ -362,7 +360,7 @@ END_VAR]]></Declaration>
 					// If child is associated for the current group index		
 					IF (aListOfSeq[ii].uinGroupStop = uinGroupIndex) THEN
 						// Check defined status and if child not already checked
-						IF (aListOfSeq[ii].pCIF^.Job.intState = aListOfSeq[ii].intStatusSeqStandby AND aListOfSeq[ii].bolChecked = FALSE) THEN
+						IF (((aListOfSeq[ii].pCIF^.Job.intState = aListOfSeq[ii].intStatusSeqStandby) OR (aListOfSeq[ii].pCIF^.Job.intState = aListOfSeq[ii].intStatusSeqStandby2)) AND aListOfSeq[ii].bolChecked = FALSE) THEN
 							aListOfSeq[ii].bolChecked:= TRUE;
 							intCheckCounter:= intCheckCounter - 1;
 						END_IF				
@@ -448,20 +446,24 @@ END_VAR]]></Declaration>
 				
 		// State Change Condition
 		IF (me.Alarm.eActivAlmClass < E_AlmClass.TSTOP) THEN
-			IF (me.intCmd=cCMD_RUN) THEN
-				IF (SIf_In^.bolReady.intern OR SIf_Cfg^.bolIgnoreReadyInput) THEN 
-					me.StateMachine.intStateNext := cSTA_RUNBusy;
+			IF (me.intCmd=cCMD_RUN) OR (me.intCmd=cCMD_STANDBY) THEN
+				IF (SIf_In^.bolReady.intern OR SIf_Cfg^.bolIgnoreReadyInput) THEN
+					IF (me.intCmd=cCMD_RUN) THEN
+						me.StateMachine.intStateNext := cSTA_RUNBusy;
+					ELSIF (me.intCmd=cCMD_STANDBY) THEN
+						me.StateMachine.intStateNext := cSTA_STANDBYBusy;
+					END_IF
 				ELSE
 					//SIf_MOD.Alm[E_ALM_MOD.NextModuleNotReadyWarning].strText := 'Next Module is not Ready';
 					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_MOD.NextModuleNotReadyWarning,0,ADR(SIf_MOD.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 					CIf.Job.intACmd := cCMD_DONE;
 				END_IF
 			END_IF
-			
-			IF (me.intCmd=cCMD_STANDBY) THEN
-				me.StateMachine.intStateNext := cSTA_STANDBYBusy;
-			END_IF
+		ELSE
+			// Clear pending command to prevent automatic recovery!
+			CIf.Job.intACmd:=cSTA_DONE;
 		END_IF
+		
 	END_IF
 
 	
@@ -531,14 +533,20 @@ END_VAR]]></Declaration>
 					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_MOD.NextModuleNotReadyWarning,0,ADR(SIf_MOD.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 					CIf.Job.intACmd := cCMD_DONE;
 				END_IF
-			END_IF
-			
-			IF (me.intCmd=cCMD_STANDBY) THEN
+			ELSIF (me.intCmd=cCMD_STANDBY) THEN
+				IF (SIf_In^.bolReady.intern OR SIf_Cfg^.bolIgnoreReadyInput) THEN 
 					me.StateMachine.intStateNext := cSTA_STANDBYBusy;
+				ELSE
+					//SIf_MOD.Alm[E_ALM_MOD.NextModuleNotReadyWarning].strText := 'Next Module is not Ready';
+					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_MOD.NextModuleNotReadyWarning,0,ADR(SIf_MOD.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+					CIf.Job.intACmd := cCMD_DONE;
+				END_IF
 			END_IF
 		END_IF
+		
 	END_IF
 
+	
 //--------------------------------------------------------------------------------------
 // Exit action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
@@ -914,10 +922,11 @@ IF (usiNumOfSeq <= (Base_Const.cMaxNrOfChilds-1)) THEN
 	aListOfSeq[usiNumOfSeq].intStatusSeqRun:= stSequence.intStatusSeqRun;
 	aListOfSeq[usiNumOfSeq].intStatusSeqRun2:= stSequence.intStatusSeqRun2;
 	aListOfSeq[usiNumOfSeq].intCmdSeqStop:= stSequence.intCmdSeqStop;
-	aListOfSeq[usiNumOfSeq].intStatusSeqStop:= stSequence.intStatusSeqStop;
-	aListOfSeq[usiNumOfSeq].intCmdSeqStandby:= stSequence.intCmdSeqStandby;
-	aListOfSeq[usiNumOfSeq].intStatusSeqStandby:= stSequence.intStatusSeqStandby;	
+	aListOfSeq[usiNumOfSeq].intStatusSeqStop:= stSequence.intStatusSeqStop;	
 	aListOfSeq[usiNumOfSeq].intStatusSeqStop2:= stSequence.intStatusSeqStop2;
+	aListOfSeq[usiNumOfSeq].intCmdSeqStandby:= stSequence.intCmdSeqStandby;
+	aListOfSeq[usiNumOfSeq].intStatusSeqStandby:= stSequence.intStatusSeqStandby;
+	aListOfSeq[usiNumOfSeq].intStatusSeqStandby2:= stSequence.intStatusSeqStandby2;
 	// Inc. number of sequence
 	usiNumOfSeq:= usiNumOfSeq+1;
 	// Check if the pointer is valid

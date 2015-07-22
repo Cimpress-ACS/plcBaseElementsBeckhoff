@@ -14,18 +14,20 @@ STRUCT
 	intCmdSeqRun: INT;
 	/// Expected status for run sequence
 	intStatusSeqRun: INT;
-	/// Alternativ status for run sequence
+	/// Alternative status for run sequence
 	intStatusSeqRun2: INT;
 	/// Command to be executed for run sequence
 	intCmdSeqStop: INT;
 	/// Expected status for stop sequence
 	intStatusSeqStop: INT;
+	/// Alternative status for stop sequence
+	intStatusSeqStop2: INT;
 	/// Command to be executed for standby sequence
 	intCmdSeqStandby: INT;
 	/// Expected status for standby sequence
-	intStatusSeqStandby: INT;	
-	/// Alternativ status for stop sequence
-	intStatusSeqStop2: INT;
+	intStatusSeqStandby: INT;
+	/// Alternative status for standby sequence
+	intStatusSeqStandby2: INT;
 	/// Used internal for run and stop sequence to detect if the sequence has been processed
 	bolChecked: BOOL;
 END_STRUCT
