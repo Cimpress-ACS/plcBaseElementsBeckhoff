@@ -16,7 +16,8 @@
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
     <Released>True</Released>
-    <Description>0.0.1.65 	- [RP-1797] - New BaseConcept including SaberLogging
+    <Description>0.0.1.66 	- [RP-2057] - Moved back some Utilities from the base.
+0.0.1.65 	- [RP-1797] - New BaseConcept including SaberLogging
 0.0.1.64 	- small changes
 0.0.1.63 	- implemented STANDBY startup/shutdown
 0.0.1.62 	- implemented STANDBY transitions
@@ -109,7 +110,7 @@
 0.0.0.6 - Added the PRS controller
 0.0.0.5 - Added the UMC and VPC controller</Description>
     <Author>Cimpress R&amp;D Control Systems</Author>
-    <ProjectVersion>0.0.1.65</ProjectVersion>
+    <ProjectVersion>0.0.1.66</ProjectVersion>
     <!--    <OutputType>Exe</OutputType>
     <RootNamespace>MyApplication</RootNamespace>
     <AssemblyName>MyApplication</AssemblyName>-->
@@ -617,6 +618,66 @@
     <Compile Include="POUs\Controller\Lvl3\BaseCtrlModule\T_Sequence.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\Utility\Data Channel\IdBase\FB_IdBaseRecvDch.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Utility\Data Channel\IdBase\FB_IdBaseSendDch.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Utility\Data Channel\IdBase\IdBaseConst.TcGVL">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Utility\Data Channel\IdBase\T_IdBaseRecvData.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Utility\Data Channel\IdBase\T_IdBaseSendData.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Utility\GHT [Generic Hash Table]\FB_GHT.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Utility\GHT [Generic Hash Table]\IGHT.TcIO">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Utility\GHT [Generic Hash Table]\T_GHTHashTableBuffer.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Utility\ItemBase\E_Destination.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Utility\ItemBase\E_ItemHealth.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Utility\ItemBase\E_PrintSelection.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Utility\ItemBase\ItemConst.TcGVL">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Utility\ItemBase\T_IdBase_DCH.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Utility\ItemBase\T_ItemBase.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Utility\ItemBase\T_ItemPaperBase.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
     <Compile Include="Version\Global_Version.TcGVL">
       <SubType>Code</SubType>
     </Compile>
@@ -645,10 +706,14 @@
     <Folder Include="POUs\Controller\Lvl1" />
     <Folder Include="POUs\Controller\Lvl3\BaseCtrlModule" />
     <Folder Include="POUs\Utility" />
+    <Folder Include="POUs\Utility\Data Channel" />
+    <Folder Include="POUs\Utility\Data Channel\IdBase" />
+    <Folder Include="POUs\Utility\GHT [Generic Hash Table]" />
+    <Folder Include="POUs\Utility\ItemBase" />
     <Folder Include="Version" />
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_PLC,0.3.6.0,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.6.1,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_EtherCAT,3.3.5.0,Beckhoff Automation GmbH">
