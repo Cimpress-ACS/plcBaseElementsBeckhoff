@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="T_GHTHashTableBuffer" Id="{9a3a7aba-2db4-4014-8751-5e7f48f9bff1}">
+    <Declaration><![CDATA[TYPE T_GHTHashTableBuffer :
+STRUCT
+	aBuffer: ARRAY[0..(50 - 1)] OF POINTER TO T_HashTableEntry;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
