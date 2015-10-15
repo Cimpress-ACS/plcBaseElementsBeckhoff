@@ -649,7 +649,7 @@
     <Folder Include="Version" />
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_PLC,0.3.6.0,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.6.1,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_EtherCAT,3.3.5.0,Beckhoff Automation GmbH">
@@ -788,11 +788,6 @@
     <SubObject Include="FB_PTL.sta_OFFBusy" />
     <SubObject Include="FB_PTL.sta_PON" />
     <SubObject Include="FB_PTL.sta_PONBusy" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Base_Elements.tmc">
-      <SubType>Content</SubType>
-    </Content>
   </ItemGroup>
   <ProjectExtensions>
     <PlcProjectOptions>
