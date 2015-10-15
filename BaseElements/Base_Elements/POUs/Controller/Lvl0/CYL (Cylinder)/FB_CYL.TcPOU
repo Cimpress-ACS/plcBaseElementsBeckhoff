@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <POU Name="FB_CYL" Id="{59de7442-5445-4be6-b821-033336f62ada}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FB_CYL" Id="{59de7442-5445-4be6-b821-033336f62ada}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_CYL EXTENDS FB_CtrlBase
 
 VAR_INPUT
@@ -126,7 +126,10 @@ CIf.SwCfg.bolSimulation := FALSE;
 SIf.Par.udiExtendTime_ms := 10000;
 SIf.Par.udiRetractTime_ms := 8000;
 SIf.Par.udiSimExtendTime_ms := SIf.Par.udiExtendTime_ms/2;	
-SIf.Par.udiSimRetractTime_ms := SIf.Par.udiRetractTime_ms/2;]]></ST>
+SIf.Par.udiSimRetractTime_ms := SIf.Par.udiRetractTime_ms/2;
+SIf.Par.udiDebounceTimeExtended_ms := 0;
+SIf.Par.udiDebounceTimeRetracted_ms := 0;
+]]></ST>
       </Implementation>
     </Method>
     <Method Name="getCmdState" Id="{0c1b41fc-39bc-44e0-8541-bfbf69edbb2f}">
@@ -631,16 +634,15 @@ END_IF
       </Get>
     </Property>
     <Method Name="IoInBridge" Id="{d0cf526a-f035-4ce6-b0c9-596784ec5c80}">
-      <Declaration><![CDATA[METHOD PROTECTED IoInBridge : BOOL
-]]></Declaration>
+      <Declaration><![CDATA[METHOD PROTECTED IoInBridge : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
 SIf.In.bolExtended.map := THIS^.In_bolExtended;
 SIf.In.bolRetracted.map := THIS^.In_bolRetracted;
 
 IF (CIf.SwCfg.bolSimulation = FALSE) THEN
-	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolExtended));
-	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolRetracted));
+	getInBolDebounced(CIf.Job.bolIoForce, me.FUBInfo.udiSample_ms, SIf.Par.udiDebounceTimeExtended_ms, ADR(SIf.In.bolExtended));
+	getInBolDebounced(CIf.Job.bolIoForce, me.FUBInfo.udiSample_ms, SIf.Par.udiDebounceTimeRetracted_ms, ADR(SIf.In.bolRetracted));
 ELSE
 	//simulation of global IO
 END_IF
@@ -801,6 +803,5 @@ END_IF
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>
