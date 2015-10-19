@@ -16,7 +16,8 @@
     <Company>Vistaprint</Company>
     <Title>Base_Elements</Title>
     <Released>True</Released>
-    <Description>0.0.1.66 	- [RP-2057] - Moved back some Utilities from the base.
+    <Description>0,0.1.67 -   [RP-2113] - introduced de-bouncing
+0.0.1.66 	- [RP-2057] - Moved back some Utilities from the base.
 0.0.1.65 	- [RP-1797] - New BaseConcept including SaberLogging
 0.0.1.64 	- small changes
 0.0.1.63 	- implemented STANDBY startup/shutdown
@@ -110,7 +111,7 @@
 0.0.0.6 - Added the PRS controller
 0.0.0.5 - Added the UMC and VPC controller</Description>
     <Author>Cimpress R&amp;D Control Systems</Author>
-    <ProjectVersion>0.0.1.66</ProjectVersion>
+    <ProjectVersion>0.0.1.67</ProjectVersion>
     <!--    <OutputType>Exe</OutputType>
     <RootNamespace>MyApplication</RootNamespace>
     <AssemblyName>MyApplication</AssemblyName>-->
@@ -852,11 +853,6 @@
     <SubObject Include="FB_PTL.sta_OFFBusy" />
     <SubObject Include="FB_PTL.sta_PON" />
     <SubObject Include="FB_PTL.sta_PONBusy" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Base_Elements.tmc">
-      <SubType>Content</SubType>
-    </Content>
   </ItemGroup>
   <ProjectExtensions>
     <PlcProjectOptions>
