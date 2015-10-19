@@ -64,7 +64,7 @@
     <Folder Include="POUs\Utility Functions" />
   </ItemGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_Elements,0.0.1.64,Vistaprint">
+    <LibraryReference Include="Base_Elements,0.0.1.67,Vistaprint">
       <Namespace>Base_Elements</Namespace>
     </LibraryReference>
     <LibraryReference Include="Base_PLC,0.3.5.17,Vistaprint">
@@ -169,11 +169,6 @@
     <SubObject Include="FB_SLB.CmdToAllZones_1" />
     <SubObject Include="FB_SLB.StopAllZones_1" />
     <SubObject Include="FB_SLB.StopAllZones_1" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="BaseElementsSample.tmc">
-      <SubType>Content</SubType>
-    </Content>
   </ItemGroup>
   <ProjectExtensions>
     <PlcProjectOptions>

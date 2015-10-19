@@ -1,18 +1,22 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
   <DUT Name="T_Ctrl_SIf_CYL_Par" Id="{d2a041b0-9ccd-45c7-8c9c-38689c415a92}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_CYL_Par :
 STRUCT
-	///[ms] until failure to long time for extend
+	// until failure to long time for extend
 	udiExtendTime_ms: UDINT;
-	///[ms] until failure to long time for retract
+	// until failure to long time for retract
 	udiRetractTime_ms: UDINT;
-	///[ms] simulation time for extend or /2 of timeout time?
+	// simulation time for extend or /2 of timeout time?
 	udiSimExtendTime_ms: UDINT;
-	///[ms] simulation time for retract or /2 of timeout time?
+	// simulation time for retract or /2 of timeout time?
 	udiSimRetractTime_ms: UDINT;
+	// debounce time for extended feedback, default is 0
+	udiDebounceTimeExtended_ms: UDINT;
+	// debounce time for retracted feedback, default is 0
+	udiDebounceTimeRetracted_ms: UDINT;
 END_STRUCT
 END_TYPE
 ]]></Declaration>
-    <ObjectProperties />
   </DUT>
 </TcPlcObject>
