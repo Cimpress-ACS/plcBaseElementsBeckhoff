@@ -4,7 +4,7 @@
     <Declaration><![CDATA[// This function has been automatically generated from the project information.
 VAR_GLOBAL CONSTANT
 	{attribute 'const_non_replaced'}
-	stLibVersion_Base_Elements : ST_LibVersion := (iMajor := 0, iMinor := 0, iBuild := 1, iRevision := 67, sVersion := '0.0.1.67');
+	stLibVersion_Base_Elements : ST_LibVersion := (iMajor := 0, iMinor := 0, iBuild := 1, iRevision := 68, sVersion := '0.0.1.68');
 END_VAR
 ]]></Declaration>
   </GVL>
