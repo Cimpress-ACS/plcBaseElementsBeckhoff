@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4019.2">
   <POU Name="FB_IdBaseRecvDch" Id="{027a6878-45dc-4329-a3ee-28dda31b0de4}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_IdBaseRecvDch EXTENDS FB_DataChannelRecvBase IMPLEMENTS I_DataChannelRecv
 VAR
@@ -9,7 +9,21 @@ VAR
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[SUPER^();]]></ST>
+      <ST><![CDATA[(* Copyright 2017 Cimpress
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. *)
+
+SUPER^();]]></ST>
     </Implementation>
     <Method Name="InitChannel" Id="{35fba11f-13bb-4a56-a8bf-29ffa9343d7f}">
       <Declaration><![CDATA[{attribute 'object_name' := 'InitChannel'}

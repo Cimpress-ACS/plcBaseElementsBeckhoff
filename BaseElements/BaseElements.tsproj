@@ -1,5 +1,63 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0">
+<TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0" TcVersion="3.1.4020.0">
+	<DataTypes>
+		<DataType>
+			<Name GUID="{25EF4C36-7333-44F5-AC86-574EF298D49B}" Namespace="tc2_serialcom, 3.3.4.0 (beckhoff automation gmbh)" AutoDeleteType="true">EL6inData22B</Name>
+			<Comment>
+				<![CDATA[ This data type is corresponding to the
+   KL-6xxx data structure used in the
+   TwinCAT SystemManager
+   (KL-6xxx version using 5 data bytes / 
+    non-alternative (standard) output ) 
+]]>
+			</Comment>
+			<BitSize>192</BitSize>
+			<SubItem>
+				<Name>Status</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<BitSize>16</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>D</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000001}">BYTE</Type>
+				<ArrayInfo>
+					<LBound>0</LBound>
+					<Elements>22</Elements>
+				</ArrayInfo>
+				<BitSize>176</BitSize>
+				<BitOffs>16</BitOffs>
+			</SubItem>
+		</DataType>
+		<DataType>
+			<Name GUID="{8DC5D6ED-9071-47B9-B641-9B3AE04217BF}" Namespace="tc2_serialcom, 3.3.4.0 (beckhoff automation gmbh)" AutoDeleteType="true">EL6outData22B</Name>
+			<Comment>
+				<![CDATA[ This data type is corresponding to the
+   KL-6xxx data structure used in the
+   TwinCAT SystemManager
+   (KL-6xxx version using 5 data bytes / 
+    non-alternative (standard) output ) 
+]]>
+			</Comment>
+			<BitSize>192</BitSize>
+			<SubItem>
+				<Name>Ctrl</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<BitSize>16</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>D</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000001}">BYTE</Type>
+				<ArrayInfo>
+					<LBound>0</LBound>
+					<Elements>22</Elements>
+				</ArrayInfo>
+				<BitSize>176</BitSize>
+				<BitOffs>16</BitOffs>
+			</SubItem>
+		</DataType>
+	</DataTypes>
 	<ImageDatas>
 		<ImageData Id="1000">424dd6020000000000003600000028000000100000000e0000000100180000000000a0020000c40e0000c40e00000000000000000000ff00ffff00ffff00ff808080808080808080808080808080808080808080808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c0000000c0c0c0000000808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c000ffffc0c0c000ffff808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c0000000c0c0c0000000808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c0ff0000c0c0c0ff0000808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c0000000c0c0c0000000808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c00000ffc0c0c00000ff808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c0000000c0c0c0000000808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c0008000c0c0c0008000808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ff0000c00000c0ffffffc0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ff</ImageData>
 		<ImageData Id="1001">424dd6020000000000003600000028000000100000000e0000000100180000000000a0020000c40e0000c40e00000000000000000000ff00ff000000000000ff00ffff00ffff00ff808080808080808080808080808080ff00ffff00ffff00ffff00ffff00ff000000ff00ffff00ff000000ff00ffff00ffc0c0c0000000c0c0c0000000808080ff00ffff00ffff00ffff00ffff00ff000000ff00ffff00ffff00ffff00ffff00ffc0c0c000ffffc0c0c000ffff808080ff00ffff00ffff00ffff00ffff00ff000000ff00ffff00ffff00ffff00ffff00ffc0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ff000000ff00ffff00ff000000ff00ffff00ffc0c0c0000000c0c0c0000000808080ff00ffff00ffff00ffff00ffff00ffff00ff000000000000ff00ffff00ffff00ffc0c0c0ff0000c0c0c0ff0000808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ff007fff007fff007fff007fff007fff007fffc0c0c0000000c0c0c0000000808080ff00ffff00ffff00ffff00ffff00ff007fff007fff007fff007fff007fff007fffc0c0c00000ffc0c0c00000ff808080ff00ffff00ffff00ffff00ffff00ff007fff007fff007fff007fff007fff007fffc0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ff007fff007fff007fff007fff007fff007fffc0c0c0000000c0c0c0000000808080ff00ffff00ffff00ffff00ffff00ff007fff007fff007fff007fff007fff007fffc0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ff007fff007fff007fff007fff007fff007fffc0c0c0008000c0c0c0008000808080ff00ffff00ffff00ffff00ffff00ff007fff007fff007fff007fff007fff007fffc0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ff</ImageData>
@@ -7,7 +65,7 @@
 		<ImageData Id="1003">424db6030000000000003600000028000000100000000e000000010020000000000080030000c40e0000c40e00000000000000000000ff00ff00ff00ff00ff00ff00ff00ff00e0e0e0ffe0e0e0ffe0e0e0ffe0e0e0ffe0e0e0ff808080ff808080ff808080ff808080ff808080ffff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00e0e0e0ff9c9c9cff242424ff9c9c9cffe0e0e0ffc0c0c0ff000000ffc0c0c0ff000000ff808080ffff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00e0e0e0ff9c9c9cff242424ff9c9c9cffe0e0e0ffc0c0c0ff00ffffffc0c0c0ff00ffffff808080ffff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00e0e0e0ff9c9c9cff242424ff9c9c9cffe0e0e0ffc0c0c0ffc0c0c0ffc0c0c0ffc0c0c0ff808080ffff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00e0e0e0ff9c9c9cff242424ff9c9c9cffe0e0e0ffc0c0c0ff000000ffc0c0c0ff000000ff808080ffff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00e0e0e0ff9c9c9cff242424ff9c9c9cffe0e0e0ffc0c0c0ffff0000ffc0c0c0ffff0000ff808080ffff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00e0e0e0ff9c9c9cff242424ff9c9c9cffe0e0e0ffc0c0c0ffc0c0c0ffc0c0c0ffc0c0c0ff808080ffff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00e0e0e0ff9c9c9cff242424ff9c9c9cffe0e0e0ffc0c0c0ff000000ffc0c0c0ff000000ff808080ffff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00e0e0e0ffe0e0e0ffe0e0e0ffe0e0e0ffe0e0e0ffc0c0c0ff0000ffffc0c0c0ff0000ffff808080ffff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00e0e0e0ff9c9c9cff242424ff9c9c9cffe0e0e0ffc0c0c0ffc0c0c0ffc0c0c0ffc0c0c0ff808080ffff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00e0e0e0ffe0e0e0ffe0e0e0ffe0e0e0ffe0e0e0ffc0c0c0ff000000ffc0c0c0ff000000ff808080ffff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00e0e0e0ffc6c6c6ff242424ffc6c6c6ffe0e0e0ffc0c0c0ffc0c0c0ffc0c0c0ffc0c0c0ff808080ffff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00e0e0e0ff242424ffe0e0e0ff242424ffe0e0e0ffc0c0c0ff008000ffc0c0c0ff008000ff808080ffff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00e0e0e0ffc6c6c6ff242424ffc6c6c6ffe0e0e0ffc0c0c0ffc0c0c0ffc0c0c0ffc0c0c0ff808080ffff00ff00ff00ff00</ImageData>
 		<ImageData Id="1004">424dd6020000000000003600000028000000100000000e0000000100180000000000a0020000c40e0000c40e00000000000000000000ff00ffc0c0c0c0c0c0c0c0c0c0c0c0808080808080808080808080808080808080ff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0c0c0c0c0c0c0c0c0c0808080c0c0c0000000c0c0c0000000808080ff00ffff00ffff00ffff00ffff00ffff00ffc0c0c000bfff00bfffc0c0c0808080c0c0c000ffffc0c0c000ffff808080ff00ffff00ffff00ffff00ffff00ffff00ffc0c0c000bfff00bfffc0c0c0808080c0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffc0c0c000bfff00bfffc0c0c0808080c0c0c0000000c0c0c0000000808080ff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0c0c0c0c0c0c0c0c0c0808080c0c0c0ff0000c0c0c0ff0000808080ff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0c0c0c0c0c0c0c0c0c0808080c0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0c0c0c0c0c0c0c0c0c0808080c0c0c0000000c0c0c0000000808080ff00ffff00ffff00ffff00ffff00ffff00ffc0c0c000bfff00bfffc0c0c0808080c0c0c00000ffc0c0c00000ff808080ff00ffff00ffff00ffff00ffff00ffff00ffc0c0c000bfff00bfffc0c0c0808080c0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffc0c0c000bfff00bfffc0c0c0808080c0c0c0000000c0c0c0000000808080ff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0c0c0c0c0c0c0c0c0c0808080c0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0c0c0c0c0c0c0c0c0c0808080c0c0c0008000c0c0c0008000808080ff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0c0c0c0c0c0c0c0c0c0808080c0c0c0c0c0c0c0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ff</ImageData>
 	</ImageDatas>
-	<Project ProjectGUID="{1927D6AA-E64E-4710-9987-139DA1D786B0}" ModifiedGUID="{4FD3F329-9901-4D7F-9E4B-868A630D553B}">
+	<Project ProjectGUID="{1927D6AA-E64E-4710-9987-139DA1D786B0}" Target64Bit="true" ShowHideConfigurations="#x6">
 		<System>
 			<Settings>
 				<Cpu RtLimit="50"/>
@@ -40,6 +98,168 @@
 				<Instance Id="#x01010020" TcSmClass="TComPlcObjDef">
 					<Name>BaseElementsSample Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
+					<Vars VarGrpType="1">
+						<Name>Task_Fast Inputs</Name>
+						<Var>
+							<Name>FastPRG_1.fbRFR_11.fbExCom.In_stEL6inData</Name>
+							<Type GUID="{25EF4C36-7333-44F5-AC86-574EF298D49B}" Namespace="tc2_serialcom, 3.3.4.0 (beckhoff automation gmbh)">EL6inData22B</Type>
+						</Var>
+						<Var>
+							<Name>FastPRG_1.fbRFD_12.fbCom_3964R.In_stEL6inData</Name>
+							<Type GUID="{25EF4C36-7333-44F5-AC86-574EF298D49B}" Namespace="tc2_serialcom, 3.3.4.0 (beckhoff automation gmbh)">EL6inData22B</Type>
+						</Var>
+					</Vars>
+					<Vars VarGrpType="2">
+						<Name>Task_Fast Outputs</Name>
+						<Var>
+							<Name>FastPRG_1.fbRFR_11.fbExCom.Out_stEL6outData</Name>
+							<Type GUID="{8DC5D6ED-9071-47B9-B641-9B3AE04217BF}" Namespace="tc2_serialcom, 3.3.4.0 (beckhoff automation gmbh)">EL6outData22B</Type>
+						</Var>
+						<Var>
+							<Name>FastPRG_1.fbRFD_12.fbCom_3964R.Out_stEL6outData</Name>
+							<Type GUID="{8DC5D6ED-9071-47B9-B641-9B3AE04217BF}" Namespace="tc2_serialcom, 3.3.4.0 (beckhoff automation gmbh)">EL6outData22B</Type>
+						</Var>
+					</Vars>
+					<Vars VarGrpType="2">
+						<Name>Task_Middle Outputs</Name>
+						<Var>
+							<Name>Io.Out_bolLED_RD</Name>
+							<Comment>
+								<![CDATA[ Red LED]]>
+							</Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>Io.Out_bolLED_YE</Name>
+							<Comment>
+								<![CDATA[ Yellow LED]]>
+							</Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>Io.Out_bolLED_GN</Name>
+							<Comment>
+								<![CDATA[ Green LED]]>
+							</Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>Io.Out_bolBeep</Name>
+							<Comment>
+								<![CDATA[ Beeper]]>
+							</Comment>
+							<Type>BOOL</Type>
+						</Var>
+					</Vars>
+					<Vars VarGrpType="1">
+						<Name>Task_Slow Inputs</Name>
+						<Var>
+							<Name>Io.In_bol_11_0_B1_Doublestopper_full</Name>
+							<Comment>
+								<![CDATA[VOLLMELDUNG DOPPELSTOPPER]]>
+							</Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>Io.In_bol_11_0_B5_Seperator_full</Name>
+							<Comment>
+								<![CDATA[VOLLMELDUNG VEREINZELUNG]]>
+							</Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>Io.In_bol_11_0_B6_Hanger_in_Seperator</Name>
+							<Comment>
+								<![CDATA[BUEGEL IN VEREINZELUNG]]>
+							</Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>Io.In_bol_11_0_A1_Motor_Protection</Name>
+							<Comment>
+								<![CDATA[MOTORSCHUTZ AUSGELOEST]]>
+							</Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>Io.In_bol_11_0_B13_Doublestopper_full</Name>
+							<Comment>
+								<![CDATA[VOLLMELDUNG DOPPELSTOPPER]]>
+							</Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>Io.In_bol_11_0_B15_New_part</Name>
+							<Comment>
+								<![CDATA[NEUES TEIL]]>
+							</Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>Io.In_bol_EmergencyOff</Name>
+							<Comment>
+								<![CDATA[ Emergency Off Button]]>
+							</Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>Io.In_bol_11_0_B3_Doublestopper_full</Name>
+							<Comment>
+								<![CDATA[VOLLMELDUNG DOPPELSTOPPER]]>
+							</Comment>
+							<Type>BOOL</Type>
+						</Var>
+					</Vars>
+					<Vars VarGrpType="2">
+						<Name>Task_Slow Outputs</Name>
+						<Var>
+							<Name>Io.Out_bol_11_0_Q2_Doublestopper</Name>
+							<Comment>
+								<![CDATA[DOPPELSTOPPER]]>
+							</Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>Io.Out_bol_11_0_Q4_Doublestopper</Name>
+							<Comment>
+								<![CDATA[DOPPELSTOPPER]]>
+							</Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>Io.Out_bol_11_0_Q7_Seperator</Name>
+							<Comment>
+								<![CDATA[VEREINZELUNG]]>
+							</Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>Io.Out_bol_11_0_Q8_Control_stopper</Name>
+							<Comment>
+								<![CDATA[KONTROLLSTOPPER]]>
+							</Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>Io.Out_bol_11_0_A1_Drive_On</Name>
+							<Comment>
+								<![CDATA[ANTRIEB EIN]]>
+							</Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>Io.Out_bol_11_0_Q14_Doublestopper</Name>
+							<Comment>
+								<![CDATA[DOPPELSTOPPER]]>
+							</Comment>
+							<Type>BOOL</Type>
+						</Var>
+					</Vars>
+					<TaskPouOids>
+						<TaskPouOid Prio="8" OTCID="#x01010023"/>
+						<TaskPouOid Prio="4" OTCID="#x01010021"/>
+						<TaskPouOid Prio="6" OTCID="#x01010022"/>
+					</TaskPouOids>
 				</Instance>
 			</Project>
 		</Plc>
@@ -1021,16 +1241,4 @@
 			</Device>
 		</Io>
 	</Project>
-	<Mappings>
-		<OwnerA Name="TIPC^BaseElementsSample^BaseElementsSample Instance">
-			<OwnerB Name="TIID^Device 1 (EtherCAT)^Term 1 (EK1200)^Term 2 (EL6021)">
-				<Link VarA="Task_Fast Inputs^FastPRG_1.fbRFD_12.fbCom_3964R.In_stEL6inData^Status" VarB="COM Inputs^Status"/>
-				<Link VarA="Task_Fast Outputs^FastPRG_1.fbRFD_12.fbCom_3964R.Out_stEL6outData^Ctrl" VarB="COM Outputs^Ctrl"/>
-			</OwnerB>
-			<OwnerB Name="TIID^Device 5 (EtherCAT)^Term 5 (EK1100)^Term 6 (EL6001)">
-				<Link VarA="Task_Fast Inputs^FastPRG_1.fbRFR_11.fbExCom.In_stEL6inData^Status" VarB="COM Inputs^Status"/>
-				<Link VarA="Task_Fast Outputs^FastPRG_1.fbRFR_11.fbExCom.Out_stEL6outData^Ctrl" VarB="COM Outputs^Ctrl"/>
-			</OwnerB>
-		</OwnerA>
-	</Mappings>
 </TcSmProject>

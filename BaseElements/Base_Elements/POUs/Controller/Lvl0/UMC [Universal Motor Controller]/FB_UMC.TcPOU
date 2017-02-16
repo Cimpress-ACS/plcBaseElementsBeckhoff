@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <POU Name="FB_UMC" Id="{7c7c56be-85d5-4b7e-bf88-0704e3cbe388}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4019.2">
+  <POU Name="FB_UMC" Id="{7c7c56be-85d5-4b7e-bf88-0704e3cbe388}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_UMC EXTENDS FB_CtrlBase
 VAR_INPUT
 	In_uinStatus: UINT;
@@ -36,7 +36,21 @@ VAR CONSTANT
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[(*__________________________________________________________________________________________________
+      <ST><![CDATA[(* Copyright 2017 Cimpress
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. *)
+
+(*__________________________________________________________________________________________________
 ¦	
 ¦	Vistaprint Schweiz GmbH
 ¦	CH - 8401 Winterthur
@@ -86,9 +100,7 @@ END_IF;
         <Implementation>
           <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
         </Implementation>
-        <ObjectProperties />
       </Get>
-      <ObjectProperties />
     </Property>
     <Method Name="IoInBridge" Id="{06969552-1773-4573-a299-c8c9933c6ef7}">
       <Declaration><![CDATA[{attribute 'object_name' := 'IoInBridge'}
@@ -111,7 +123,6 @@ ELSE
 END_IF
 ]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_STOP" Id="{09e03bbf-eae1-44ff-a886-88cd140bacad}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_STOP'}
@@ -149,7 +160,6 @@ METHOD PROTECTED sta_STOP : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="cmd_MotorClear" Id="{0ad32ce5-02b8-4336-897b-d51700cbd635}">
       <Declaration><![CDATA[{attribute 'object_name' := 'cmd_MotorClear'}
@@ -160,7 +170,6 @@ METHOD PROTECTED cmd_MotorClear : BOOL
 SIf.Out.uinSpeedSetpoint.intern 	:= 0;
 ]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_OFF" Id="{150e8486-b104-40bc-a4cd-7964d5391c98}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFF'}
@@ -201,7 +210,6 @@ METHOD PROTECTED sta_OFF : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="cmd_MotorStop" Id="{1a8a96f0-c8a9-40ae-90a4-f5ab5f6c384a}">
       <Declaration><![CDATA[{attribute 'object_name' := 'cmd_MotorStop'}
@@ -213,7 +221,6 @@ Out_unControl.Data.SetDCBreak 		:= 1;
 Out_unControl.Data.SetHalt        	:= 1;
 Out_unControl.Data.SetQuickStop    	:= 1;]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="cmd_MotorOff" Id="{326dcdf1-c155-44d9-932c-4ff855772f9d}">
       <Declaration><![CDATA[{attribute 'object_name' := 'cmd_MotorOff'}
@@ -227,7 +234,6 @@ Out_unControl.Data.SetQuickStop    	:= 1;
 SIf.Out.uinSpeedSetpoint.intern 	:= 0;
 ]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="getCtrlSIf" Id="{3696bb31-b5b5-4032-aeb8-45d951e4306a}">
       <Declaration><![CDATA[{attribute 'object_name' := 'getCtrlSIf'}
@@ -236,7 +242,6 @@ METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_UMC
       <Implementation>
         <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="Always" Id="{3a485704-ed5c-4489-b478-2352d4f505da}">
       <Declaration><![CDATA[{attribute 'object_name' := 'Always'}
@@ -299,7 +304,6 @@ IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 	
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="FB_init" Id="{49188027-cec4-4e22-bc48-1162ee5fdc57}">
       <Declaration><![CDATA[{attribute 'object_name' := 'FB_init'}
@@ -395,7 +399,6 @@ SIf.Par.eRotationDirection  := E_TURN_DIRECTION.LEFT;
 
 SIf.Par.udiSimMotorOnTime_ms := SIf.Par.udiMotorOnTime_ms / 10;]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_ERRORQuit" Id="{4cd275a2-017f-4fd0-ac4d-8b20883964bd}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERRORQuit'}
@@ -443,7 +446,6 @@ METHOD PROTECTED sta_ERRORQuit : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="GetSpeedValue" Id="{66b53486-bbd4-4830-9c89-63959ea0da21}">
       <Declaration><![CDATA[{attribute 'object_name' := 'GetSpeedValue'}
@@ -462,7 +464,6 @@ END_IF
 
 GetSpeedValue := uinSpeedOutput;]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="IoOutBridge" Id="{736f9f75-7cb1-43df-8de3-f69d4bdd9b87}">
       <Declaration><![CDATA[{attribute 'object_name' := 'IoOutBridge'}
@@ -481,7 +482,6 @@ IF (CIf.SwCfg.bolSimulation = FALSE) THEN
 	THIS^.Out_uinSpeedSetpoint		:= SIf.Out.uinSpeedSetpoint.map	;
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="StateMachine" Id="{7d9bdba7-64c2-4795-9f3a-03cc5948e4c4}">
       <Declaration><![CDATA[{attribute 'object_name' := 'StateMachine'}
@@ -504,7 +504,6 @@ CASE me.StateMachine.intState OF
 		THIS^.sta_RESETMOTORERROR();
 END_CASE;]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_PON" Id="{7f3296c6-7073-4b07-8edd-16b8f4336c81}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_PON'}
@@ -532,7 +531,6 @@ METHOD PROTECTED sta_PON : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_RESETMOTORERROR" Id="{8264d63d-8bc3-4403-911a-4948072988bd}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_RESETMOTORERROR'}
@@ -569,7 +567,6 @@ END_VAR
 		Out_unControl.Data.ResetFault := FALSE;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_RUNBusy" Id="{90aee50a-6506-4bb5-b1aa-9f9d7c1ddd68}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_RUNBusy'}
@@ -675,7 +672,6 @@ END_IF
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_EOFFbusy" Id="{9c2f9fe8-215d-4fdf-97c0-6e2185aa0bfa}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_EOFFbusy'}
@@ -706,7 +702,6 @@ IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 	;
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_OFFBusy" Id="{9e716469-41e6-4c16-83b3-eae4c2af4606}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFFBusy'}
@@ -754,7 +749,6 @@ END_VAR
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_RUN" Id="{ac65b301-60da-4f47-a010-e58ca5188043}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_RUN'}
@@ -812,7 +806,6 @@ END_IF
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_ERROR" Id="{b89e4623-bf9b-4d13-915b-6b332e27f154}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERROR'}
@@ -870,7 +863,6 @@ METHOD PROTECTED sta_ERROR : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="GetMotorStatus" Id="{ba97abe5-84c2-4af3-b8dd-6dedb07bbbb2}">
       <Declaration><![CDATA[{attribute 'object_name' := 'GetMotorStatus'}
@@ -884,7 +876,6 @@ END_VAR
 uinMotorStatus := SHR(uinMotorStatus,8);
 GetMotorStatus := UINT_TO_INT(uinMotorStatus);]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="CtrlInit" Id="{be50f307-0332-4dfb-86e8-1d7e3f9b4a0a}">
       <Declaration><![CDATA[{attribute 'object_name' := 'CtrlInit'}
@@ -900,7 +891,6 @@ arTurnDirection[E_TURN_DIRECTION.RIGHT] 	:= TRUE;
 SIf.Cur.uinSpeedLimit := SIf.Cfg.uinMaxSpeed * SIf.Cfg.uinLC11_100 / 100;
 ]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_EOFF" Id="{bfe5d590-8682-4646-bfdd-2258cd36f1d7}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_EOFF'}
@@ -939,7 +929,6 @@ METHOD PROTECTED sta_EOFF : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_STOPBusy" Id="{c180d7f4-f7f7-488b-8aaa-4b056e975904}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_STOPBusy'}
@@ -987,7 +976,6 @@ END_IF
 		Out_unControl.Data.ResetFault := FALSE;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="cmd_MotorReset" Id="{cb1c0de1-c819-406c-9479-8b1d7fc3d345}">
       <Declaration><![CDATA[{attribute 'object_name' := 'cmd_MotorReset'}
@@ -998,7 +986,6 @@ METHOD PROTECTED cmd_MotorReset : BOOL
 Out_unControl.Data.ResetFault 		:= 1;
 ]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="CycleEndDuty" Id="{cbbdec4d-6cee-48b4-953e-bd11ec7bb1cd}">
       <Declaration><![CDATA[{attribute 'object_name' := 'CycleEndDuty'}
@@ -1009,7 +996,6 @@ METHOD PROTECTED CycleEndDuty : BOOL
 
 SUPER^.CycleEndDuty();]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="getCmdState" Id="{d6b7f123-3a09-4b60-a640-1798c6d05ee8}">
       <Declaration><![CDATA[{attribute 'object_name' := 'getCmdState'}
@@ -1045,7 +1031,6 @@ IF (getCmdState='') THEN // global not defined get local
 	END_IF
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="cmd_MotorOn" Id="{e8a1edd6-9a14-4af6-bda0-9cb0cbe53275}">
       <Declaration><![CDATA[{attribute 'object_name' := 'cmd_MotorOn'}
@@ -1066,7 +1051,6 @@ Out_unControl.Data.SetSpeedCcw     	:= bDirection;
 SIf.Out.uinSpeedSetpoint.intern 	:= uinSpeed;
 ]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="CycleStartDuty" Id="{ef85c73c-cf9d-4365-978d-303e02039685}">
       <Declaration><![CDATA[{attribute 'object_name' := 'CycleStartDuty'}
@@ -1077,8 +1061,6 @@ METHOD PROTECTED CycleStartDuty : BOOL
 
 In_unStatus.Input := SIf.In.uinStatus.intern;]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>

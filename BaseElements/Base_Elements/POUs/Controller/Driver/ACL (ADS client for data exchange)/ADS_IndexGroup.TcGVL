@@ -1,4 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4019.2">
   <GVL Name="ADS_IndexGroup" Id="{06e1f24a-87bb-47a4-8d8e-fc0192b1e43e}">
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
 	/// "Index-Group/Offset", GET_SYMHANDLE_BYNAME
@@ -6,20 +7,5 @@
 	/// "Index-Group/Offset", READ_WRITE_SYMVAL_BYHANDLE
 	cREAD_WRITE_SYMVAL_BYHANDLE: UDINT := 16#F005;
 END_VAR]]></Declaration>
-    <ObjectProperties>﻿<XmlArchive>
-  <Data>
-    <o xml:space="preserve" t="FileLink">
-      <v n="FileName">""</v>
-      <v n="LinkType" t="LinkType">ExportBeforeCompile</v>
-      <v n="lTimeStamp">0L</v>
-    </o>
-  </Data>
-  <TypeList>
-    <Type n="FileLink">{0e9188e9-4f07-4676-afb5-399bcddbc44b}</Type>
-    <Type n="Int64">System.Int64</Type>
-    <Type n="LinkType">{926664ef-7286-4d12-8220-5000ab511fa6}</Type>
-    <Type n="String">System.String</Type>
-  </TypeList>
-</XmlArchive></ObjectProperties>
   </GVL>
 </TcPlcObject>
